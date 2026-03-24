@@ -4,7 +4,7 @@
 Một hệ thống đấu giá thời gian thực (real-time) được xây dựng hoàn toàn bằng Java, áp dụng kiến trúc mô hình Client-Server, đa luồng (Multithreading) và giao diện JavaFX.
 
 ##  Danh sách thành viên nhóm
-* **Người A (Đạt) - Team Lead & Server:** Cấu trúc hệ thống, Socket/REST API, Xử lý giao dịch cốt lõi.
+* **Người A - Team Lead & Server:** Cấu trúc hệ thống, Socket/REST API, Xử lý giao dịch cốt lõi.
 * **Người B - OOP & Model:** Xây dựng Class Hierarchy, Design Patterns, Xử lý Concurrency (Đa luồng).
 * **Người C - Client & GUI:** Thiết kế giao diện JavaFX, kết nối Client-Server, cập nhật UI Real-time.
 * **Người D - Features & QA:** Quản lý User/Item, thuật toán Auto-bidding, Anti-sniping, Unit Test.
