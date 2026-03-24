@@ -54,14 +54,15 @@ graph TB
 | # | Task | Files/Packages | Tuần |
 |---|------|---------------|------|
 | 1 | Setup GitHub repo, Maven multi-module (`common`, `server`, `client`) | `pom.xml`, `.gitignore`, `README.md` | 1 |
-| 2 | Cấu hình Server (Spring Boot hoặc `com.sun.net.httpserver`) | `server/` module | 1 |
-| 3 | REST API endpoints: User CRUD, Item CRUD, Auction CRUD, Bid | `server/controller/` | 2-3 |
-| 4 | WebSocket endpoint cho realtime bid updates | `server/websocket/` | 4-5 |
-| 5 | Database config + connection pool (H2/SQLite) | `server/db/DatabaseManager.java` (**Singleton**) | 2 |
-| 6 | DAO layer: `UserDAO`, `ItemDAO`, `AuctionDAO`, `BidDAO` | `server/dao/` | 2-3 |
-| 7 | Auction logic: tích hợp Service layer với DAO | `server/service/` | 4-5 |
-| 8 | **CI/CD**: GitHub Actions + JUnit test tự động | `.github/workflows/` | 6 |
-| 9 | Review PR, merge code, kiểm soát chất lượng | GitHub | Liên tục |
+| 2 | Áp dụng **Google Java Style Guide** + **Conventional Commits** | Toàn project | 1 (liên tục) |
+| 3 | Cấu hình Server (Spring Boot hoặc `com.sun.net.httpserver`) | `server/` module | 1 |
+| 4 | REST API endpoints: User CRUD, Item CRUD, Auction CRUD, Bid | `server/controller/` | 2-3 |
+| 5 | WebSocket endpoint cho realtime bid updates | `server/websocket/` | 4-5 |
+| 6 | Database config + connection pool (H2/SQLite) | `server/db/DatabaseManager.java` (**Singleton**) | 2 |
+| 7 | DAO layer: `UserDAO`, `ItemDAO`, `AuctionDAO`, `BidDAO` | `server/dao/` | 2-3 |
+| 8 | Auction logic: tích hợp Service layer với DAO | `server/service/` | 4-5 |
+| 9 | **CI/CD**: GitHub Actions + JUnit test tự động | `.github/workflows/` | 6 |
+| 10 | Review PR, merge code, kiểm soát chất lượng | GitHub | Liên tục |
 
 ---
 
@@ -73,14 +74,17 @@ graph TB
 |---|------|---------------|------|
 | 1 | Entity hierarchy: `Entity` (abstract) → `User` (abstract) → `Bidder`, `Seller`, `Admin` | `common/entity/` | 1-2 |
 | 2 | Item hierarchy: `Item` (abstract) → `Electronics`, `Art`, `Vehicle` | `common/entity/` | 1-2 |
-| 3 | `Auction` class: item, startTime, endTime, currentPrice, status | `common/entity/` | 2 |
-| 4 | `BidTransaction` class: auctionId, bidderId, amount, timestamp | `common/entity/` | 2 |
-| 5 | **Factory Method**: `ItemFactory` tạo Item theo type | `common/factory/` | 2 |
-| 6 | **Observer Pattern**: `AuctionObserver` interface + `AuctionEventManager` | `common/observer/` hoặc `server/observer/` | 4 |
-| 7 | **Singleton**: Áp dụng cho DatabaseManager, AuctionManager | Phối hợp Người A | 3 |
-| 8 | **Concurrency**: `synchronized` / `ReentrantLock` cho `BidService.placeBid()` | `server/service/BidService.java` | 4-5 |
-| 9 | Enums: `AuctionStatus`, `UserRole`, `ItemType` | `common/enums/` | 1 |
-| 10 | **JUnit Tests**: UserService, BidService, AuctionService, ItemFactory, Concurrency | `server/src/test/` | 6 |
+| 3 | `Auction`, `BidTransaction`, `AutoBid` classes | `common/entity/` | 2 |
+| 4 | **Encapsulation**: `private` fields + getter/setter toàn bộ entity | `common/entity/` | 1-2 |
+| 5 | **Polymorphism**: override `getInfo()` / `toString()` ở mỗi subclass | `common/entity/` | 2 |
+| 6 | **Abstraction**: abstract methods trong `Entity`, `User`, `Item` | `common/entity/` | 1-2 |
+| 7 | **Factory Method**: `ItemFactory` tạo Item theo type | `common/factory/` | 2 |
+| 8 | **Observer Pattern**: `AuctionObserver` interface + `AuctionEventManager` | `server/observer/` | 4 |
+| 9 | **Strategy Pattern**: `BidStrategy` interface → `ManualBidStrategy`, `AutoBidStrategy` | `common/strategy/` | 4-5 |
+| 10 | **Singleton**: Áp dụng cho DatabaseManager, AuctionManager | Phối hợp Người A | 3 |
+| 11 | **Concurrency**: `synchronized` / `ReentrantLock` cho `BidService.placeBid()` | `server/service/BidService.java` | 4-5 |
+| 12 | Enums: `AuctionStatus`, `UserRole`, `ItemType` | `common/enums/` | 1 |
+| 13 | **JUnit Tests**: UserService, BidService, AuctionService, ItemFactory, Concurrency | `server/src/test/` | 6 |
 
 ---
 
@@ -180,6 +184,7 @@ d:\autofish/
 
 ---
 
+## Verification Plan
 
 ### Manual Testing
 1. Start server → Start 2+ clients → Test full auction flow
