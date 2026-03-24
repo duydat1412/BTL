@@ -180,13 +180,6 @@ d:\autofish/
 
 ---
 
-## Verification Plan
-
-### Automated Tests (JUnit 5)
-```bash
-cd d:\autofish
-mvn clean test
-```
 
 ### Manual Testing
 1. Start server → Start 2+ clients → Test full auction flow
