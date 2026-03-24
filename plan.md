@@ -47,7 +47,7 @@ graph TB
 
 ## Phân công chi tiết theo vai trò
 
-### Người A (Đạt) — Team Lead & Server Core
+### Người A — Team Lead & Server Core
 
 **Phạm vi**: Kiến trúc hệ thống, Server + REST API, Database + DAO, Auction logic, CI/CD setup, Code review
 
