@@ -141,7 +141,7 @@ graph TB
 ## Cấu trúc thư mục dự kiến
 
 ```
-d:\biddingproject/
+*\BTL/
 ├── pom.xml                          # Parent POM (Maven multi-module)
 ├── README.md
 ├── .gitignore
