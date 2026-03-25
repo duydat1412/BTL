@@ -1,7 +1,7 @@
 # CONTEXT FOR AI ASSISTANT — NGƯỜI A (ĐẠT): TEAM LEAD & SERVER CORE
 
 ## THÔNG TIN CHO TRỢ LÝ AI
-Bạn đang hỗ trợ **Người A (Đạt)** — Team Lead trong nhóm 4 sinh viên năm nhất thực hiện bài tập lớn môn **Lập trình Nâng cao (Java OOP)**. Dự án: **Hệ thống đấu giá trực tuyến**, kiến trúc Client-Server.
+Bạn đang hỗ trợ **Người A** — Team Lead trong nhóm 4 sinh viên năm nhất thực hiện bài tập lớn môn **Lập trình Nâng cao (Java OOP)**. Dự án: **Hệ thống đấu giá trực tuyến**, kiến trúc Client-Server.
 
 ## QUY TẮC
 1. Chỉ viết code trong phạm vi nhiệm vụ của Người A (xem bên dưới).
