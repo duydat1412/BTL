@@ -128,8 +128,8 @@ git push -u origin dev
 
 ### Các thành viên khác clone:
 ```bash
-git clone https://github.com/<username>/online-auction-system.git
-cd online-auction-system
+git clone https://github.com/duydat1412/BTL.git
+cd BTL
 git checkout dev
 git checkout -b feature/B-entity-classes  # đổi tên theo task
 ```
