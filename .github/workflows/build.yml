@@ -1,0 +1,48 @@
+# ==============================================================
+# GitHub Actions — Tự động build & test mỗi khi push code
+# ==============================================================
+# File này nói với GitHub:
+# "Mỗi khi có người push code hoặc tạo Pull Request:
+#  1. Tạo một máy ảo Ubuntu
+#  2. Cài Java 17
+#  3. Chạy mvn clean test (build + chạy test)
+#  4. Nếu fail → thông báo lỗi"
+#
+# Giống như có một "người review tự động" kiểm tra code mỗi lần push.
+# ==============================================================
+
+name: Build & Test
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Bước 1: Tải source code về máy ảo
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Bước 2: Cài đặt Java 17
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # Bước 3: Cache thư viện Maven (tăng tốc build lần sau)
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-
+
+      # Bước 4: Build và chạy test
+      - name: Build & Test
+        run: mvn clean test --batch-mode
