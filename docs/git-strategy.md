@@ -59,9 +59,10 @@ feature/D-user-auth          ← Người D làm features
 ```bash
 git checkout dev
 git pull origin dev
+
 git checkout feature/A-ten-task
-git merge dev
-# Nếu có conflict → xem mục 6
+git rebase dev
+# Nếu conflict → sửa → git add . → git rebase --continue
 ```
 
 ### 🔵 Làm xong 1 phần → commit
@@ -72,10 +73,16 @@ git commit -m "feat(server): thêm REST API cho User CRUD"
 
 ### 🟡 Cuối ngày → push lên GitHub
 ```bash
-git push origin feature/A-ten-task
+git push origin feature/A-ten-task --force-with-lease
 ```
 
 ### 🔴 Xong task → tạo Pull Request
+Trước khi tạo **Pull Reqeust** : 
+```
+git checkout feature/A-ten-task
+git rebase dev
+git push --force-with-lease
+```
 1. Vào GitHub → **Pull Requests** → **New Pull Request**
 2. Base: `dev` ← Compare: `feature/A-ten-task`
 3. Viết mô tả ngắn: "Thêm REST API User CRUD"
