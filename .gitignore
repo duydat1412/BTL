@@ -12,7 +12,7 @@ target/
 *.iws
 *.iml
 *.ipr
-
+.idea/
 ### Eclipse ###
 .apt_generated
 .classpath
@@ -37,7 +37,12 @@ build/
 
 ### Mac OS ###
 .DS_Store
-.idea/
-*.iml
-out/
-target/
+#Environments
+.env
+application-dev.properties
+application-dev.yml
+# Databases
+*.db
+*.sqlite
+*.mv.db
+*.trace.db
