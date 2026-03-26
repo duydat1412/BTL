@@ -23,7 +23,7 @@ Một hệ thống đấu giá thời gian thực (real-time) được xây dự
 4. **Auto-bidding (Tự động trả giá):** Ủy quyền cho hệ thống tự động nâng giá theo bước giá thiết lập sẵn.
 5. **Anti-sniping (Chống nẫng tay trên):** Tự động gia hạn thêm 30 giây nếu có lượt trả giá ở những giây cuối cùng.
 
-## ⚙Hướng dẫn cài đặt và chạy thử nghiệm
+## Hướng dẫn cài đặt và chạy thử nghiệm
 ### Yêu cầu môi trường
 * Đã cài đặt JDK (phiên bản 17 trở lên).
 * Có kết nối Internet để Maven tải các thư viện cần thiết.
