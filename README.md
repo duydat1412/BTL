@@ -31,7 +31,7 @@ Một hệ thống đấu giá thời gian thực (real-time) được xây dự
 ### Các bước khởi chạy
 1. **Clone dự án về máy:**
    ```bash
-   git clone [https://github.com/duydat1412/BTL.git](https://github.com/duydat1412/BTL.git)
+   git clone https://github.com/duydat1412/BTL.git
 
 ## Các IDE hỗ trợ việc vibe code nên dùng : 
 
