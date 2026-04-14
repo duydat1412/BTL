@@ -158,12 +158,12 @@ graph TB
 │       ├── entity/                  # [Người B] User, Item, Auction, BidTransaction
 │       ├── enums/                   # [Người B] AuctionStatus, UserRole, ItemType
 │       ├── factory/                 # [Người B] ItemFactory
-│       └── observer/                # [Người B] AuctionObserver interface
+│       ├── observer/                # [Người B] AuctionObserver interface
+│       └── strategy/                # [Người B] BidStrategy, AutoBidStrategy
 ├── auction-server/
 │   ├── pom.xml
 │   ├── src/main/java/com/auction/server/
 │   │   ├── AuctionServerApp.java    # [Người A] Main entry (ServerSocket)
-│   │   ├── config/                  # [Người A] Server config
 │   │   ├── datastore/               # [Người A] DataStore (Singleton, Serialization)
 │   │   ├── repository/              # [Người A] UserRepository, ItemRepository, AuctionRepository, BidRepository
 │   │   ├── handler/                 # [Người A] Socket message handlers
