@@ -1,11 +1,12 @@
-# Hướng dẫn chạy Server ở localhost (sau khi clone repo)
+# Hướng dẫn chạy Socket Server ở localhost
 
-Tài liệu này dành cho các thành viên B, C, D sau khi clone dự án về máy.
+Cấu trúc dự án hiện đã chuyển sang mô hình **Java Socket thuần + Serialization**, không còn dùng Spring Boot.
+Tài liệu này hướng dẫn cách chạy server cũng như cách khắc phục lỗi cơ bản.
 
 ## 1) Yêu cầu môi trường
 
 - Cài **JDK 17+**
-- Có Internet lần đầu để Maven Wrapper tải dependency
+- Có Internet lần đầu để tải các thư viện cơ bản qua Maven
 
 Kiểm tra Java:
 
@@ -13,84 +14,53 @@ Kiểm tra Java:
 java -version
 ```
 
-## 2) Clone và vào dự án
+## 2) Cách chạy Server
 
-```bash
-git clone https://github.com/duydat1412/BTL.git
-cd BTL
-```
+Bạn có thể chạy Server bằng một trong hai cách dưới đây:
 
-## 3) Chạy server (cách khuyến nghị)
+### Cách 1: Chạy trực tiếp trên IDE (Khuyến nghị)
+1. Mở dự án trong IntelliJ IDEA / Eclipse / VS Code.
+2. Tìm tới class `AuctionServerApp` trong file: `auction-server/src/main/java/com/auction/server/AuctionServerApp.java`
+3. Nhấn nút Run (Tam giác màu xanh) hoặc chuột phải chọn `Run 'AuctionServerApp.main()'`.
+4. Nếu Console in ra `=== Khởi động Auction Server ===` và `Server đang lắng nghe trên cổng 8080`, tức là server đã chạy thành công.
 
-### Windows (PowerShell)
+### Cách 2: Chạy qua Terminal (Môi trường Console)
+Chạy trực tiếp project thông qua công cụ Maven Exec Plugin mà hệ thống đã cài sẵn.
 
+**Windows (PowerShell/CMD):**
 ```powershell
-Set-Location .\auction-server
-..\mvnw.cmd spring-boot:run
+# Di chuyển vào module server
+cd auction-server
+
+# Build và chạy class main của server (Sử dụng script ./mvnw.cmd có ở root)
+..\mvnw.cmd clean compile exec:java
 ```
 
-### macOS / Linux
-
+**macOS / Linux:**
 ```bash
 cd auction-server
-../mvnw spring-boot:run
+../mvnw clean compile exec:java
 ```
 
-> Server mặc định chạy tại: `http://localhost:8080`
+## 3) Cách dừng server
 
-## 4) Kiểm tra server đã chạy chưa
+- **Trên IDE:** Nhấn nút Stop (ô vuông màu đỏ) ở cửa sổ Console/Run.
+- **Trên Terminal:** Nhấn tổ hợp phím `Ctrl + C`, nếu terminal hỏi xác nhận `Terminate batch job (Y/N)?`, hãy gõ `Y` rồi Enter.
 
-Mở trình duyệt hoặc gọi API health check:
+> ⚠️ Khi Server tắt đúng cách, nó sẽ thực thi lệnh lưu bộ nhớ tạm RAM xuống CSDL file `data/auction_data.dat`. Đừng tắt ngang bằng Task Manager trừ phi bị đơ hoàn toàn.
 
-- `http://localhost:8080/api/health`
+## 4) Một số lỗi có thể gặp
 
-PowerShell:
+### Lỗi 1: `Address already in use: JVM_Bind` (Cổng 8080 đang bận)
+Mặc định Java Socket Server sẽ xin hệ điều hành cổng số mạng là **8080**. Nếu bạn lỡ chạy 2 lần hoặc bị kẹt tiến trình cũ chưa tắt hẳn thì không thể mở lại.
 
+**Xử lý nhanh:** (trên Windows PowerShell Run as Admin)
 ```powershell
-Invoke-RestMethod http://localhost:8080/api/health
-```
-
-Nếu server chạy, sẽ thấy JSON có `status: "UP"`.
-
-## 5) Cách dừng server
-
-- Ngay tại terminal đang chạy server: nhấn `Ctrl + C`
-
-Nếu bị kẹt tiến trình (không dừng được):
-
-```powershell
+# Tìm ID tiến trình đang dùng port 8080 và ép tắt
 $pids = Get-NetTCPConnection -LocalPort 8080 -State Listen | Select-Object -ExpandProperty OwningProcess -Unique
 foreach ($processIdToStop in $pids) { Stop-Process -Id $processIdToStop -Force }
 ```
+Sau đó chạy lại server.
 
-## 6) Lỗi thường gặp và cách xử lý
-
-### Lỗi 1: `Database may be already in use` (H2 lock file)
-
-Nguyên nhân: đang có 1 instance server khác chạy và giữ file DB.
-
-Cách xử lý nhanh:
-
-1. Dừng server cũ theo mục 5.
-2. Chạy lại server.
-
-### Lỗi 2: `Address already in use: bind` (port 8080 bận)
-
-Cách 1 (khuyến nghị): dừng process đang dùng port 8080 theo mục 5.
-
-Cách 2: đổi port trong file:
-
-- `auction-server/src/main/resources/application.properties`
-
-Ví dụ:
-
-```properties
-server.port=8081
-```
-
-rồi chạy lại và test ở `http://localhost:8081/api/health`.
-
-## 7) Ghi chú cho team
-
-- Không cần cài Maven thủ công, vì đã dùng Maven Wrapper (`mvnw`/`mvnw.cmd`).
-- Luôn chạy server từ module `auction-server` để tránh lỗi plugin khi chạy từ root.
+### Lỗi 2: Không lưu được Data, báo lỗi `FileNotFoundException`
+Hãy kiểm tra xem folder `auction-server/data/` đã được cấp quyền đọc ghi dữ liệu chưa. Hệ thống tự tạo folder và file `auction_data.dat` nếu không có. 
