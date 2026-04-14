@@ -1,15 +1,24 @@
-# Module: `auction-server`
+# Module `auction-server`
 
-## 📖 Vai trò (Role)
-Đây là **Máy Chủ (Backend)** – Trái tim và Bộ não của hệ thống. 
-Chịu trách nhiệm vận hành mọi logic nghiệp vụ, quản trị dữ liệu tập trung và đảm bảo mọi luật lệ của sàn đấu giá được thực thi nghiêm ngặt. Module này chạy hoàn toàn độc lập với Client.
+Đây là module **Backend cốt lõi** phục vụ hệ thống đấu giá, được viết hoàn toàn bằng Java thuần (Core Java).
 
-## Kiến trúc & Công nghệ
-Được xây dựng bằng **Spring Boot** với mô hình phân tầng chức năng rõ ràng:
-- **`Controller` (Tầng giao tiếp)**: Cung cấp REST API làm điểm tiếp nhận các yêu cầu HTTP (Login, Đặt giá, Lấy lịch sử) gửi từ Máy khách.
-- **`Service` (Tầng nghiệp vụ)**: Logic kiểm soát trò chơi. Kiểm định xem bước giá nạp lên có hợp lệ không? Phiên đã hết giờ chưa? Tài khoản này có bị cấm không?
-- **`DAO & Database` (Tầng lưu trữ)**: Sử dụng các câu lệnh truy vấn SQL (qua Spring Boot JDBC) để thay đổi/lấy dữ liệu. Dữ liệu này được lưu xuống một cơ sở dữ liệu nhúng **H2 Database** tích hợp sẵn.
-- **`WebSocket` (Tầng realtime)**: Ngược lại với API tĩnh, công nghệ này cho phép Máy chủ tự động **Bơm (Push)** dữ liệu biến động (như thông báo có người vừa mua thành công một món đồ) tới tất cả các ứng dụng Máy khách đang xem ngay trong thời gian thực.
+## Vai Trò
+- **Không sử dụng Framework Web/API REST**: Thay vì giao tiếp bằng JSON qua HTTP, dự án sử dụng **Raw TCP Sockets** (`ServerSocket`) mở ở port `8080` lắng nghe các Object Java được gửi trực tiếp.
+- Thay vì sử dụng cơ sở dữ liệu dạng bảng như MySQL/H2, server sử dụng **Java Serialization** để thao tác ghi toàn bộ đối tượng Singleton `DataStore` trực tiếp xuống file đuôi `.dat`.
+- Áp dụng Threading: Mỗi một Client kết nối tới sẽ được uỷ quyền cho một Thread (luồng) thông qua `ThreadPool` nằm ở trong `AuctionServerApp`. Điều này giúp nhiều khách hàng có thể đấu giá cùng lúc.
 
-## Liên kết hệ thống
-- Phụ thuộc (Depend trên) `auction-common`: Kéo bộ khung `Entity` từ common sang để làm khuôn đúc và lưu trữ chúng trực tiếp vào cơ sở dữ liệu.
+## Cấu trúc các thành phần
+```text
+src/main/java/com/auction/server/
+├── AuctionServerApp.java       ← Nơi chứa phương thức main() mở cổng 8080
+├── datastore/                  ← DataStore.java (Quản lý việc loadData()/saveData() ra ổ cứng)
+├── handler/                    ← ClientHandler.java (Luồng giao tiếp với 1 client chuyên biệt)
+└── repository/                 ← Nơi truy xuất danh sách và thao tác CRUD vào System RAM
+```
+
+## Cách biên dịch và khởi chạy
+Hãy di chuyển ra thư mục gốc (`D:\BTL`) và gọi lệnh Maven sau:
+```powershell
+.\mvnw.cmd clean compile exec:java -pl auction-server -am
+```
+> Server sẽ đợi lệnh `Object` từ Client chứ không phản hồi nếu gõ trên trình duyệt web trình bày UI HTTP.
