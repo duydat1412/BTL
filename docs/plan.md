@@ -16,12 +16,12 @@ graph TB
         NetClient["NetworkClient"]
     end
     
-    subgraph Server["Server - Người A (Spring Boot / HttpServer)"]
-        REST["REST API + WebSocket"]
-        SController["Controllers"]
+    subgraph Server["Server - Người A (Java Socket)"]
+        SocketServer["SocketServer (ServerSocket)"]
+        MsgHandler["Message Handlers"]
         SService["Services"]
-        SDAO["DAO Layer"]
-        DB[(Database)]
+        SRepo["Repository (Serialization)"]
+        DataFile[(DataFile .dat)]
     end
 
     subgraph Core["Core Models - Người B (OOP + Patterns)"]
@@ -37,8 +37,8 @@ graph TB
     end
     
     FXML --> FXController --> ClientModel --> NetClient
-    NetClient <-->|"REST + WebSocket"| REST
-    REST --> SController --> SService --> SDAO --> DB
+    NetClient <-->|"Socket (ObjectStream)"| SocketServer
+    SocketServer --> MsgHandler --> SService --> SRepo --> DataFile
     SService --> Core
     SService --> Features
 ```
@@ -49,20 +49,22 @@ graph TB
 
 ### Người A — Team Lead & Server Core
 
-**Phạm vi**: Kiến trúc hệ thống, Server + REST API, Database + DAO, Auction logic, CI/CD setup, Code review
+**Phạm vi**: Kiến trúc hệ thống, Server Socket, Repository (Serialization), Auction logic, CI/CD setup, Code review
 
 | # | Task | Files/Packages | Tuần |
 |---|------|---------------|------|
-| 1 | Setup GitHub repo, Maven multi-module (`common`, `server`, `client`) | `pom.xml`, `.gitignore`, `README.md` | 1 |
-| 2 | Áp dụng **Google Java Style Guide** + **Conventional Commits** | Toàn project | 1 (liên tục) |
-| 3 | Cấu hình Server (Spring Boot hoặc `com.sun.net.httpserver`) | `server/` module | 1 |
-| 4 | REST API endpoints: User CRUD, Item CRUD, Auction CRUD, Bid | `server/controller/` | 2-3 |
-| 5 | WebSocket endpoint cho realtime bid updates | `server/websocket/` | 4-5 |
-| 6 | Database config + connection pool (H2/SQLite) | `server/db/DatabaseManager.java` (**Singleton**) | 2 |
-| 7 | DAO layer: `UserDAO`, `ItemDAO`, `AuctionDAO`, `BidDAO` | `server/dao/` | 2-3 |
-| 8 | Auction logic: tích hợp Service layer với DAO | `server/service/` | 4-5 |
-| 9 | **CI/CD**: GitHub Actions + JUnit test tự động | `.github/workflows/` | 6 |
-| 10 | Review PR, merge code, kiểm soát chất lượng | GitHub | Liên tục |
+| 1 | Setup GitHub repo, Maven multi-module (`common`, `server`, `client`) | `pom.xml`, `.gitignore`, `README.md` | 6 |
+| 2 | Áp dụng **Google Java Style Guide** + **Conventional Commits** | Toàn project | 6 (liên tục) |
+| 3 | Cấu hình Server: `ServerSocket` lắng nghe nhiều client, mỗi client 1 Thread | `server/` module | 6 |
+| 4 | Socket message handlers: User, Item, Auction, Bid | `server/handler/` | 7-8 |
+| 5 | Realtime update qua Socket + Observer Pattern | `server/observer/` | 7-8 |
+| 6 | DataStore (Serialization-based): `ObjectOutputStream / ObjectInputStream` | `server/datastore/DataStore.java` (**Singleton**) | 7 |
+| 7 | Repository layer: `UserRepository`, `ItemRepository`, `AuctionRepository`, `BidRepository` (Serialization) | `server/repository/` | 7-8 |
+| 8 | Auction logic: tích hợp Service layer với Repository | `server/service/` | 8-9 |
+| 9 | **Tích hợp Checkstyle plugin** vào `pom.xml` — Enforce **Google Java Style** tự động khi build | `pom.xml` | 9 |
+| 10 | **CI/CD**: GitHub Actions + JUnit test tự động | `.github/workflows/` | 9 |
+| 11 | Review PR, merge code, kiểm soát chất lượng | GitHub | Liên tục |
+| 12 | **README.md**: Viết README đầy đủ — hướng dẫn cài đặt, cách chạy Server, cách chạy Client | `README.md` | 13-14 |
 
 ---
 
@@ -72,19 +74,20 @@ graph TB
 
 | # | Task | Files/Packages | Tuần |
 |---|------|---------------|------|
-| 1 | Entity hierarchy: `Entity` (abstract) → `User` (abstract) → `Bidder`, `Seller`, `Admin` | `common/entity/` | 1-2 |
-| 2 | Item hierarchy: `Item` (abstract) → `Electronics`, `Art`, `Vehicle` | `common/entity/` | 1-2 |
-| 3 | `Auction`, `BidTransaction`, `AutoBid` classes | `common/entity/` | 2 |
-| 4 | **Encapsulation**: `private` fields + getter/setter toàn bộ entity | `common/entity/` | 1-2 |
-| 5 | **Polymorphism**: override `getInfo()` / `toString()` ở mỗi subclass | `common/entity/` | 2 |
-| 6 | **Abstraction**: abstract methods trong `Entity`, `User`, `Item` | `common/entity/` | 1-2 |
-| 7 | **Factory Method**: `ItemFactory` tạo Item theo type | `common/factory/` | 2 |
-| 8 | **Observer Pattern**: `AuctionObserver` interface + `AuctionEventManager` | `server/observer/` | 4 |
-| 9 | **Strategy Pattern**: `BidStrategy` interface → `ManualBidStrategy`, `AutoBidStrategy` | `common/strategy/` | 4-5 |
-| 10 | **Singleton**: Áp dụng cho DatabaseManager, AuctionManager | Phối hợp Người A | 3 |
-| 11 | **Concurrency**: `synchronized` / `ReentrantLock` cho `BidService.placeBid()` | `server/service/BidService.java` | 4-5 |
-| 12 | Enums: `AuctionStatus`, `UserRole`, `ItemType` | `common/enums/` | 1 |
-| 13 | **JUnit Tests**: UserService, BidService, AuctionService, ItemFactory, Concurrency | `server/src/test/` | 6 |
+| 1 | Entity hierarchy: `Entity` (abstract) → `User` (abstract) → `Bidder`, `Seller`, `Admin` | `common/entity/` | 6-7 |
+| 2 | Item hierarchy: `Item` (abstract) → `Electronics`, `Art`, `Vehicle` | `common/entity/` | 6-7 |
+| 3 | `Auction`, `BidTransaction`, `AutoBid` classes | `common/entity/` | 7 |
+| 4 | **Encapsulation**: `private` fields + getter/setter toàn bộ entity | `common/entity/` | 6-7 |
+| 5 | **Polymorphism**: override `getInfo()` / `toString()` ở mỗi subclass | `common/entity/` | 7 |
+| 6 | **Abstraction**: abstract methods trong `Entity`, `User`, `Item` | `common/entity/` | 6-7 |
+| 7 | **Factory Method**: `ItemFactory` tạo Item theo type | `common/factory/` | 6 |
+| 8 | ⚠️ **Observer Pattern**: `AuctionObserver` interface + `AuctionEventManager` — **ƯU TIÊN CAO: hoàn thành trong Tuần 7** | `server/observer/` | 7 |
+| 9 | **Strategy Pattern**: `BidStrategy` interface → `ManualBidStrategy`, `AutoBidStrategy` | `common/strategy/` | 8 |
+| 10 | **Singleton**: Áp dụng cho DataStore, AuctionManager | Phối hợp Người A | 7 |
+| 11 | **Concurrency**: `synchronized` / `ReentrantLock` cho `BidService.placeBid()` | `server/service/BidService.java` | 7-8 |
+| 12 | Enums: `AuctionStatus`, `UserRole`, `ItemType` | `common/enums/` | 6 |
+| 13 | **JUnit Tests**: UserService, BidService, AuctionService, ItemFactory, Concurrency | `server/src/test/` | 8 |
+| 14 | **Unit test coverage ≥ 60%** — Dùng **JaCoCo plugin** để đo coverage | `pom.xml` + `server/src/test/` | 10 |
 
 ---
 
@@ -94,47 +97,51 @@ graph TB
 
 | # | Task | Files/Packages | Tuần |
 |---|------|---------------|------|
-| 1 | Setup JavaFX module, Scene Builder | `client/` module | 1 |
-| 2 | Login / Register screen | `view/login.fxml` + `controller/LoginController.java` | 2-3 |
-| 3 | Auction List screen (grid/list view) | `view/auction_list.fxml` + controller | 3 |
-| 4 | Auction Detail + Realtime Bidding screen | `view/auction_detail.fxml` + controller | 4-5 |
-| 5 | Seller Dashboard (CRUD sản phẩm) | `view/seller_dashboard.fxml` + controller | 3-4 |
-| 6 | Admin Panel | `view/admin.fxml` + controller | 5 |
-| 7 | `NetworkClient` class: gọi REST API + lắng nghe WebSocket | `client/network/` | 4-5 |
-| 8 | `Platform.runLater()` cho realtime updates (giá, countdown timer) | Trong các controllers | 5-6 |
-| 9 | CSS styling (dark theme / modern look) | `client/css/style.css` | 6 |
-| 10 | **Error handling UI**: hiển thị lỗi, thông báo cho người dùng | Trong các controllers | 5-6 |
+| 1 | Setup JavaFX module, Scene Builder | `client/` module | 6 |
+| 2 | Login / Register screen | `view/login.fxml` + `controller/LoginController.java` | 7-8 |
+| 3 | Auction List screen (grid/list view) | `view/auction_list.fxml` + controller | 8 |
+| 4 | Auction Detail + Realtime Bidding screen | `view/auction_detail.fxml` + controller | 8-9 |
+| 5 | Seller Dashboard (CRUD sản phẩm) | `view/seller_dashboard.fxml` + controller | 8-9 |
+| 6 | Admin Panel | `view/admin.fxml` + controller | 9-10 |
+| 7 | `NetworkClient` class: dùng `Socket` + `ObjectOutputStream` để gửi request, `ObjectInputStream` để nhận response | `client/network/` | 9-10 |
+| 8 | `Platform.runLater()` cho realtime updates (giá, countdown timer) | Trong các controllers | 10 |
+| 9 | CSS styling (dark theme / modern look) | `client/css/style.css` | 10-11 |
+| 10 | **Error handling UI**: hiển thị lỗi, thông báo cho người dùng | Trong các controllers | 10-11 |
 
 ---
 
 ### Người D — Features & QA
 
-**Phạm vi**: User management, Product management, Session end logic, Auto-bidding, Anti-sniping, Bid chart (bonus)
+**Phạm vi**: User management, Product management, Session end logic, Auto-bidding, Anti-sniping, Bid chart (bonus), Custom Exceptions
 
 | # | Task | Files/Packages | Tuần |
 |---|------|---------------|------|
-| 1 | User registration + login logic (password hashing BCrypt) | `server/service/UserService.java` | 2-3 |
-| 2 | Product management service (CRUD validation) | `server/service/ItemService.java` | 2-3 |
-| 3 | `AuctionScheduler`: `ScheduledExecutorService` tự động đóng phiên | `server/service/AuctionScheduler.java` | 4-5 |
-| 4 | Status transitions: `OPEN → RUNNING → FINISHED → PAID / CANCELED` | Trong AuctionService | 4-5 |
-| 5 | **Auto-bidding**: maxBid, increment, `PriorityQueue` theo thời gian đăng ký | `server/service/AutoBidService.java` | 7 |
-| 6 | **Anti-sniping**: bid trong X giây cuối → gia hạn Y giây | Trong AuctionScheduler | 7 |
-| 7 | Exception handling: bid < currentPrice, bid on closed auction, invalid data | Toàn hệ thống | 6 |
-| 8 | Edge case testing: concurrent bids, connection loss, invalid inputs | Test cases | 6-8 |
-| 9 | **Bid History chart (bonus)**: LineChart giá realtime (trục X: time, Y: price) | `client/controller/` phối hợp Người C | 7 |
+| 1 | User registration + login logic (password hashing BCrypt) | `server/service/UserService.java` | 7-8 |
+| 2 | Product management service (CRUD validation) | `server/service/ItemService.java` | 7-8 |
+| 3 | **Custom Exceptions**: `InvalidBidException`, `AuctionClosedException`, `AuthenticationException` | `server/exception/` | 8 |
+| 4 | `AuctionScheduler`: `ScheduledExecutorService` tự động đóng phiên | `server/service/AuctionScheduler.java` | 8-9 |
+| 5 | Status transitions: `OPEN → RUNNING → FINISHED → PAID / CANCELED` | Trong AuctionService | 8-9 |
+| 6 | Exception handling: bid < currentPrice, bid on closed auction, invalid data | Toàn hệ thống | 9-10 |
+| 7 | Edge case testing: concurrent bids, connection loss, invalid inputs | Test cases | 9-11 |
+| 8 | **Unit test coverage ≥ 60%** — Phối hợp Người B, dùng **JaCoCo plugin** | `server/src/test/` | 10 |
+| 9 | **Auto-bidding**: maxBid, increment, `PriorityQueue` theo thời gian đăng ký | `server/service/AutoBidService.java` | 13-14 |
+| 10 | **Anti-sniping**: bid trong X giây cuối → gia hạn Y giây | Trong AuctionScheduler | 13-14 |
+| 11 | **Bid History chart (bonus)**: LineChart giá realtime (trục X: time, Y: price) | `client/controller/` phối hợp Người C | 13-14 |
 
 ---
 
-## Lịch trình 8 tuần
+## Lịch trình 9 tuần (Tuần 6 → Tuần 15)
 
 | Tuần | Milestone | Người A | Người B | Người C | Người D |
 |------|-----------|---------|---------|---------|---------|
-| **1** | Setup & Design | GitHub, Maven, Server scaffold | Entity classes, Enums, class diagram | JavaFX setup, Scene Builder | Nghiên cứu requirements |
-| **2-3** | Core CRUD | REST API (User, Item), DAO, DB | Item hierarchy, Factory, Auction model | Login, Auction List UI | User auth, Item service |
-| **4-5** | Auction Logic | WebSocket, Bid API, Service integration | Observer, Concurrency (ReentrantLock) | Bidding screen, Seller dashboard | Scheduler, Status transitions |
-| **6** | Integration | Tích hợp toàn bộ, fix bugs | JUnit tests | Realtime UI (Platform.runLater) | Exception handling, edge cases |
-| **7** | Advanced | Hỗ trợ tích hợp | Hỗ trợ test concurrency | UI polish | Auto-bid, Anti-sniping, Bid chart |
-| **8-9** | Final | Code review, documentation | Final tests | UI polish | End-to-end testing |
+| **6** | Khởi động + Thiết kế OOP | GitHub, Maven, Server scaffold (ServerSocket) | Entity classes, Enums, class diagram, Factory | JavaFX setup, Scene Builder, tự học JavaFX + SceneBuilder | Nghiên cứu requirements |
+| **7** | Observer + Logic đấu giá + GUI cơ bản | Socket message handlers, DataStore (Serialization) | ⚠️ **Observer Pattern (ƯU TIÊN CAO)**, Concurrency (ReentrantLock) | Login, Auction List UI | User auth, Item service |
+| **8** | Custom Exceptions + JUnit + Refactor SOLID + GUI MVC | Repository layer, Service integration | JUnit tests, Strategy Pattern | Bidding screen, Seller dashboard | Custom Exceptions, Scheduler, Status transitions |
+| **9** | Maven + Checkstyle + GitHub Actions + Socket + Serialization | Checkstyle plugin, CI/CD (GitHub Actions), tự học Socket server-side & Serialization | Hỗ trợ refactor SOLID | NetworkClient (Socket), tự học Socket client-side | Exception handling |
+| **10** | Client-Server hoàn thiện + GUI đầy đủ + Coverage ≥60% | Tích hợp toàn bộ, fix bugs | Unit test coverage ≥60% (JaCoCo) | Realtime UI (Platform.runLater), Admin panel | Unit test coverage ≥60% (JaCoCo), edge case testing |
+| **11-12** | Tích hợp toàn bộ + E2E testing + Fix bugs | Hỗ trợ tích hợp, code review | Hỗ trợ test concurrency | CSS styling, UI polish | End-to-end testing |
+| **13-14** | Polish UI + Auto-bid + Anti-sniping + Bid chart (nếu kịp) | README.md đầy đủ | Final tests | UI polish | Auto-bid, Anti-sniping, Bid chart |
+| **15** | Trình bày + Demo + Chấm điểm | Trình bày | Trình bày | Demo | Demo |
 
 ---
 
@@ -142,8 +149,8 @@ graph TB
 
 ```
 *\BTL/
-├── pom.xml                          # Parent POM (Maven multi-module)
-├── README.md
+├── pom.xml                          # Parent POM (Maven multi-module) + Checkstyle plugin
+├── README.md                        # Hướng dẫn cài đặt, chạy Server, chạy Client
 ├── .gitignore
 ├── auction-common/
 │   ├── pom.xml
@@ -155,20 +162,24 @@ graph TB
 ├── auction-server/
 │   ├── pom.xml
 │   ├── src/main/java/com/auction/server/
-│   │   ├── AuctionServerApp.java    # [Người A] Main entry
+│   │   ├── AuctionServerApp.java    # [Người A] Main entry (ServerSocket)
 │   │   ├── config/                  # [Người A] Server config
-│   │   ├── db/                      # [Người A] DatabaseManager (Singleton)
-│   │   ├── dao/                     # [Người A] UserDAO, ItemDAO, AuctionDAO, BidDAO
-│   │   ├── controller/              # [Người A] REST controllers
-│   │   ├── websocket/               # [Người A] WebSocket handler
+│   │   ├── datastore/               # [Người A] DataStore (Singleton, Serialization)
+│   │   ├── repository/              # [Người A] UserRepository, ItemRepository, AuctionRepository, BidRepository
+│   │   ├── handler/                 # [Người A] Socket message handlers
 │   │   ├── service/                 # [Người A + B + D]
 │   │   │   ├── AuctionService.java
 │   │   │   ├── BidService.java      # [Người B] Concurrency logic
 │   │   │   ├── UserService.java     # [Người D] Auth logic
 │   │   │   ├── AutoBidService.java  # [Người D] Auto-bid
 │   │   │   └── AuctionScheduler.java# [Người D] Scheduler + Anti-snipe
-│   │   └── observer/                # [Người B] AuctionEventManager
-│   └── src/test/java/               # [Người B + D] JUnit tests
+│   │   ├── observer/                # [Người B] AuctionEventManager
+│   │   └── exception/               # [Người D] Custom Exceptions
+│   │       ├── InvalidBidException.java
+│   │       ├── AuctionClosedException.java
+│   │       └── AuthenticationException.java
+│   └── src/test/java/               # [Người B + D] JUnit tests (coverage ≥ 60%, JaCoCo)
+│       └── data/                    # .dat files (Serialization data)
 └── auction-client/
     ├── pom.xml
     └── src/main/
@@ -176,7 +187,7 @@ graph TB
         │   ├── AuctionClientApp.java# [Người C] JavaFX main
         │   ├── controller/          # [Người C] FX Controllers
         │   ├── model/               # [Người C] Client-side models
-        │   └── network/             # [Người C] REST client + WebSocket listener
+        │   └── network/             # [Người C] Socket client (ObjectStream)
         └── resources/
             ├── view/                # [Người C] FXML files
             └── css/                 # [Người C] Stylesheets
@@ -188,7 +199,11 @@ graph TB
 
 ### Manual Testing
 1. Start server → Start 2+ clients → Test full auction flow
-2. Verify realtime updates across clients
+2. Verify realtime updates across clients (qua Socket)
 3. Test concurrent bidding (2 bidders same time)
 4. Test auto-bid + anti-sniping
 5. Test edge cases (invalid bid, closed auction, connection loss)
+
+### Automated Testing
+- Unit test coverage ≥ 60% (đo bằng JaCoCo)
+- GitHub Actions chạy `mvn clean test` + Checkstyle tự động
