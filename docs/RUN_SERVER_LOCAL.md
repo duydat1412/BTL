@@ -1,66 +1,80 @@
 # Hướng dẫn chạy Socket Server ở localhost
 
-Cấu trúc dự án hiện đã chuyển sang mô hình **Java Socket thuần + Serialization**, không còn dùng Spring Boot.
-Tài liệu này hướng dẫn cách chạy server cũng như cách khắc phục lỗi cơ bản.
+> **QUAN TRỌNG:** Cấu trúc dự án hiện đã chuyển hoàn toàn sang mô hình **Java Socket thuần + Serialization** (để đúng yêu cầu thầy giáo). Server sẽ **KHÔNG CÒN LÀ WEB API** nữa. Bạn **KHÔNG THỂ** vào bằng link `http://localhost:8080/` trên trình duyệt và cũng không gọi bằng Postman được!
+
+Tài liệu này hướng dẫn cách chạy server cũng như cách giao tiếp với server.
+
+---
 
 ## 1) Yêu cầu môi trường
 
 - Cài **JDK 17+**
 - Có Internet lần đầu để tải các thư viện cơ bản qua Maven
 
-Kiểm tra Java:
-
+Kiểm tra Java (Mở PowerShell hoặc CMD):
 ```powershell
 java -version
 ```
+
+---
 
 ## 2) Cách chạy Server
 
 Bạn có thể chạy Server bằng một trong hai cách dưới đây:
 
-### Cách 1: Chạy trực tiếp trên IDE (Khuyến nghị)
+### Cách 1: Chạy trực tiếp trên IDE (Khuyên dùng)
 1. Mở dự án trong IntelliJ IDEA / Eclipse / VS Code.
-2. Tìm tới class `AuctionServerApp` trong file: `auction-server/src/main/java/com/auction/server/AuctionServerApp.java`
-3. Nhấn nút Run (Tam giác màu xanh) hoặc chuột phải chọn `Run 'AuctionServerApp.main()'`.
-4. Nếu Console in ra `=== Khởi động Auction Server ===` và `Server đang lắng nghe trên cổng 8080`, tức là server đã chạy thành công.
+2. Mở file: `auction-server/src/main/java/com/auction/server/AuctionServerApp.java`.
+3. Nhấn nút Run (Biểu tượng tam giác Play) đính kèm cạnh dòng `public static void main`.
+4. Console hiện `=== Khởi động Auction Server ===` và `Server đang lắng nghe trên cổng 8080` tức là thành công.
 
 ### Cách 2: Chạy qua Terminal (Môi trường Console)
-Chạy trực tiếp project thông qua công cụ Maven Exec Plugin mà hệ thống đã cài sẵn.
+Luôn luôn mở Terminal ở **thư mục gốc** (`D:\BTL>`, không phải `auction-server>`). Đừng đứng ở `auction-server` nếu không nó sẽ bị lỗi không tìm thấy `com.auction.common`.
 
 **Windows (PowerShell/CMD):**
 ```powershell
-# Di chuyển vào module server
-cd auction-server
-
-# Build và chạy class main của server (Sử dụng script ./mvnw.cmd có ở root)
-..\mvnw.cmd clean compile exec:java
+# Chạy câu lệnh này ĐÚNG ở thư mục gốc BTL
+.\mvnw.cmd clean compile exec:java -pl auction-server -am
 ```
 
 **macOS / Linux:**
 ```bash
-cd auction-server
-../mvnw clean compile exec:java
+./mvnw clean compile exec:java -pl auction-server -am
 ```
 
-## 3) Cách dừng server
+---
+
+## 3) Cách giao tiếp (Truy cập) vào Server
+
+Như đã nhấn mạnh ở trên, đây là Raw TCP Socket Server sử dụng `ObjectInputStream/ObjectOutputStream`. 
+Do đó chỉ có các chương trình Java gửi tin dạng Object Serialization mới truy cập được.
+
+**Làm sao để test?**
+Theo task được phân công ở Tuần 6-7, **Người C** cần được yêu cầu tạo code cho `NetworkClient.java` ở module `auction-client`, mở kết nối tới Server thông qua:
+```java
+Socket socket = new Socket("localhost", 8080);
+ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+//... send objects
+```
+Sau đó anh/chị mới có thể chạy ứng dụng Client để nói chuyện và truyền đi các lệnh (đăng ký, đấu giá) cho hệ thống Server xử lý.
+
+---
+
+## 4) Cách dừng server
 
 - **Trên IDE:** Nhấn nút Stop (ô vuông màu đỏ) ở cửa sổ Console/Run.
-- **Trên Terminal:** Nhấn tổ hợp phím `Ctrl + C`, nếu terminal hỏi xác nhận `Terminate batch job (Y/N)?`, hãy gõ `Y` rồi Enter.
+- **Trên Terminal:** Nhấn tổ hợp `Ctrl + C`, nếu nó hỏi `Terminate batch job (Y/N)?`, hãy gõ `Y` rồi ấn Enter.
 
-> ⚠️ Khi Server tắt đúng cách, nó sẽ thực thi lệnh lưu bộ nhớ tạm RAM xuống CSDL file `data/auction_data.dat`. Đừng tắt ngang bằng Task Manager trừ phi bị đơ hoàn toàn.
+> ⚠️ Khi Server tắt đúng cách, nó sẽ lưu bộ nhớ RAM xuống file Database `data/auction_data.dat`. 
 
-## 4) Một số lỗi có thể gặp
+---
 
-### Lỗi 1: `Address already in use: JVM_Bind` (Cổng 8080 đang bận)
-Mặc định Java Socket Server sẽ xin hệ điều hành cổng số mạng là **8080**. Nếu bạn lỡ chạy 2 lần hoặc bị kẹt tiến trình cũ chưa tắt hẳn thì không thể mở lại.
+## 5) Lỗi thường gặp: `Address already in use`
+Mặc định Java Socket Server sẽ xin hệ thống mạng **cổng 8080**. Nếu lỡ chạy đúp 2 lần hoặc server cũ chưa bị tắt hẳn, máy sẽ báo bận.
 
-**Xử lý nhanh:** (trên Windows PowerShell Run as Admin)
+**Xử lý:** (Chạy cửa sổ PowerShell dưới quyền Admin)
 ```powershell
-# Tìm ID tiến trình đang dùng port 8080 và ép tắt
 $pids = Get-NetTCPConnection -LocalPort 8080 -State Listen | Select-Object -ExpandProperty OwningProcess -Unique
 foreach ($processIdToStop in $pids) { Stop-Process -Id $processIdToStop -Force }
 ```
-Sau đó chạy lại server.
-
-### Lỗi 2: Không lưu được Data, báo lỗi `FileNotFoundException`
-Hãy kiểm tra xem folder `auction-server/data/` đã được cấp quyền đọc ghi dữ liệu chưa. Hệ thống tự tạo folder và file `auction_data.dat` nếu không có. 
+Sau đó bật lại Server như Bước 2.
