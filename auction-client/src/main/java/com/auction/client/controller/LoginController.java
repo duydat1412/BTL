@@ -2,14 +2,15 @@ package com.auction.client.controller;
 import javafx.fxml.FXML;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-
+// 1+1=2
 public class LoginController {
     @FXML
     private TextField usernameField;
     @FXML
     private PasswordField passwordField;
     @FXML
-    public void handleLogin() {
+    public void handleLogin()
+    {
         String user = usernameField.getText();
         String pass = passwordField.getText();
 
@@ -17,3 +18,4 @@ public class LoginController {
         System.out.println("Pass: " + pass);
     }
 }
+
