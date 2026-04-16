@@ -16,27 +16,28 @@
     </modules>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
+        <!-- Yêu cầu sử dụng java 17 -->
+        <maven.compiler.source>17</maven.compiler.source> 
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spring-boot.version>3.2.0</spring-boot.version>
     </properties>
 
-    <!-- Quản lý version dependency tập trung, các module con không cần khai báo version -->
+    <!-- Quản lý version dependency tập trung -->
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring-boot.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
             <!-- Module common dùng chung cho server và client -->
             <dependency>
                 <groupId>com.auction</groupId>
                 <artifactId>auction-common</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            
+            <!-- JUnit 5 cho testing -->
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>5.10.1</version>
+                <scope>test</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

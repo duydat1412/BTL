@@ -33,13 +33,20 @@ Luôn luôn mở Terminal ở **thư mục gốc** (`D:\BTL>`, không phải `au
 
 **Windows (PowerShell/CMD):**
 ```powershell
-# Chạy câu lệnh này ĐÚNG ở thư mục gốc BTL
-.\mvnw.cmd clean compile exec:java -pl auction-server -am
+# Bước 1: Compile tất cả dependency (chạy ĐÚNG ở thư mục gốc BTL)
+.\mvnw.cmd clean compile -pl auction-server -am
+
+# Bước 2: Chạy server (chạy ĐÚNG ở thư mục gốc BTL)
+.\mvnw.cmd exec:java -pl auction-server
 ```
 
 **macOS / Linux:**
 ```bash
-./mvnw clean compile exec:java -pl auction-server -am
+# Bước 1: Compile tất cả dependency
+./mvnw clean compile -pl auction-server -am
+
+# Bước 2: Chạy server
+./mvnw exec:java -pl auction-server
 ```
 
 ---
