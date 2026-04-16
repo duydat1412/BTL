@@ -1,19 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.auction</groupId>
+    <!-- Thừa kế tất cả cấu hình từ Parent POM của Team Lead -->
+    <parent>
+        <groupId>com.auction</groupId>
+        <artifactId>auction-system</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
     <artifactId>auction-client</artifactId>
-    <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <javafx.version>21</javafx.version>
+        <!-- Đồng bộ JavaFX 17 theo chuẩn JDK 17 toàn dự án -->
+        <javafx.version>17.0.6</javafx.version>
     </properties>
 
     <dependencies>
+        <!-- CỰC QUAN TRỌNG: Nhúng module common vào để lấy Class User, Auction... 
+             Nếu thiếu cái này sẽ báo lỗi ClassNotFoundException khi truyền File qua ObjectStream -->
+        <dependency>
+            <groupId>com.auction</groupId>
+            <artifactId>auction-common</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
@@ -26,6 +39,7 @@
             <version>${javafx.version}</version>
         </dependency>
     </dependencies>
+
     <build>
         <plugins>
             <plugin>
