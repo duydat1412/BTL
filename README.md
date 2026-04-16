@@ -16,21 +16,31 @@ Một hệ thống đấu giá thời gian thực (real-time) được xây dự
 * **Kiến trúc:** Client-Server, MVC Pattern
 * **Kỹ thuật nâng cao:** Multithreading (Xử lý đa luồng an toàn bằng `synchronized`/`ReentrantLock`), Socket/Observer Pattern (Cập nhật giá Real-time).
 
-## Tính năng nổi bật
-1. **Đấu giá thời gian thực:** Nhiều người dùng có thể cùng lúc đặt giá, màn hình tự động nhảy số không cần tải lại trang.
-2. **Xử lý đồng thời an toàn:** Đảm bảo không bị sai lệch dữ liệu khi hàng trăm request trả giá gửi lên cùng một phần nghìn giây.
-3. **Đồng hồ đếm ngược:** Mỗi phiên đấu giá có thời gian chạy lùi chính xác. Tự động chốt phiên khi về 0.
-4. **Auto-bidding (Tự động trả giá):** Ủy quyền cho hệ thống tự động nâng giá theo bước giá thiết lập sẵn.
-5. **Anti-sniping (Chống nẫng tay trên):** Tự động gia hạn thêm 30 giây nếu có lượt trả giá ở những giây cuối cùng.
-
-## Hướng dẫn cài đặt và chạy thử nghiệm
+## 🚀 Hướng dẫn cài đặt và chạy thử nghiệm
 ### Yêu cầu môi trường
 * Đã cài đặt JDK (phiên bản 17 trở lên).
-* Có kết nối Internet để Maven tải các thư viện cần thiết.
+* Cửa sổ dòng lệnh CMD/PowerShell hoặc Terminal có hỗ trợ chạy script.
 
-### Các bước khởi chạy
+### Cấu trúc thư mục (Multi-module)
+- `auction-common`: Chứa Entity, Enum và Interfaces dùng chung.
+- `auction-server`: Chứa Main App mở Socket Server lắng nghe port 8080 và quản lý file data.
+- `auction-client`: Chứa giao diện hiển thị cho người chơi (JavaFX) và trình gửi/nhận Request.
+- `docs/`: Tài liệu đồ án chi tiết.
+
+### Cách chạy Server cục bộ (Chỉ dành cho Test hoặc cho Backend/Server Auth)
 1. **Clone dự án về máy:**
    ```bash
+   git clone https://github.com/duydat1412/BTL.git
+   cd BTL
+   ```
+2. **Khởi chạy Socket Server:**
+   Đứng tại thư mục **BTL**, chạy lệnh sau để build và boot server (chỉ lắng nghe, đợi Client nối vào):
+   ```powershell
+   .\mvnw.cmd clean compile exec:java -pl auction-server -am
+   ```
+   Nếu console in ra `Server đang lắng nghe trên cổng 8080` tức là thành công!
+
+> **Chi tiết các lệnh và báo lỗi**: Xem thêm ở [docs/RUN_SERVER_LOCAL.md](docs/RUN_SERVER_LOCAL.md)
    git clone https://github.com/duydat1412/BTL.git
 
 ## Các IDE hỗ trợ việc vibe code nên dùng : 

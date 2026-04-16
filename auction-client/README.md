@@ -1,16 +1,17 @@
-# Module: `auction-client`
+# Module `auction-client`
 
-## Vai trò (Role)
-Đây là **Ứng dụng Máy Khách (Frontend)** – Giao diện (Mặt tiền) tiếp xúc trực tiếp với người chơi hoặc quản trị viên (Admin).
+Đây là phần mềm đại diện cho **Người Chơi (Client)** để giao tiếp với hệ thống Đấu giá.
 
-## Chức năng chính
-Nếu như Server là những đoạn mã chạy câm lặng bên dưới, thì Client làm nhiệm vụ tương tác qua hình ảnh và thao tác phím/chuột. Chức năng chính bao gồm:
-- **Tiếp nhận thao tác:** Lắng nghe người dùng nhập liệu mật khẩu, bấm nút bấm (Button), nhập số tiền mong muốn đặt...
-- **Giao diện hiển thị (UI):** Vẽ ra một sàn đấu giá giả lập (có thể bằng Java Swing, JavaFX, hoặc giao diện Console) để người dùng xem Danh sách Vật phẩm, Bảng xếp hạng giá và đồng hồ đếm ngược.
+## Vai Trò
+- Quản lý giao diện người dùng **(GUI)** bằng **JavaFX**.
+- Tạo một TCP Client socket để bắn các `Request/Message Object` tới Server ở `localhost:8080` sử dụng cổng giao tiếp `ObjectOutputStream` và `ObjectInputStream` thuần túy.
+- Xử lý Thread riêng biệt để làm nhiệm vụ **Lắng nghe thụ động (Observer)** từ Server. Ví dụ khi có một người khác vượt giá bạn, luồng lắng nghe này sẽ nhận lệnh báo động và cập nhật lên màn hình FXML theo thời gian thực (Real-time).
 
-## Luồng hoạt động & Giao tiếp
-Module này **KHÔNG** chứa bất kỳ Database hay kiểm tra logic phức tạp nào, mọi thứ đều dựa vào Server:
-1. Client cần hiển thị bảng xếp hạng => Gửi API yêu cầu Server cung cấp.
-2. Server gom một cục JSON trả về.
-3. Client bắt lấy file JSON đó, dùng khuôn có sẵn từ `auction-common` cùng sự trợ giúp của thư viện `Gson` để "thông dịch" và vẽ ra các chỉ số tương ứng lên màn hình.
-4. Client đăng ký một đường dây nóng `WebSocket` ngay khi mở ứng dụng. Bất cứ khi nào đối thủ trả giá hớ, Server sẽ réo qua đường dây nóng này để màn hình tự động nhảy số mới mà không cần F5 (tải lại trang).
+## Cấu trúc các thành phần (Dự kiến do Người C thưc hiện)
+```text
+src/main/java/com/auction/client/
+├── App.java                   ← Nơi chứa phương thức main() khởi Động app JavaFX
+├── controllers/               ← Gắn liền với các file giao diện .fxml (Xử lý ấn nút, gõ phím)
+├── network/                   ← Nơi thiết lập Socket kết nối tới Server
+└── utils/                     ← Tiện ích format thông báo, popup
+```

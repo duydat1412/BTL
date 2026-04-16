@@ -1,16 +1,20 @@
-#  Module: `auction-common`
+# Module `auction-common`
 
-## Vai trò (Role)
-Đây là **Module Core (Dữ liệu Dùng chung)** của toàn bộ hệ thống Đấu giá trực tuyến.
-Module này **không tự chạy độc lập**, mà được định nghĩa như một "thư viện" chứa các cấu trúc mã nguồn nền tảng để cả Máy chủ (`auction-server`) lẫn Máy khách (`auction-client`) cùng tái sử dụng. Tức là cả Server và Client đều `import` common vào để dùng.
+Đây là một thư viện sử dụng chung cho cả `auction-client` (Phía Khách) và `auction-server` (Phía Máy Chủ).
 
-## Thành phần chính
-Nằm chủ yếu trong `src/main/java/com/auction/common/`:
-- **`Entity` (Model)**: Cấu trúc các đối tượng thực thể cốt lõi (ví dụ: `User`, `Item`, `Auction`). Đại diện cho các bảng trong Database.
-- **`Enum`**: Chứa các hằng số cấu hình hệ thống (ví dụ: `UserRole`, `AuctionStatus`, `ItemType`).
-- **`Design Patterns`**: Chứa các Interface trừu tượng (Abstract) hoặc các nhà máy khởi tạo (ví dụ: `ItemFactory`).
-- **Ràng buộc chung**: Thư viện `Gson` nằm ở đây đóng vai trò chuyển đổi qua lại giữa Java Object và mã JSON.
+## Lý do tồn tại của Module này
+Bởi vì hệ thống Đấu giá của chúng ta được thiết kế theo cấu trúc truyền/nhận Object bằng Stream (Java Serialization).
+-> Nên **CẢ HAI BÊN** Server và Client đều phải "hiểu" chung một định dạng lớp (Ví dụ: Class `User`, `Item`, `RequestMessage`, v.v... phải có cấu trúc thuộc tính y chang nhau).
 
-## Ý nghĩa thực tiễn
-- Giúp loại bỏ hoàn toàn việc lặp lại code (DRY - Don't Repeat Yourself). Thay vì phải code class `User` 2 lần vào Client và Server, ta chỉ cần code 1 lần ở Common.
-- Module này là khu vực làm việc chính của thành viên phụ trách mảng Cấu trúc dữ liệu và Lập trình Hướng đối tượng (OOP).
+Việc ném các class thực thể đó vào `auction-common` giúp cả hai dự án có thể `import com.auction.common...` trực tiếp mà không phải copy-paste code dư thừa.
+
+## Các thành phần
+```text
+src/main/java/com/auction/common/
+├── entity/          ← Các đối tượng cốt lõi: User, Item, Auction, Bid. BẮT BUỘC implements Serializable
+├── enums/           ← Tập hợp các trạng thái: Status (OPEN, CLOSED), MessageType (REQUEST, RESPONSE)
+├── exceptions/      ← Custom Exceptions (Người D sẽ phụ trách) dùng chung cho báo lỗi
+└── network/         ← Tập hợp các DTO hoặc Messages truyền dẫn (nếu có)
+```
+
+**⚠️ Quy tắc tối quan trọng:** TẤT CẢ các Models nằm ở module này nếu muốn bắn sang Socket hoặc đẩy vào File Database đều bắt buộc phải implements `java.io.Serializable` và khai báo tĩnh `serialVersionUID`.

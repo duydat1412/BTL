@@ -1,6 +1,6 @@
 # Module: `auction-server`
 
-## Vai trò (Role)
+## 📖 Vai trò (Role)
 Đây là **Máy Chủ (Backend)** – Trái tim và Bộ não của hệ thống. 
 Chịu trách nhiệm vận hành mọi logic nghiệp vụ, quản trị dữ liệu tập trung và đảm bảo mọi luật lệ của sàn đấu giá được thực thi nghiêm ngặt. Module này chạy hoàn toàn độc lập với Client.
 

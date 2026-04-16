@@ -131,7 +131,6 @@ auction-server/
 ├── pom.xml
 └── src/main/java/com/auction/server/
     ├── AuctionServerApp.java            ← Main entry point (ServerSocket)
-    ├── config/                          ← Server config
     ├── datastore/
     │   └── DataStore.java               ← Singleton, Serialization (.dat files)
     ├── repository/
