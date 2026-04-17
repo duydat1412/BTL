@@ -2,9 +2,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- Module này thuộc parent auction-system -->
+    <!-- Thừa kế tất cả cấu hình từ Parent POM của Team Lead -->
     <parent>
         <groupId>com.auction</groupId>
         <artifactId>auction-system</artifactId>
@@ -13,19 +14,43 @@
 
     <artifactId>auction-client</artifactId>
 
+    <properties>
+        <!-- Đồng bộ JavaFX 17 theo chuẩn JDK 17 toàn dự án -->
+        <javafx.version>17.0.6</javafx.version>
+    </properties>
+
     <dependencies>
-        <!-- Module common: dùng chung entity, enum -->
+        <!-- CỰC QUAN TRỌNG: Nhúng module common vào để lấy Class User, Auction... 
+             Nếu thiếu cái này sẽ báo lỗi ClassNotFoundException khi truyền File qua ObjectStream -->
         <dependency>
             <groupId>com.auction</groupId>
             <artifactId>auction-common</artifactId>
         </dependency>
 
-        <!-- Gson: xử lý JSON khi giao tiếp với server -->
         <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>2.10.1</version>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>${javafx.version}</version>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
+                <configuration>
+                    <mainClass>com.auction.client.AuctionClientApp</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
