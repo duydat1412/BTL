@@ -1,7 +1,7 @@
 package com.auction.server.service;
 
-public class SignUpException extends Exception {
-    public SignUpException(String message) {
+public class AuthenticationException extends Exception {
+    public AuthenticationException(String message) {
         super(message);
     }
 }
