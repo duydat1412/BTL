@@ -7,6 +7,7 @@ import com.auction.common.entity.Admin;
 import com.auction.common.entity.Bidder;
 import com.auction.common.entity.Seller;
 import com.auction.common.enums.UserRole;
+import com.auction.common.message.ClientResponse;
 import com.auction.server.exception.AuthenticationException;
 import com.auction.server.repository.SerializableUserRepository;
 import org.mindrot.jbcrypt.BCrypt;
@@ -45,16 +46,14 @@ public class UserService{
             }
         }
     }
-    public static void login(String username, String password)throws AuthenticationException{
+    public static ClientResponse login(String username, String password)throws AuthenticationException{
         SerializableUserRepository sur=new SerializableUserRepository();
         User log=sur.findByUsername(username);
         if(log==null){
             throw new AuthenticationException("Username not found.");
         } else if(BCrypt.checkpw(password, log.getPassword())==false){
             throw new AuthenticationException("Invalid password");
-        } else{
-
         }
-
+        return new ClientResponse(true,"Login successfully", log);
     }
 }
