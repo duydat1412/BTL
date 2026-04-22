@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+  <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -6,6 +6,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <!-- Thừa kế tất cả cấu hình từ Parent POM của Team Lead -->
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Module này thuộc parent auction-system -->
     <parent>
         <groupId>com.auction</groupId>
         <artifactId>auction-system</artifactId>
@@ -28,15 +31,15 @@
         </dependency>
 
         <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-controls</artifactId>
-            <version>${javafx.version}</version>
+            <groupId>com.auction</groupId>
+            <artifactId>auction-common</artifactId>
         </dependency>
 
+        <!-- Gson: xử lý JSON khi giao tiếp với server -->
         <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-fxml</artifactId>
-            <version>${javafx.version}</version>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10.1</version>
         </dependency>
     </dependencies>
 
