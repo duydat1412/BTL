@@ -1,6 +1,6 @@
 # USER AUTH CONTRACT (C <-> A <-> D)
 
-## 0) Source of truth (Task 3)
+## 0) Source of truth
 - All shared DTO/message classes must be created and used from:
   - `auction-common/src/main/java/com/auction/common/message/`
 - Do not create duplicate Request/Response classes in `auction-client` or `auction-server`.
