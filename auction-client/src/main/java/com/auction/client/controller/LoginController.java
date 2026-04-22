@@ -2,7 +2,6 @@ package com.auction.client.controller;
 import javafx.fxml.FXML;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-// 1+1=2
 public class LoginController {
     @FXML
     private TextField usernameField;
