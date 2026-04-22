@@ -1,9 +1,15 @@
 package com.auction.server.handler;
 
+import com.auction.common.message.Action;
+import com.auction.common.message.ClientRequest;
+import com.auction.common.message.ClientResponse;
+import com.auction.common.message.LoginRequest;
+import com.auction.common.message.RegisterRequest;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.net.Socket;
 
 /**
@@ -29,17 +35,9 @@ public class ClientHandler implements Runnable {
             System.out.println("Đã sẵn sàng giao tiếp với client: " + clientSocket.getInetAddress());
 
             while (true) {
-                // Nhận Request Object (Tuần 7-8 sẽ định nghĩa class Request rõ ràng hơn)
                 Object requestObj = in.readObject();
-                System.out.println("Nhận request: " + requestObj);
-
-                // TODO: Xử lý thông qua UserService, ItemService (do Người D và Người B phụ trách)
-                // String action = request.getAction();
-                // ...
-                
-                // Trả về kết quả
-                String mockResponse = "Kết quả từ Server cho request: " + requestObj.toString();
-                out.writeObject(mockResponse);
+                ClientResponse response = handleIncomingRequest(requestObj);
+                out.writeObject(response);
                 out.flush();
             }
 
@@ -55,5 +53,41 @@ public class ClientHandler implements Runnable {
                 System.err.println("Lỗi khi đóng socket: " + e.getMessage());
             }
         }
+    }
+
+    private ClientResponse handleIncomingRequest(Object requestObj) {
+        if (!(requestObj instanceof ClientRequest request)) {
+            return failure("Invalid request format");
+        }
+
+        Action action = request.getAction();
+        if (action == null) {
+            return failure("Action is required");
+        }
+
+        Serializable payload = request.getPayload();
+        return switch (action) {
+            case REGISTER -> handleRegister(payload);
+            case LOGIN -> handleLogin(payload);
+            default -> failure("Action not supported yet: " + action);
+        };
+    }
+
+    private ClientResponse handleRegister(Serializable payload) {
+        if (!(payload instanceof RegisterRequest)) {
+            return failure("REGISTER payload must be RegisterRequest");
+        }
+        return failure("REGISTER received, waiting UserService integration");
+    }
+
+    private ClientResponse handleLogin(Serializable payload) {
+        if (!(payload instanceof LoginRequest)) {
+            return failure("LOGIN payload must be LoginRequest");
+        }
+        return failure("LOGIN received, waiting UserService integration");
+    }
+
+    private ClientResponse failure(String message) {
+        return new ClientResponse(false, message, null);
     }
 }
