@@ -15,10 +15,10 @@ import org.mindrot.jbcrypt.BCrypt;
 public class UserService{
     public static void signup(UserRole userRole, String username, String password, String email, String department)throws AuthenticationException {
         SerializableUserRepository sur = new SerializableUserRepository();
-        String mr="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+        String mr="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";  ///Mail pattern
         Pattern mp=Pattern.compile(mr, Pattern.CASE_INSENSITIVE);
         Matcher m= mp.matcher(email);
-        String pr="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\\\S+$).{8,}$";
+        String pr="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\\\S+$).{8,}$";    ///Password pattern
         Pattern p=Pattern.compile(pr, Pattern.CASE_INSENSITIVE);
         Matcher pm=p.matcher(password);
         if(userRole==null||username==null||email==null||password==null){
