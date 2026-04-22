@@ -3,7 +3,7 @@
 
 Một hệ thống đấu giá thời gian thực (real-time) được xây dựng hoàn toàn bằng Java, áp dụng kiến trúc mô hình Java TCP Socket, đa luồng (Multithreading), cơ sở dữ liệu qua Java Serialization (.dat) và giao diện JavaFX.
 
-## 👥 Danh sách thành viên nhóm
+##  Danh sách thành viên nhóm
 * **Người A - Team Lead & Server:** Cấu trúc hệ thống, Java Socket đa luồng (ClientHandler), Thread pool, Thiết lập Singleton DataStore.
 * **Người B - OOP & Model:** Xây dựng cấu trúc Object/Entity (Serializable), Factory, Observer Pattern (Cập nhật giá Real-time).
 * **Người C - Client & GUI:** Thiết kế giao diện JavaFX, kết nối NetworkClient (ObjectStream) để nói chuyện với Server.
@@ -17,7 +17,7 @@ Một hệ thống đấu giá thời gian thực (real-time) được xây dự
 * **Lưu trữ dữ liệu:** Java Serialization (Ghi xuất Object vào file tĩnh).
 * **Kiến trúc:** Client-Server, MVC Pattern.
 
-## 🚀 Hướng dẫn cài đặt và chạy thử nghiệm
+##  Hướng dẫn cài đặt và chạy thử nghiệm
 ### Yêu cầu môi trường
 * Đã cài đặt JDK (phiên bản 17 trở lên).
 * Cửa sổ dòng lệnh CMD/PowerShell hoặc Terminal có hỗ trợ chạy script.
