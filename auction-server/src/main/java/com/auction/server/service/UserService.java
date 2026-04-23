@@ -8,13 +8,20 @@ import com.auction.common.entity.Bidder;
 import com.auction.common.entity.Seller;
 import com.auction.common.enums.UserRole;
 import com.auction.common.message.ClientResponse;
+import com.auction.common.message.RegisterRequest;
 import com.auction.server.exception.AuthenticationException;
 import com.auction.server.repository.SerializableUserRepository;
 import org.mindrot.jbcrypt.BCrypt;
 
 public class UserService{
-    public static void signup(UserRole userRole, String username, String password, String email, String department)throws AuthenticationException {
+
+    // Dang ki tai khoan moi,
+    public static void signup(RegisterRequest registerRequest, String department)throws AuthenticationException {
         SerializableUserRepository sur = new SerializableUserRepository();
+        UserRole userRole=registerRequest.getRole();
+        String username=registerRequest.getUsername();
+        String password=registerRequest.getPassword();
+        String email=registerRequest.getEmail();
         String mr="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";  ///Mail pattern
         Pattern mp=Pattern.compile(mr, Pattern.CASE_INSENSITIVE);
         Matcher m= mp.matcher(email);
