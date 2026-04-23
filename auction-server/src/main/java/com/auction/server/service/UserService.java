@@ -8,6 +8,7 @@ import com.auction.common.entity.Bidder;
 import com.auction.common.entity.Seller;
 import com.auction.common.enums.UserRole;
 import com.auction.common.message.ClientResponse;
+import com.auction.common.message.LoginRequest;
 import com.auction.common.message.RegisterRequest;
 import com.auction.server.exception.AuthenticationException;
 import com.auction.server.repository.SerializableUserRepository;
@@ -53,8 +54,10 @@ public class UserService{
             }
         }
     }
-    public static ClientResponse login(String username, String password)throws AuthenticationException{
+    public static ClientResponse login(LoginRequest loginRequest)throws AuthenticationException{
         SerializableUserRepository sur=new SerializableUserRepository();
+        String username=loginRequest.getUsername();
+        String password=loginRequest.getPassword();
         User log=sur.findByUsername(username);
         if(log==null){
             throw new AuthenticationException("Username not found.");
