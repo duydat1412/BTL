@@ -17,7 +17,7 @@ import org.mindrot.jbcrypt.BCrypt;
 public class UserService{
 
     // Dang ki tai khoan moi,
-    public static void signup(RegisterRequest registerRequest, String department)throws AuthenticationException {
+    public static ClientResponse signup(RegisterRequest registerRequest, String department)throws AuthenticationException {
         SerializableUserRepository sur = new SerializableUserRepository();
         UserRole userRole=registerRequest.getRole();
         String username=registerRequest.getUsername();
@@ -29,6 +29,7 @@ public class UserService{
         String pr="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\\\S+$).{8,}$";    ///Password pattern
         Pattern p=Pattern.compile(pr, Pattern.CASE_INSENSITIVE);
         Matcher pm=p.matcher(password);
+        User newUser=null;
         if(userRole==null||username==null||email==null||password==null){
             throw new AuthenticationException("parameters cannot be null");
         } else if(sur.findByUsername(username)!=null){
@@ -41,18 +42,20 @@ public class UserService{
             String hashedPassword=BCrypt.hashpw(password, BCrypt.gensalt());
             switch (userRole){
                 case BIDDER:
-                    sur.save(new Bidder(username, hashedPassword, email));
+                    newUser=new Bidder(username, hashedPassword, email);
                     break;
                 case SELLER:
-                    sur.save(new Seller(username, hashedPassword, email));
+                    newUser=new Seller(username, hashedPassword, email);
                     break;
                 case ADMIN:
-                    sur.save(new Admin(username, hashedPassword, email, department));
+                    newUser=new Admin(username, hashedPassword, email, department);
                     break;
                 default:
                     throw new AuthenticationException("Invalid role.");
             }
+            sur.save(newUser);
         }
+        return new ClientResponse(true, "Dang ki thanh cong", newUser);
     }
     public static ClientResponse login(LoginRequest loginRequest)throws AuthenticationException{
         SerializableUserRepository sur=new SerializableUserRepository();
