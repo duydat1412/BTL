@@ -5,12 +5,14 @@ import com.auction.common.message.ClientRequest;
 import com.auction.common.message.ClientResponse;
 import com.auction.common.message.LoginRequest;
 import com.auction.common.message.RegisterRequest;
+import com.auction.server.exception.AuthenticationException;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.Socket;
+import com.auction.server.service.UserService;
 
 /**
  * Xử lý yêu cầu từ Client (chạy trên một luồng riêng).
@@ -69,25 +71,51 @@ public class ClientHandler implements Runnable {
         return switch (action) {
             case REGISTER -> handleRegister(payload);
             case LOGIN -> handleLogin(payload);
-            default -> failure("Action not supported yet: " + action);
+            case GET_AUCTIONS -> pending(action, "AuctionService integration");
+            case GET_AUCTION -> pending(action, "AuctionService integration");
+            case CREATE_AUCTION -> pending(action, "AuctionService integration");
+            case PLACE_BID -> pending(action, "BidService integration"); // nhanh lên Minh Đức, tôi đang đợi ông đây
+            case GET_BID_HISTORY -> pending(action, "BidService integration");
+            case GET_ITEMS -> pending(action, "ItemService integration");
+            case CREATE_ITEM -> pending(action, "ItemService integration");
+            case UPDATE_ITEM -> pending(action, "ItemService integration");
+            case DELETE_ITEM -> pending(action, "ItemService integration");
         };
     }
 
     private ClientResponse handleRegister(Serializable payload) {
-        if (!(payload instanceof RegisterRequest)) {
+        if (!(payload instanceof RegisterRequest req)) {
             return failure("REGISTER payload must be RegisterRequest");
         }
-        return failure("REGISTER received, waiting UserService integration");
+        return executeAuthAction(() -> UserService.signup(req, ""));
     }
 
     private ClientResponse handleLogin(Serializable payload) {
-        if (!(payload instanceof LoginRequest)) {
+        if (!(payload instanceof LoginRequest req)) {
             return failure("LOGIN payload must be LoginRequest");
         }
-        return failure("LOGIN received, waiting UserService integration");
+        return executeAuthAction(() -> UserService.login(req));
+    }
+
+    private ClientResponse executeAuthAction(AuthAction action) {
+        try {
+            return action.run();
+        } catch (AuthenticationException e) {
+            return failure(e.getMessage());
+        }
     }
 
     private ClientResponse failure(String message) {
         return new ClientResponse(false, message, null);
     }
+
+    private ClientResponse pending(Action action, String waitingFor) {
+        return failure(action + " pending: " + waitingFor);
+    }
+
+    @FunctionalInterface
+    private interface AuthAction {
+        ClientResponse run() throws AuthenticationException;
+    }
+
 }

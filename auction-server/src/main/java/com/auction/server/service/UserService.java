@@ -7,6 +7,7 @@ import com.auction.common.entity.Admin;
 import com.auction.common.entity.Bidder;
 import com.auction.common.entity.Seller;
 import com.auction.common.enums.UserRole;
+import com.auction.common.message.AuthUserData;
 import com.auction.common.message.ClientResponse;
 import com.auction.common.message.LoginRequest;
 import com.auction.common.message.RegisterRequest;
@@ -55,7 +56,7 @@ public class UserService{
             }
             sur.save(newUser);
         }
-        return new ClientResponse(true, "Dang ki thanh cong", newUser);
+        return new ClientResponse(true, "Dang ki thanh cong", toAuthUserData(newUser));
     }
     public static ClientResponse login(LoginRequest loginRequest)throws AuthenticationException{
         SerializableUserRepository sur=new SerializableUserRepository();
@@ -67,6 +68,10 @@ public class UserService{
         } else if(BCrypt.checkpw(password, log.getPassword())==false){
             throw new AuthenticationException("Invalid password");
         }
-        return new ClientResponse(true,"Login successfully", log);
+        return new ClientResponse(true, "Login successfully", toAuthUserData(log));
+    }
+
+    private static AuthUserData toAuthUserData(User user) {
+        return new AuthUserData(user.getId(), user.getUsername(), user.getRole());
     }
 }
