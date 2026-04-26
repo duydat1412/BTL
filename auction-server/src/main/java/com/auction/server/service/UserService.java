@@ -16,10 +16,9 @@ import com.auction.server.repository.SerializableUserRepository;
 import org.mindrot.jbcrypt.BCrypt;
 
 public class UserService{
-
+    static SerializableUserRepository sur = new SerializableUserRepository();
     // Dang ki tai khoan moi,
     public static synchronized ClientResponse signup(RegisterRequest registerRequest, String department)throws AuthenticationException {
-        SerializableUserRepository sur = new SerializableUserRepository();
         UserRole userRole=registerRequest.getRole();
         String username=registerRequest.getUsername();
         String password=registerRequest.getPassword();
@@ -59,7 +58,6 @@ public class UserService{
         return new ClientResponse(true, "Dang ki thanh cong", toAuthUserData(newUser));
     }
     public static ClientResponse login(LoginRequest loginRequest)throws AuthenticationException{
-        SerializableUserRepository sur=new SerializableUserRepository();
         String username=loginRequest.getUsername();
         String password=loginRequest.getPassword();
         User log=sur.findByUsername(username);

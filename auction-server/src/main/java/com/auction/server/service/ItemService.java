@@ -14,10 +14,9 @@ import java.util.Map;
 import static com.auction.common.enums.ItemType.ELECTRONICS;
 
 public class ItemService {
-
+    static SerializableItemRepository sir=new SerializableItemRepository();
     //CREAT
     public ClientResponse C(CreateItemRequest cir){
-        SerializableItemRepository sir=new SerializableItemRepository();
         Map attr=cir.getExtraAttributes();
         Item i=null;
         switch (cir.getItemType()){
@@ -37,7 +36,8 @@ public class ItemService {
         return new ClientResponse(true, "Created item successfully", i);
     }
     //READ
-    public ClientResponse R(GetItemsRequest){
+    public ClientResponse R(GetItemsRequest gir){
+        sir.findById(gir.getSellerId());
         return new ClientResponse(true, "", null);
     }
     //UPDATE
