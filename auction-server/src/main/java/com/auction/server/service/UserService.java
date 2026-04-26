@@ -18,7 +18,7 @@ import org.mindrot.jbcrypt.BCrypt;
 public class UserService{
 
     // Dang ki tai khoan moi,
-    public static ClientResponse signup(RegisterRequest registerRequest, String department)throws AuthenticationException {
+    public static synchronized ClientResponse signup(RegisterRequest registerRequest, String department)throws AuthenticationException {
         SerializableUserRepository sur = new SerializableUserRepository();
         UserRole userRole=registerRequest.getRole();
         String username=registerRequest.getUsername();
