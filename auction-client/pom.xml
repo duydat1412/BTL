@@ -27,9 +27,25 @@
             <artifactId>auction-common</artifactId>
         </dependency>
 
+        <!-- JavaFX Controls: cung cấp các UI component (Button, TextField, Label...) -->
         <dependency>
-            <groupId>com.auction</groupId>
-            <artifactId>auction-common</artifactId>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <!-- JavaFX FXML: hỗ trợ load giao diện từ file .fxml -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <!-- Thêm javafx-graphics tường minh để tránh lỗi package javafx.application does not exist trên GitHub Actions (Linux) -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>${javafx.version}</version>
         </dependency>
 
         <!-- Gson: xử lý JSON khi giao tiếp với server -->
