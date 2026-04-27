@@ -21,13 +21,13 @@ public class ItemService {
         Item i=null;
         switch (cir.getItemType()){
             case ELECTRONICS:
-                i=new Electronics(cir.getName(), cir.getDescription(), cir.getStartingPrice(), cir.getSellerId(), (String) attr.get("brand"),(String) attr.get("model"),(int) attr.get("warrantyMonths"));
+                i=new Electronics(cir.getName(), cir.getDescription(), cir.getStartingPrice(), cir.getSellerId(), (String) attr.get("brand"),(String) attr.get("model"), Integer.parseInt((String) attr.get("warrantyMonths")));
                 break;
             case ART:
-                i=new Art(cir.getName(), cir.getDescription(), cir.getStartingPrice(), cir.getSellerId(), (String) attr.get("artist"), (int) attr.get("year"), (String) attr.get("medium"));
+                i=new Art(cir.getName(), cir.getDescription(), cir.getStartingPrice(), cir.getSellerId(), (String) attr.get("artist"), Integer.parseInt((String) attr.get("year")), (String) attr.get("medium"));
                 break;
             case VEHICLE:
-                i=new Vehicle(cir.getName(), cir.getDescription(), cir.getStartingPrice(), cir.getSellerId(), (String) attr.get("manufacturer"), (int) attr.get("yearOfManufacture"), (int) attr.get("mileage"));
+                i=new Vehicle(cir.getName(), cir.getDescription(), cir.getStartingPrice(), cir.getSellerId(), (String) attr.get("manufacturer"), Integer.parseInt((String) attr.get("yearOfManufacture")), Integer.parseInt((String) attr.get("mileage")));
                 break;
             default:
                 return new ClientResponse(false, "Something went wrong", null);
