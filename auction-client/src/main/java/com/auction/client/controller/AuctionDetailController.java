@@ -29,4 +29,5 @@ public class AuctionDetailController {
             e.printStackTrace();
         }
     }
+    //12345
 }
