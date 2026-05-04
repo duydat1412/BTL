@@ -5,7 +5,6 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
 import javafx.scene.*;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -14,61 +13,63 @@ import javafx.util.Duration;
 
 public class AuctionDetailController {
 
-    @FXML
-    private Label nameLabel;
+    @FXML private Label nameLabel;
+    @FXML private Label priceLabel;
+    @FXML private Label timeLabel;
+    @FXML private TextField bidAmountField;
 
-    @FXML
-    private Label priceLabel;
+    private int secondsRemaining ;
+    private Timeline timeline;
 
-    @FXML
-    private Label timeLabel;
-    @FXML
-    private TextField bidAmountField;
-    @FXML
-    private int secondsRemaining;
-    private Timeline countdownTimeline;
-    public void initialize() {
-    }
     public void setData(Auction auction) {
-        //Hiển thị thông tin
         nameLabel.setText(auction.getTitle());
-        priceLabel.setText("Giá Hiện Tại: "+auction.getCurrentPrice());
+        priceLabel.setText("Giá: " + auction.getCurrentPrice());
 
-        this.secondsRemaining = 3600;
+        secondsRemaining = 3600;
         startTimer();
     }
-    private void startTimer(){
-        countdownTimeline = new Timeline(new KeyFrame(Duration.seconds(1),e->{
+    private void startTimer() {
+        timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
             secondsRemaining--;
-            int mins = secondsRemaining/60;
-            int secs = secondsRemaining%60;
-            timeLabel.setText(String.format("%02d:%02d",mins,secs));
+
+            int min = secondsRemaining / 60;
+            int sec = secondsRemaining % 60;
+
+            timeLabel.setText(String.format("%02d:%02d", min, sec));
 
             if (secondsRemaining <= 0) {
-
-                countdownTimeline.stop();
-                timeLabel.setText("Kết thúc phiên");
+                timeline.stop();
+                timeLabel.setText("Hết giờ");
             }
         }));
-        countdownTimeline.setCycleCount(Timeline.INDEFINITE);
-        countdownTimeline.play();
+
+        timeline.setCycleCount(Timeline.INDEFINITE);
+        timeline.play();
     }
+
     @FXML
-    public void handlePlaceBid(){
-        // gửi requast đặt giá
+    private void handlePlaceBid() {
         String amount = bidAmountField.getText();
-        System.out.println("Đang gửi đề nghị đặt giá" + amount);
+
+        if (amount.isEmpty()) {
+            System.out.println("Chưa nhập giá");
+            return;
+        }
+
+        System.out.println("Đặt giá: " + amount);
     }
+
     @FXML
-    public void goBack() {
+    private void goBack() {
         try {
-            if (countdownTimeline != null) countdownTimeline.stop();
+            if (timeline != null) timeline.stop();
+
             Parent root = FXMLLoader.load(getClass().getResource("/view/auction_list.fxml"));
             Stage stage = (Stage) nameLabel.getScene().getWindow();
             stage.setScene(new Scene(root));
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    //12345
 }
