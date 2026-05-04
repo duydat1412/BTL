@@ -23,6 +23,10 @@
         <Button text="Login"
                 layoutX="260" layoutY="210"
                 onAction="#handleLogin"/>
+        <Label fx:id="errorLabel"
+               textFill="red"
+               layoutX="200"
+               layoutY="250"/>
     </children>
 
 </AnchorPane>

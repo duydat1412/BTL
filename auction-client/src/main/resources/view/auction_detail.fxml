@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.auction.client.controller.AuctionDetailController"
+            prefHeight="400.0" prefWidth="600.0">
+
+    <children>
+        // tiêu đề
+        <Label text="Chi tiết sản phẩm"
+               layoutX="220" layoutY="40"
+               style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+
+        // tên sản phẩm
+        <Label text="Tên:"
+               layoutX="150" layoutY="120"/>
+        <Label fx:id="nameLabel"
+               layoutX="220" layoutY="120"/>
+        // giá
+        <Label text="Giá:"
+               layoutX="150" layoutY="160"/>
+        <Label fx:id="priceLabel"
+               layoutX="220" layoutY="160"/>
+
+        // sản phẩm
+        <Button text="Back"
+                layoutX="260" layoutY="250"
+                onAction="#goBack"/>
+
+    </children>
+
+</AnchorPane>

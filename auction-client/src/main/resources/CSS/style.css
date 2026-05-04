@@ -1,0 +1,41 @@
+/* Nền tối cho toàn bộ ứng dụng */
+.root {
+    -fx-background-color: #1e1e1e;
+    -fx-font-family: "Segoe UI Semibold";
+}
+
+/* Biến ListView thành danh sách chuyên nghiệp */
+.list-view {
+    -fx-background-color: transparent;
+    -fx-border-color: #333333;
+    -fx-border-width: 1;
+}
+
+.list-cell {
+    -fx-background-color: #252526;
+    -fx-text-fill: #cccccc;
+    -fx-padding: 15;
+    -fx-margin: 5;
+    -fx-background-radius: 5;
+}
+
+.list-cell:hover {
+    -fx-background-color: #2a2d2e;
+}
+
+.list-cell:selected {
+    -fx-background-color: #007acc;
+    -fx-text-fill: white;
+}
+
+/* Nút bấm hiện đại */
+.button {
+    -fx-background-color: #007acc;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 4;
+}
+
+.button:hover {
+    -fx-background-color: #1f8ad2;
+}
