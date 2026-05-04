@@ -10,7 +10,7 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import com.auction.common.message.LoginRequest;
 import com.auction.common.message.ClientResponse;
-import com.auction.client.Network.NetworkClient;
+import com.auction.client.network.NetworkClient;
 
 public class LoginController {
 
@@ -23,7 +23,6 @@ public class LoginController {
     @FXML
     private Label errorLabel; // 👈 THÊM
 
-    // Sửa đoạn code handleLogin trong file LoginController.java của bạn
     @FXML
     public void handleLogin() {
         String user = usernameField.getText();
