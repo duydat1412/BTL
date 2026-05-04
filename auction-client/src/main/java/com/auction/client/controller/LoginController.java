@@ -21,18 +21,18 @@ public class LoginController {
     private PasswordField passwordField;
 
     @FXML
-    private Label errorLabel; // 👈 THÊM
+    private Label errorLabel;
 
     @FXML
+
     public void handleLogin() {
         String user = usernameField.getText();
         String pass = passwordField.getText();
-
         if (user.isEmpty() || pass.isEmpty()) {
+
             errorLabel.setText("Không được để trống!");
             return;
         }
-
         try {
             NetworkClient client = NetworkClient.getInstance();
             client.connect("localhost", 1234);
@@ -45,6 +45,7 @@ public class LoginController {
                 Stage stage = (Stage) usernameField.getScene().getWindow();
                 stage.setScene(new Scene(root));
                 stage.show();
+
             } else {
                 errorLabel.setText("Đăng nhập thất bại!");
             }

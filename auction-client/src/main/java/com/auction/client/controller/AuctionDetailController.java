@@ -31,7 +31,7 @@ public class AuctionDetailController {
     }
     public void setData(Auction auction) {
         //Hiển thị thông tin
-        nameLabel.setText(auction.getItemId());
+        nameLabel.setText(auction.getTitle());
         priceLabel.setText("Giá Hiện Tại: "+auction.getCurrentPrice());
 
         this.secondsRemaining = 3600;
@@ -62,6 +62,7 @@ public class AuctionDetailController {
     @FXML
     public void goBack() {
         try {
+            if (countdownTimeline != null) countdownTimeline.stop();
             Parent root = FXMLLoader.load(getClass().getResource("/view/auction_list.fxml"));
             Stage stage = (Stage) nameLabel.getScene().getWindow();
             stage.setScene(new Scene(root));
