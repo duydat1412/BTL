@@ -19,12 +19,10 @@
         <PasswordField fx:id="passwordField"
                        promptText="Password"
                        layoutX="200" layoutY="170"/>
-
-        <Button text="Login"
-                layoutX="260" layoutY="210"
-                onAction="#handleLogin"/>
+        <Button text="Login" layoutX="220" layoutY="210" onAction="#handleLogin"/>
+        <Button text="Register" layoutX="300" layoutY="210" onAction="#handleRegister"/>
         <Label fx:id="errorLabel"
-               textFill="red"
+               textFill="#060980"
                layoutX="200"
                layoutY="250"/>
     </children>

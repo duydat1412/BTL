@@ -17,29 +17,21 @@ public class AuctionListController {
 
     @FXML
     public void initialize() {
-        listView.getItems().addAll(
-                new Auction("ITEM001", "SELLER001", "iPhone 15", 10000000, LocalDateTime.now(), LocalDateTime.now().plusDays(2)),
-                new Auction("ITEM002", "SELLER001", "MacBook M2", 20000000, LocalDateTime.now(), LocalDateTime.now().plusDays(2))
-        );
-        listView.setCellFactory(new Callback<ListView<Auction>, ListCell<Auction>>() {
+        listView.setCellFactory(param -> new ListCell<>() {
             @Override
-            public ListCell<Auction> call(ListView<Auction> param) {
-                return new ListCell<Auction>() {
-                    @Override
-                    protected void updateItem(Auction item, boolean empty) {
-                        super.updateItem(item, empty);
-                        if (empty || item == null) {
-                            setText(null);
-                        } else {
-                            setText(item.getTitle() + " - " + item.getCurrentPrice() + " VND");
-                        }
-                    }
-                };
+            protected void updateItem(Auction item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item.getTitle() + " - Giá: " + item.getCurrentPrice());
+                }
             }
         });
-        listView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue != null) {
-                openDetail(newValue);
+
+        listView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                openDetail(newVal);
             }
         });
     }
@@ -51,7 +43,6 @@ public class AuctionListController {
             controller.setData(selected);
             Stage stage = (Stage) listView.getScene().getWindow();
             stage.setScene(new Scene(root));
-
         } catch (Exception e) {
             System.err.println("Lỗi khi mở màn hình chi tiết: " + e.getMessage());
             e.printStackTrace();
