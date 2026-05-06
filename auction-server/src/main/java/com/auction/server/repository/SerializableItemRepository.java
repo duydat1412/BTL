@@ -22,7 +22,7 @@ public class SerializableItemRepository implements ItemRepository {
     public List<Item> findAll() { return DataStore.getInstance().getItems(); }
 
     @Override
-    public void update(Item item) { DataStore.getInstance().saveData(); }
+    public void update() { DataStore.getInstance().saveData(); }
 
     @Override
     public void delete(String id) {

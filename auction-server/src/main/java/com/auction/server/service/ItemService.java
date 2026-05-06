@@ -5,10 +5,7 @@ import com.auction.common.entity.Electronics;
 import com.auction.common.entity.Item;
 import com.auction.common.entity.Vehicle;
 import com.auction.common.factory.ItemFactory;
-import com.auction.common.message.ClientResponse;
-import com.auction.common.message.CreateItemRequest;
-import com.auction.common.message.GetItemsRequest;
-import com.auction.common.message.UpdateItemRequest;
+import com.auction.common.message.*;
 import com.auction.server.repository.SerializableItemRepository;
 
 import java.io.Serializable;
@@ -136,15 +133,25 @@ public class ItemService {
                         v.setMileage(Integer.parseInt(attr.get("mileage")));
                 }
                 sir.update();
+                return new ClientResponse(true, "cap nhat thanh cong", item);
             }
         } catch (Exception e){
-            return new ClientResponse()
+            return new ClientResponse(false, e.getMessage(), null);
         }
     }
 
     // ==================== DELETE (Người D sẽ implement) ====================
 
-    public void D() {
+    public ClientResponse D(DeleteItemRequest deleteItemRequest, String senderId) {
+        if (deleteItemRequest.getSellerId()!=senderId){
+            return new ClientResponse(false, "No Permission", null);
+        }
+        try{
+            sir.delete(deleteItemRequest.getItemId());
+            return new ClientResponse(true, "Thanh cong", null);
+        } catch (Exception e){
+            return new ClientResponse(false, e.getMessage(), null);
+        }
     }
 
     // ==================== Helper ====================
