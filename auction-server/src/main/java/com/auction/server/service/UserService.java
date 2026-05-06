@@ -26,7 +26,7 @@ public class UserService{
         String mr="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";  ///Mail pattern
         Pattern mp=Pattern.compile(mr, Pattern.CASE_INSENSITIVE);
         Matcher m= mp.matcher(email);
-        String pr="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\\\S+$).{8,}$";    ///Password pattern
+        String pr="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$";    ///Password pattern
         Pattern p=Pattern.compile(pr, Pattern.CASE_INSENSITIVE);
         Matcher pm=p.matcher(password);
         User newUser=null;

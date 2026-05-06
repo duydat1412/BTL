@@ -1,6 +1,5 @@
 package com.auction.client.controller;
 
-import java.time.LocalDateTime;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.*;
@@ -8,7 +7,6 @@ import javafx.scene.control.ListView;
 import javafx.stage.Stage;
 import com.auction.common.entity.Auction;
 import javafx.scene.control.ListCell;
-import javafx.util.Callback;
 
 public class AuctionListController {
 

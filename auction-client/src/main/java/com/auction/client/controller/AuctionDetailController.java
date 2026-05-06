@@ -20,13 +20,10 @@ public class AuctionDetailController {
             nameLabel.setText("Không có dữ liệu");
             return;
         }
-
         nameLabel.setText(auction.getTitle());
         priceLabel.setText("Giá hiện tại: " + auction.getCurrentPrice());
-
         timeLabel.setText("Đang chờ dữ liệu từ server...");
     }
-
     @FXML
     public void handlePlaceBid() {
         String amount = bidAmountField.getText();
