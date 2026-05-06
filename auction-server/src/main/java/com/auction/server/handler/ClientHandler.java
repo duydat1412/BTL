@@ -3,6 +3,8 @@ package com.auction.server.handler;
 import com.auction.common.message.Action;
 import com.auction.common.message.ClientRequest;
 import com.auction.common.message.ClientResponse;
+import com.auction.common.message.CreateItemRequest;
+import com.auction.common.message.GetItemsRequest;
 import com.auction.common.message.LoginRequest;
 import com.auction.common.message.RegisterRequest;
 import com.auction.server.exception.AuthenticationException;
@@ -12,6 +14,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.Socket;
+import com.auction.server.service.ItemService;
 import com.auction.server.service.UserService;
 
 /**
@@ -76,8 +79,8 @@ public class ClientHandler implements Runnable {
             case CREATE_AUCTION -> pending(action, "AuctionService integration");
             case PLACE_BID -> pending(action, "BidService integration"); // nhanh lên Minh Đức, tôi đang đợi ông đây
             case GET_BID_HISTORY -> pending(action, "BidService integration");
-            case GET_ITEMS -> pending(action, "ItemService integration");
-            case CREATE_ITEM -> pending(action, "ItemService integration");
+            case GET_ITEMS -> handleGetItems(payload);
+            case CREATE_ITEM -> handleCreateItem(payload);
             case UPDATE_ITEM -> pending(action, "ItemService integration");
             case DELETE_ITEM -> pending(action, "ItemService integration");
         };
@@ -103,6 +106,20 @@ public class ClientHandler implements Runnable {
         } catch (AuthenticationException e) {
             return failure(e.getMessage());
         }
+    }
+
+    private ClientResponse handleGetItems(Serializable payload) {
+        if (!(payload instanceof GetItemsRequest req)) {
+            return failure("GET_ITEMS payload must be GetItemsRequest");
+        }
+        return ItemService.getItems(req);
+    }
+
+    private ClientResponse handleCreateItem(Serializable payload) {
+        if (!(payload instanceof CreateItemRequest req)) {
+            return failure("CREATE_ITEM payload must be CreateItemRequest");
+        }
+        return ItemService.createItem(req);
     }
 
     private ClientResponse failure(String message) {

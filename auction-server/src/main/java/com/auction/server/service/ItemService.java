@@ -4,48 +4,126 @@ import com.auction.common.entity.Art;
 import com.auction.common.entity.Electronics;
 import com.auction.common.entity.Item;
 import com.auction.common.entity.Vehicle;
+import com.auction.common.factory.ItemFactory;
 import com.auction.common.message.ClientResponse;
 import com.auction.common.message.CreateItemRequest;
 import com.auction.common.message.GetItemsRequest;
 import com.auction.server.repository.SerializableItemRepository;
 
+import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-import static com.auction.common.enums.ItemType.ELECTRONICS;
-
+/**
+ * Xử lý nghiệp vụ CRUD cho sản phẩm (Item).
+ */
 public class ItemService {
-    static SerializableItemRepository sir=new SerializableItemRepository();
-    //CREAT
-    public ClientResponse C(CreateItemRequest cir){
-        Map attr=cir.getExtraAttributes();
-        Item i=null;
-        switch (cir.getItemType()){
-            case ELECTRONICS:
-                i=new Electronics(cir.getName(), cir.getDescription(), cir.getStartingPrice(), cir.getSellerId(), (String) attr.get("brand"),(String) attr.get("model"), Integer.parseInt((String) attr.get("warrantyMonths")));
-                break;
-            case ART:
-                i=new Art(cir.getName(), cir.getDescription(), cir.getStartingPrice(), cir.getSellerId(), (String) attr.get("artist"), Integer.parseInt((String) attr.get("year")), (String) attr.get("medium"));
-                break;
-            case VEHICLE:
-                i=new Vehicle(cir.getName(), cir.getDescription(), cir.getStartingPrice(), cir.getSellerId(), (String) attr.get("manufacturer"), Integer.parseInt((String) attr.get("yearOfManufacture")), Integer.parseInt((String) attr.get("mileage")));
-                break;
-            default:
-                return new ClientResponse(false, "Something went wrong", null);
+
+    private static final SerializableItemRepository itemRepo = new SerializableItemRepository();
+
+    // ==================== CREATE ====================
+
+    public static ClientResponse createItem(CreateItemRequest request) {
+        try {
+            if (request.getName() == null || request.getName().trim().isEmpty()) {
+                return new ClientResponse(false, "Tên sản phẩm không được để trống", null);
+            }
+            if (request.getStartingPrice() <= 0) {
+                return new ClientResponse(false, "Giá khởi điểm phải lớn hơn 0", null);
+            }
+            if (request.getSellerId() == null) {
+                return new ClientResponse(false, "Thiếu thông tin người bán", null);
+            }
+            if (request.getItemType() == null) {
+                return new ClientResponse(false, "Phải chọn loại sản phẩm", null);
+            }
+
+            Item item = ItemFactory.createItem(request.getItemType());
+            item.setName(request.getName());
+            item.setDescription(request.getDescription());
+            item.setStartingPrice(request.getStartingPrice());
+            item.setSellerId(request.getSellerId());
+
+            Map<String, String> attr = request.getExtraAttributes();
+            if (attr != null) {
+                switch (request.getItemType()) {
+                    case ELECTRONICS -> {
+                        Electronics e = (Electronics) item;
+                        e.setBrand(attr.getOrDefault("brand", ""));
+                        e.setModel(attr.getOrDefault("model", ""));
+                        e.setWarrantyMonths(parseIntSafe(attr.get("warrantyMonths")));
+                    }
+                    case ART -> {
+                        Art a = (Art) item;
+                        a.setArtist(attr.getOrDefault("artist", ""));
+                        a.setMedium(attr.getOrDefault("medium", ""));
+                        a.setYear(parseIntSafe(attr.get("year")));
+                    }
+                    case VEHICLE -> {
+                        Vehicle v = (Vehicle) item;
+                        v.setManufacturer(attr.getOrDefault("manufacturer", ""));
+                        v.setYearOfManufacture(parseIntSafe(attr.get("yearOfManufacture")));
+                        v.setMileage(parseIntSafe(attr.get("mileage")));
+                    }
+                }
+            }
+
+            itemRepo.save(item);
+            return new ClientResponse(true, "Tạo sản phẩm thành công", item);
+
+        } catch (Exception e) {
+            return new ClientResponse(false, "Lỗi khi tạo sản phẩm: " + e.getMessage(), null);
         }
-        sir.save(i);
-        return new ClientResponse(true, "Created item successfully", i);
     }
-    //READ
-    public ClientResponse R(GetItemsRequest gir){
-        sir.findById(gir.getSellerId());
-        return new ClientResponse(true, "", null);
-    }
-    //UPDATE
-    public void U(){
 
-    }
-    //DELETE
-    public void D(){
+    // ==================== READ ====================
 
+    public static ClientResponse getItems(GetItemsRequest request) {
+        try {
+            List<Item> allItems = itemRepo.findAll();
+
+            List<Item> filtered = allItems.stream()
+                    .filter(item -> {
+                        boolean matchSeller = (request.getSellerId() == null)
+                                || (item.getSellerId() != null
+                                && item.getSellerId().equals(request.getSellerId()));
+                        boolean matchType = (request.getItemType() == null)
+                                || (item.getItemType() == request.getItemType());
+                        return matchSeller && matchType;
+                    })
+                    .collect(Collectors.toList());
+
+            return new ClientResponse(true,
+                    "Lấy danh sách thành công (" + filtered.size() + " sản phẩm)",
+                    (Serializable) filtered);
+
+        } catch (Exception e) {
+            return new ClientResponse(false, "Lỗi khi lấy danh sách: " + e.getMessage(), null);
+        }
+    }
+
+    // ==================== UPDATE (Người D sẽ implement) ====================
+
+    public void U() {
+    }
+
+    // ==================== DELETE (Người D sẽ implement) ====================
+
+    public void D() {
+    }
+
+    // ==================== Helper ====================
+
+    private static int parseIntSafe(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 }
+
