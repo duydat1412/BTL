@@ -20,7 +20,7 @@
     </properties>
 
     <dependencies>
-        <!-- CỰC QUAN TRỌNG: Nhúng module common vào để lấy Class User, Auction... 
+        <!-- CỰC QUAN TRỌNG: Nhúng module common vào để lấy Class User, Auction...
              Nếu thiếu cái này sẽ báo lỗi ClassNotFoundException khi truyền File qua ObjectStream -->
         <dependency>
             <groupId>com.auction</groupId>
