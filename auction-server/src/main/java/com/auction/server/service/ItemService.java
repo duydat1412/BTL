@@ -8,6 +8,7 @@ import com.auction.common.factory.ItemFactory;
 import com.auction.common.message.ClientResponse;
 import com.auction.common.message.CreateItemRequest;
 import com.auction.common.message.GetItemsRequest;
+import com.auction.common.message.UpdateItemRequest;
 import com.auction.server.repository.SerializableItemRepository;
 
 import java.io.Serializable;
@@ -20,11 +21,11 @@ import java.util.stream.Collectors;
  */
 public class ItemService {
 
-    private static final SerializableItemRepository itemRepo = new SerializableItemRepository();
+    private static final SerializableItemRepository sir = new SerializableItemRepository();
 
     // ==================== CREATE ====================
 
-    public static ClientResponse createItem(CreateItemRequest request) {
+    public static ClientResponse C(CreateItemRequest request) {
         try {
             if (request.getName() == null || request.getName().trim().isEmpty()) {
                 return new ClientResponse(false, "Tên sản phẩm không được để trống", null);
@@ -69,7 +70,7 @@ public class ItemService {
                 }
             }
 
-            itemRepo.save(item);
+            sir.save(item);
             return new ClientResponse(true, "Tạo sản phẩm thành công", item);
 
         } catch (Exception e) {
@@ -79,9 +80,9 @@ public class ItemService {
 
     // ==================== READ ====================
 
-    public static ClientResponse getItems(GetItemsRequest request) {
+    public static ClientResponse R(GetItemsRequest request) {
         try {
-            List<Item> allItems = itemRepo.findAll();
+            List<Item> allItems = sir.findAll();
 
             List<Item> filtered = allItems.stream()
                     .filter(item -> {
@@ -105,7 +106,40 @@ public class ItemService {
 
     // ==================== UPDATE (Người D sẽ implement) ====================
 
-    public void U() {
+    public ClientResponse U(UpdateItemRequest uir) {
+        Map<String, String> attr=uir.getExtraAttributes();
+        try {
+            Item item = sir.findById(uir.getItemId());
+            if (item==null){
+                return new ClientResponse(false, "invalid item id", null);
+            } else {
+
+                item.setName(uir.getName());
+                item.setDescription(uir.getDescription());
+                item.setStartingPrice(uir.getStartingPrice());
+                item.setItemType(uir.getItemType());
+                switch (item.getItemType()){
+                    case ELECTRONICS:
+                        Electronics e=(Electronics) item;
+                        e.setBrand(attr.get("brand"));
+                        e.setModel(attr.get("model"));
+                        e.setWarrantyMonths(Integer.parseInt(attr.get("warrantyMonths")));
+                    case ART:
+                        Art a=(Art) item;
+                        a.setArtist(attr.get("artist"));
+                        a.setMedium(attr.get("medium"));
+                        a.setYear(Integer.parseInt(attr.get("year")));
+                    case VEHICLE:
+                        Vehicle v=(Vehicle) item;
+                        v.setManufacturer(attr.get("manufacturer"));
+                        v.setYearOfManufacture(Integer.parseInt(attr.get("yearOfManufacture")));
+                        v.setMileage(Integer.parseInt(attr.get("mileage")));
+                }
+                sir.update();
+            }
+        } catch (Exception e){
+            return new ClientResponse()
+        }
     }
 
     // ==================== DELETE (Người D sẽ implement) ====================

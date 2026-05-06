@@ -112,14 +112,14 @@ public class ClientHandler implements Runnable {
         if (!(payload instanceof GetItemsRequest req)) {
             return failure("GET_ITEMS payload must be GetItemsRequest");
         }
-        return ItemService.getItems(req);
+        return ItemService.R(req);
     }
 
     private ClientResponse handleCreateItem(Serializable payload) {
         if (!(payload instanceof CreateItemRequest req)) {
             return failure("CREATE_ITEM payload must be CreateItemRequest");
         }
-        return ItemService.createItem(req);
+        return ItemService.C(req);
     }
 
     private ClientResponse failure(String message) {
