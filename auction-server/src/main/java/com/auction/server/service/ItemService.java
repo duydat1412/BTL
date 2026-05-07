@@ -110,30 +110,57 @@ public class ItemService {
             if (item==null){
                 return new ClientResponse(false, "invalid item id", null);
             } else {
-
-                item.setName(uir.getName());
-                item.setDescription(uir.getDescription());
-                item.setStartingPrice(uir.getStartingPrice());
-                item.setItemType(uir.getItemType());
-                switch (item.getItemType()){
-                    case ELECTRONICS:
-                        Electronics e=(Electronics) item;
-                        e.setBrand(attr.get("brand"));
-                        e.setModel(attr.get("model"));
-                        e.setWarrantyMonths(parseIntSafe(attr.get("warrantyMonths")));
-                        break;
-                    case ART:
-                        Art a=(Art) item;
-                        a.setArtist(attr.get("artist"));
-                        a.setMedium(attr.get("medium"));
-                        a.setYear(parseIntSafe(attr.get("year")));
-                        break;
-                    case VEHICLE:
-                        Vehicle v=(Vehicle) item;
-                        v.setManufacturer(attr.get("manufacturer"));
-                        v.setYearOfManufacture(parseIntSafe(attr.get("yearOfManufacture")));
-                        v.setMileage(parseIntSafe(attr.get("mileage")));
-                        break;
+                if (uir.getName()!=null) {
+                    item.setName(uir.getName());
+                }
+                if (uir.getDescription()!=null) {
+                    item.setDescription(uir.getDescription());
+                }
+                if (uir.getStartingPrice()!=null) {
+                    item.setStartingPrice(uir.getStartingPrice());
+                }
+                if (uir.getItemType()!=null) {
+                    item.setItemType(uir.getItemType());
+                }
+                if (uir.getExtraAttributes()!=null) {
+                    switch (item.getItemType()) {
+                        case ELECTRONICS:
+                            Electronics e = (Electronics) item;
+                            if (attr.containsKey("brand")) {
+                                e.setBrand(attr.get("brand"));
+                            }
+                            if (attr.containsKey("model")) {
+                                e.setModel(attr.get("model"));
+                            }
+                            if (attr.containsKey("warrantyMonths")) {
+                                e.setWarrantyMonths(parseIntSafe(attr.get("warrantyMonths")));
+                            }
+                            break;
+                        case ART:
+                            Art a = (Art) item;
+                            if (attr.containsKey("artist")) {
+                                a.setArtist(attr.get("artist"));
+                            }
+                            if (attr.containsKey("medium")) {
+                                a.setMedium(attr.get("medium"));
+                            }
+                            if (attr.containsKey("year")) {
+                                a.setYear(parseIntSafe(attr.get("year")));
+                            }
+                            break;
+                        case VEHICLE:
+                            Vehicle v = (Vehicle) item;
+                            if (attr.containsKey("manufacturer")) {
+                                v.setManufacturer(attr.get("manufacturer"));
+                            }
+                            if (attr.containsKey("yearOfManufacture")) {
+                                v.setYearOfManufacture(parseIntSafe(attr.get("yearOfManufacture")));
+                            }
+                            if (attr.containsKey("mileage")) {
+                                v.setMileage(parseIntSafe(attr.get("mileage")));
+                            }
+                            break;
+                    }
                 }
                 sir.update();
                 return new ClientResponse(true, "cap nhat thanh cong", item);
