@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Sơ đồ Workflow Hệ thống</title>
+    <!-- Tải thư viện Mermaid từ CDN -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            fontFamily: 'arial, sans-serif'
+        });
+    </script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        h1, h2 { text-align: center; }
+        .diagram-container { display: flex; justify-content: center; margin-bottom: 50px; }
+    </style>
+</head>
+<body>
+    <h1>Sơ đồ Workflow Toàn Hệ Thống</h1>
+    <p style="text-align: center; color: #555;"><i>(Bấm Ctrl+P để In file này ra dạng PDF)</i></p>
+    
+    <h2>1. Flowchart Tổng quan (System Architecture)</h2>
+    <div class="diagram-container">
+        <div class="mermaid">
+graph TD
+    subgraph Client[Tầng Client - Người C]
+        UI["JavaFX UI Controllers<br>Login, Register, Dashboard"]
+        NetClient["NetworkClient<br>Singleton"]
+    end
+
+    Socket(("Java Socket<br>TCP Port 8080"))
+
+    subgraph Server[Tầng Server - Người A và D]
+        Handler["ClientHandler<br>Switch theo Action"]
+        UService["UserService"]
+        IService["ItemService"]
+        BService["BidService"]
+        AService["AuctionService"]
+        Repo["Serializable Repositories<br>User, Item, Bid..."]
+        DS["DataStore<br>Singleton In-Memory"]
+    end
+
+    File[("auction_data.dat<br>Ổ cứng")]
+
+    UI -->|1. Build ClientRequest| NetClient
+    NetClient -->|2. ObjectOutputStream| Socket
+    Socket -->|3. ObjectInputStream| Handler
+    
+    Handler -->|4. Action| UService
+    Handler -->|4. Action| IService
+    Handler -->|4. Action| BService
+    Handler -->|4. Action| AService
+    
+    UService -->|5. Call| Repo
+    IService -->|5. Call| Repo
+    BService -->|5. Call| Repo
+    
+    Repo -->|6. CRUD Data| DS
+    DS -->|7. saveData| File
+    
+    UService -.->|8. Return| Handler
+    IService -.->|8. Return| Handler
+    BService -.->|8. Return| Handler
+    
+    Handler -.->|9. Response| Socket
+    Socket -.->|10. Nhận| NetClient
+    NetClient -.->|11. Trả về UI| UI
+        </div>
+    </div>
+
+    <hr>
+
+    <h2>2. Sequence Diagram (Ví dụ: Tạo Sản phẩm)</h2>
+    <div class="diagram-container">
+        <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor User as Người dùng
+    participant UI as SellerDashboardController
+    participant NetClient as NetworkClient
+    participant Handler as ClientHandler
+    participant Service as ItemService
+    participant Repo as ItemRepository
+    participant DataStore as DataStore
+    participant File as auction_data.dat
+
+    User->>UI: Điền form & Bấm "Tạo sản phẩm"
+    UI->>NetClient: sendRequest(new ClientRequest(CREATE_ITEM, payload))
+    
+    activate NetClient
+    NetClient->>Handler: Gửi qua Socket (ObjectOutputStream)
+    activate Handler
+    
+    Note right of Handler: Server nhận Request, check switch(Action)
+    
+    Handler->>Service: createItem(payload)
+    activate Service
+    
+    Note right of Service: Kiểm tra logic (Tên có trống không? Giá > 0?)
+    
+    Service->>Repo: save(item)
+    activate Repo
+    
+    Repo->>DataStore: getItems().add(item)
+    activate DataStore
+    DataStore-->>Repo: (RAM updated)
+    
+    Repo->>DataStore: saveData()
+    DataStore->>File: (Serialization ghi đè file)
+    File-->>DataStore: (Lưu thành công)
+    deactivate DataStore
+    
+    Repo-->>Service: void
+    deactivate Repo
+    
+    Service-->>Handler: trả về ClientResponse(true, "Tạo thành công", item)
+    deactivate Service
+    
+    Handler-->>NetClient: Gửi về qua Socket (ObjectOutputStream)
+    deactivate Handler
+    
+    NetClient-->>UI: trả về ClientResponse
+    deactivate NetClient
+    
+    UI->>User: Hiển thị hộp thoại "Tạo sản phẩm thành công!"
+        </div>
+    </div>
+
+    <hr>
+
+    <h2>3. Chú thích các thành phần trong sơ đồ</h2>
+    <div style="margin: 0 auto; max-width: 800px; line-height: 1.6; font-size: 16px;">
+        <ul>
+            <li><b>Client UI (Controller):</b> Nơi người dùng thao tác. Nhận dữ liệu nhập, đóng gói thành <code>ClientRequest</code> và đưa cho NetworkClient.</li>
+            <li><b>NetworkClient:</b> Đóng vai trò làm "người đưa thư". Mã hóa luồng byte (Serialization) rồi đẩy qua mạng (Socket).</li>
+            <li><b>ClientHandler (Server):</b> Người gác cổng ở port 8080. Đọc thư, dựa vào nhãn (Action) để chuyển đến Service xử lý nghiệp vụ tương ứng.</li>
+            <li><b>Service:</b> Bộ não hệ thống. Kiểm tra dữ liệu hợp lệ (VD: Tên có trống không? Mật khẩu có đủ mạnh không?). Nếu hợp lý thì gọi Repository lưu lại.</li>
+            <li><b>Repository:</b> Thao tác trực tiếp với bộ nhớ (RAM). Cập nhật danh sách đối tượng hiện tại thông qua DataStore.</li>
+            <li><b>DataStore:</b> Quản lý lưu trữ bền vững. Mỗi khi có thay đổi từ Repository, nó xuất toàn bộ bộ nhớ RAM thành file <code>.dat</code> lưu xuống ổ cứng.</li>
+            <li><b>ClientResponse:</b> Món hàng được trả ngược lại từ Server về Client, chứa kết quả thành công/thất bại để UI hiển thị thông báo.</li>
+        </ul>
+    </div>
+</body>
+</html>

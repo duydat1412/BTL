@@ -120,17 +120,20 @@ public class ItemService {
                         Electronics e=(Electronics) item;
                         e.setBrand(attr.get("brand"));
                         e.setModel(attr.get("model"));
-                        e.setWarrantyMonths(Integer.parseInt(attr.get("warrantyMonths")));
+                        e.setWarrantyMonths(parseIntSafe(attr.get("warrantyMonths")));
+                        break;
                     case ART:
                         Art a=(Art) item;
                         a.setArtist(attr.get("artist"));
                         a.setMedium(attr.get("medium"));
-                        a.setYear(Integer.parseInt(attr.get("year")));
+                        a.setYear(parseIntSafe(attr.get("year")));
+                        break;
                     case VEHICLE:
                         Vehicle v=(Vehicle) item;
                         v.setManufacturer(attr.get("manufacturer"));
-                        v.setYearOfManufacture(Integer.parseInt(attr.get("yearOfManufacture")));
-                        v.setMileage(Integer.parseInt(attr.get("mileage")));
+                        v.setYearOfManufacture(parseIntSafe(attr.get("yearOfManufacture")));
+                        v.setMileage(parseIntSafe(attr.get("mileage")));
+                        break;
                 }
                 sir.update();
                 return new ClientResponse(true, "cap nhat thanh cong", item);

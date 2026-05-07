@@ -57,7 +57,7 @@ public class UserService{
         }
         return new ClientResponse(true, "Dang ki thanh cong", toAuthUserData(newUser));
     }
-    public static ClientResponse login(LoginRequest loginRequest)throws AuthenticationException{
+    public static ClientResponse xlogin(LoginRequest loginRequest)throws AuthenticationException{
         String username=loginRequest.getUsername();
         String password=loginRequest.getPassword();
         User log=sur.findByUsername(username);
