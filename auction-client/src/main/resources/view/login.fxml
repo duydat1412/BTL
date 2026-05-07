@@ -1,7 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
@@ -9,20 +6,39 @@
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.auction.client.controller.LoginController"
             prefHeight="400.0" prefWidth="600.0">
+
     <children>
-        <Label text="Login" layoutX="260" layoutY="80"/>
+        <Label text="Login" layoutX="260" layoutY="60"/>
 
         <TextField fx:id="usernameField"
                    promptText="Username"
-                   layoutX="200" layoutY="130"/>
+                   layoutX="200" layoutY="110"/>
 
         <PasswordField fx:id="passwordField"
                        promptText="Password"
-                       layoutX="200" layoutY="170"/>
+                       layoutX="200" layoutY="150"/>
+
+        <TextField fx:id="emailField"
+                   promptText="Email"
+                   layoutX="200" layoutY="190"/>
+
+        <ComboBox fx:id="roleBox"
+                  promptText="Chọn vai trò"
+                  layoutX="200" layoutY="230"
+                  prefWidth="150"/>
 
         <Button text="Login"
-                layoutX="260" layoutY="210"
+                layoutX="200" layoutY="270"
                 onAction="#handleLogin"/>
-    </children>
 
+        <Button text="Register"
+                layoutX="280" layoutY="270"
+                onAction="#handleRegister"/>
+
+        <Label fx:id="errorLabel"
+               textFill="#060980"
+               layoutX="200"
+               layoutY="310"/>
+
+    </children>
 </AnchorPane>

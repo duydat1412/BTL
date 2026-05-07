@@ -46,3 +46,7 @@ jobs:
       # Bước 4: Build và chạy test
       - name: Build & Test
         run: mvn clean test --batch-mode
+
+      # Bước 5: Checkstyle (giai đoạn đầu chỉ báo cáo, chưa fail CI)
+      - name: Checkstyle
+        run: mvn checkstyle:check --batch-mode

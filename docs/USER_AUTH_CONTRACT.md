@@ -8,6 +8,9 @@
 ## 1) Actions
 - `REGISTER`
 - `LOGIN`
+- `GET_AUCTIONS`, `GET_AUCTION`, `CREATE_AUCTION`
+- `PLACE_BID`, `GET_BID_HISTORY`
+- `GET_ITEMS`, `CREATE_ITEM`, `UPDATE_ITEM`, `DELETE_ITEM`
 
 ## 2) Request payload
 - `REGISTER` -> `RegisterRequest`
@@ -35,8 +38,20 @@
   - `action: Action`
   - `payload: Serializable`
 
+## 4.2) Handler response policy
+- Server always replies with `ClientResponse` for every action.
+- For actions not integrated yet, server returns:
+  - `success=false`
+  - `message="<ACTION> pending: <integration-name>"`
+  - `data=null`
+
 ## 5) Minimum REGISTER test cases
 1. Register BIDDER -> success
 2. Register SELLER -> success
 3. Register ADMIN -> fail
 4. Register duplicate username -> fail
+
+## 6) Realtime note (from lecturer guide)
+- Observer + realtime update is a required part of the project.
+- Socket-based realtime integration is expected in the later integration phase.
+- Current phase focuses on stable request/response contract before wiring realtime push path.

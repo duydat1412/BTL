@@ -7,20 +7,29 @@ import com.auction.common.entity.Admin;
 import com.auction.common.entity.Bidder;
 import com.auction.common.entity.Seller;
 import com.auction.common.enums.UserRole;
+import com.auction.common.message.AuthUserData;
 import com.auction.common.message.ClientResponse;
+import com.auction.common.message.LoginRequest;
+import com.auction.common.message.RegisterRequest;
 import com.auction.server.exception.AuthenticationException;
 import com.auction.server.repository.SerializableUserRepository;
 import org.mindrot.jbcrypt.BCrypt;
 
 public class UserService{
-    public static void signup(UserRole userRole, String username, String password, String email, String department)throws AuthenticationException {
-        SerializableUserRepository sur = new SerializableUserRepository();
-        String mr="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+    static SerializableUserRepository sur = new SerializableUserRepository();
+    // Dang ki tai khoan moi,
+    public static synchronized ClientResponse signup(RegisterRequest registerRequest, String department)throws AuthenticationException {
+        UserRole userRole=registerRequest.getRole();
+        String username=registerRequest.getUsername();
+        String password=registerRequest.getPassword();
+        String email=registerRequest.getEmail();
+        String mr="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";  ///Mail pattern
         Pattern mp=Pattern.compile(mr, Pattern.CASE_INSENSITIVE);
         Matcher m= mp.matcher(email);
-        String pr="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\\\S+$).{8,}$";
+        String pr="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$";    ///Password pattern
         Pattern p=Pattern.compile(pr, Pattern.CASE_INSENSITIVE);
         Matcher pm=p.matcher(password);
+        User newUser=null;
         if(userRole==null||username==null||email==null||password==null){
             throw new AuthenticationException("parameters cannot be null");
         } else if(sur.findByUsername(username)!=null){
@@ -33,27 +42,34 @@ public class UserService{
             String hashedPassword=BCrypt.hashpw(password, BCrypt.gensalt());
             switch (userRole){
                 case BIDDER:
-                    sur.save(new Bidder(username, hashedPassword, email));
+                    newUser=new Bidder(username, hashedPassword, email);
                     break;
                 case SELLER:
-                    sur.save(new Seller(username, hashedPassword, email));
+                    newUser=new Seller(username, hashedPassword, email);
                     break;
                 case ADMIN:
-                    sur.save(new Admin(username, hashedPassword, email, department));
+                    newUser=new Admin(username, hashedPassword, email, department);
                     break;
                 default:
                     throw new AuthenticationException("Invalid role.");
             }
+            sur.save(newUser);
         }
+        return new ClientResponse(true, "Dang ki thanh cong", toAuthUserData(newUser));
     }
-    public static ClientResponse login(String username, String password)throws AuthenticationException{
-        SerializableUserRepository sur=new SerializableUserRepository();
+    public static ClientResponse xlogin(LoginRequest loginRequest)throws AuthenticationException{
+        String username=loginRequest.getUsername();
+        String password=loginRequest.getPassword();
         User log=sur.findByUsername(username);
         if(log==null){
             throw new AuthenticationException("Username not found.");
         } else if(BCrypt.checkpw(password, log.getPassword())==false){
             throw new AuthenticationException("Invalid password");
         }
-        return new ClientResponse(true,"Login successfully", log);
+        return new ClientResponse(true, "Login successfully", toAuthUserData(log));
+    }
+
+    private static AuthUserData toAuthUserData(User user) {
+        return new AuthUserData(user.getId(), user.getUsername(), user.getRole());
     }
 }

@@ -7,6 +7,6 @@ public interface ItemRepository {
     void save(Item item);
     Item findById(String id);
     List<Item> findAll();
-    void update(Item item);
+    void update();
     void delete(String id);
 }
