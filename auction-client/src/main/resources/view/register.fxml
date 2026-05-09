@@ -1,43 +1,59 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.collections.FXCollections?>
+<?import java.lang.String?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.auction.client.controller.RegisterController"
-            prefHeight="400" prefWidth="600">
+<HBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.controller.RegisterController"
+      prefHeight="600.0" prefWidth="900.0"
+      styleClass="main-bg">
 
-    <children>
+    <!-- Trái: Phần giới thiệu -->
+    <VBox HBox.hgrow="ALWAYS" style="-fx-background-color: #87ceeb;" alignment="CENTER">
+        <padding><Insets top="40" bottom="40" left="40" right="40"/></padding>
+        <Label text="Tạo tài khoản mới&#10;Tham gia ngay!" styleClass="text-white, text-3xl, font-bold" wrapText="true" textAlignment="CENTER"/>
+    </VBox>
 
-        <Label text="Register" layoutX="250" layoutY="60"/>
+    <!-- Phải: Form đăng ký -->
+    <StackPane prefWidth="450" styleClass="bg-white">
+        <VBox alignment="CENTER_LEFT" spacing="15" maxWidth="350">
 
-        <TextField fx:id="usernameField"
-                   promptText="Username"
-                   layoutX="200" layoutY="110"/>
+            <VBox spacing="2">
+                <Label text="Tạo tài khoản" styleClass="text-2xl, font-bold, text-foreground"/>
+                <Label text="Vui lòng điền thông tin để tiếp tục" styleClass="text-sm, text-muted"/>
+            </VBox>
 
-        <PasswordField fx:id="passwordField"
-                       promptText="Password"
-                       layoutX="200" layoutY="150"/>
+            <VBox spacing="5">
+                <Label text="Tên đăng nhập" styleClass="text-sm, font-bold, text-foreground"/>
+                <TextField fx:id="usernameField" promptText="Nhập tên đăng nhập" styleClass="input-field"/>
+            </VBox>
 
-        <TextField fx:id="emailField"
-                   promptText="Email"
-                   layoutX="200" layoutY="190"/>
+            <VBox spacing="5">
+                <Label text="Mật khẩu" styleClass="text-sm, font-bold, text-foreground"/>
+                <PasswordField fx:id="passwordField" promptText="VD: Abc@1234" styleClass="input-field"/>
+            </VBox>
 
-        <ComboBox fx:id="roleBox"
-                  layoutX="200" layoutY="230"
-                  prefWidth="150"
-                  promptText="Chọn vai trò"/>
+            <VBox spacing="5">
+                <Label text="Email" styleClass="text-sm, font-bold, text-foreground"/>
+                <TextField fx:id="emailField" promptText="you@example.com" styleClass="input-field"/>
+            </VBox>
 
-        <Button text="Register"
-                layoutX="200" layoutY="270"
-                onAction="#handleRegister"/>
+            <VBox spacing="5">
+                <Label text="Vai trò" styleClass="text-sm, font-bold, text-foreground"/>
+                <ComboBox fx:id="roleBox" promptText="Chọn vai trò" styleClass="combo-box" maxWidth="Infinity"/>
+            </VBox>
 
-        <Button text="Back"
-                layoutX="300" layoutY="270"
-                onAction="#goBack"/>
+            <Button text="Đăng ký tài khoản" onAction="#handleRegister" styleClass="btn-gold" maxWidth="Infinity">
+                <VBox.margin><Insets top="5"/></VBox.margin>
+            </Button>
 
-        <Label fx:id="messageLabel"
-               layoutX="200" layoutY="310"/>
+            <Button text="Quay lại Đăng nhập" onAction="#goBack" styleClass="btn-outline" maxWidth="Infinity"/>
 
-    </children>
-</AnchorPane>
+            <Label fx:id="messageLabel" styleClass="text-danger, text-sm" wrapText="true" alignment="CENTER" maxWidth="Infinity"/>
+        </VBox>
+    </StackPane>
+
+</HBox>

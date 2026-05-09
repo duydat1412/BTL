@@ -28,7 +28,6 @@ public class LoginController {
         try {
             NetworkClient client = NetworkClient.getInstance();
             client.connect();
-
             ClientResponse res = client.login(user, pass);
 
             errorLabel.setText(res.getMessage());
@@ -43,7 +42,7 @@ public class LoginController {
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/view/register.fxml"));
             Stage stage = (Stage) usernameField.getScene().getWindow();
-            stage.setScene(new Scene(root));
+            stage.getScene().setRoot(root);
         } catch (Exception e) {
             e.printStackTrace();
         }

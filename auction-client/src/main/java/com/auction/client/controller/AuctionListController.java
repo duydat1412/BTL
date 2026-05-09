@@ -4,6 +4,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.*;
 import javafx.scene.control.ListView;
+import javafx.scene.control.Label;
 import javafx.stage.Stage;
 import com.auction.common.entity.Auction;
 import javafx.scene.control.ListCell;
@@ -12,6 +13,12 @@ public class AuctionListController {
 
     @FXML
     private ListView<Auction> listView;
+
+    @FXML
+    private Label userInfoLabel;
+
+    @FXML
+    private Label statusLabel;
 
     @FXML
     public void initialize() {
@@ -32,7 +39,31 @@ public class AuctionListController {
                 openDetail(newVal);
             }
         });
+        
+        if (userInfoLabel != null) {
+            userInfoLabel.setText("Xin chào, User");
+        }
     }
+
+    @FXML
+    public void handleLogout() {
+        try {
+            Parent root = FXMLLoader.load(getClass().getResource("/view/login.fxml"));
+            Stage stage = (Stage) listView.getScene().getWindow();
+            stage.getScene().setRoot(root);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    public void handleRefresh() {
+        if (statusLabel != null) {
+            statusLabel.setText("Đã tải lại danh sách.");
+        }
+        System.out.println("Tải lại danh sách đấu giá...");
+    }
+
     private void openDetail(Auction selected) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/auction_detail.fxml"));
@@ -40,7 +71,7 @@ public class AuctionListController {
             AuctionDetailController controller = loader.getController();
             controller.setData(selected);
             Stage stage = (Stage) listView.getScene().getWindow();
-            stage.setScene(new Scene(root));
+            stage.getScene().setRoot(root);
         } catch (Exception e) {
             System.err.println("Lỗi khi mở màn hình chi tiết: " + e.getMessage());
             e.printStackTrace();
