@@ -1,44 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.auction.client.controller.LoginController"
-            prefHeight="400.0" prefWidth="600.0">
+<HBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.controller.LoginController"
+      prefHeight="600.0" prefWidth="900.0"
+      styleClass="main-bg">
 
-    <children>
-        <Label text="Login" layoutX="260" layoutY="60"/>
+    <!-- Trái: Phần giới thiệu -->
+    <VBox HBox.hgrow="ALWAYS" styleClass="gradient-primary" alignment="CENTER_LEFT">
+        <padding><Insets top="40" bottom="40" left="40" right="40"/></padding>
+        <Label text="BidVault" styleClass="text-white, text-lg, font-bold"/>
+        <Region VBox.vgrow="ALWAYS"/>
+        <Label text="Nền tảng đấu giá&#10;minh bạch &amp; tốc độ." styleClass="text-white, text-3xl, font-bold" wrapText="true"/>
+        <Label text="Tham gia cùng hàng ngàn nhà sưu tập và người bán trên BidVault — nơi mỗi lượt bid đều được bảo chứng." styleClass="text-muted, text-sm" wrapText="true" maxWidth="350">
+            <VBox.margin><Insets top="10"/></VBox.margin>
+        </Label>
+        <Region VBox.vgrow="ALWAYS"/>
+        <Label text="© BidVault 2025" styleClass="text-muted, text-xs"/>
+    </VBox>
 
-        <TextField fx:id="usernameField"
-                   promptText="Username"
-                   layoutX="200" layoutY="110"/>
+    <!-- Phải: Form đăng nhập -->
+    <StackPane prefWidth="450" styleClass="bg-white">
+        <VBox alignment="CENTER_LEFT" spacing="20" maxWidth="350">
+            
+            <VBox spacing="5">
+                <Label text="Chào mừng trở lại" styleClass="text-2xl, font-bold, text-foreground"/>
+                <Label text="Dùng tài khoản đã đăng ký hoặc đăng ký mới" styleClass="text-sm, text-muted"/>
+            </VBox>
+            
+            <VBox spacing="5">
+                <Label text="Tên đăng nhập" styleClass="text-sm, font-bold, text-foreground"/>
+                <TextField fx:id="usernameField" promptText="Nhập tên đăng nhập" styleClass="input-field"/>
+            </VBox>
+            
+            <VBox spacing="5">
+                <Label text="Mật khẩu" styleClass="text-sm, font-bold, text-foreground"/>
+                <PasswordField fx:id="passwordField" promptText="••••••••" styleClass="input-field"/>
+            </VBox>
 
-        <PasswordField fx:id="passwordField"
-                       promptText="Password"
-                       layoutX="200" layoutY="150"/>
+            <Button text="Đăng nhập" onAction="#handleLogin" styleClass="btn-gold" maxWidth="Infinity"/>
+            
+            <Button text="Tạo tài khoản mới" onAction="#handleRegister" styleClass="btn-outline" maxWidth="Infinity"/>
+            
+            <Label fx:id="errorLabel" styleClass="text-danger, text-sm" wrapText="true" alignment="CENTER" maxWidth="Infinity"/>
+        </VBox>
+    </StackPane>
 
-        <TextField fx:id="emailField"
-                   promptText="Email"
-                   layoutX="200" layoutY="190"/>
-
-        <ComboBox fx:id="roleBox"
-                  promptText="Chọn vai trò"
-                  layoutX="200" layoutY="230"
-                  prefWidth="150"/>
-
-        <Button text="Login"
-                layoutX="200" layoutY="270"
-                onAction="#handleLogin"/>
-
-        <Button text="Register"
-                layoutX="280" layoutY="270"
-                onAction="#handleRegister"/>
-
-        <Label fx:id="errorLabel"
-               textFill="#060980"
-               layoutX="200"
-               layoutY="310"/>
-
-    </children>
-</AnchorPane>
+</HBox>

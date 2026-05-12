@@ -1,6 +1,7 @@
 package com.auction.client.network;
 
 import com.auction.common.message.*;
+import com.auction.common.message.AuthUserData;
 import java.io.*;
 import java.net.Socket;
 
@@ -9,6 +10,7 @@ public class NetworkClient {
     private Socket socket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
+    private AuthUserData currentUser;
 
     // Cấu hình theo AuctionServerApp
     private final String HOST = "localhost";
@@ -64,6 +66,14 @@ public class NetworkClient {
         LoginRequest payload = new LoginRequest(username, password);
         ClientRequest request = new ClientRequest(Action.LOGIN, payload);
         return sendRequest(request);
+    }
+
+    public void setCurrentUser(AuthUserData user) {
+        this.currentUser = user;
+    }
+
+    public AuthUserData getCurrentUser() {
+        return currentUser;
     }
 
 }

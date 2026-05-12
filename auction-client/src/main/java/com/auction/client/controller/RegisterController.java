@@ -20,7 +20,8 @@ public class RegisterController {
 
     @FXML
     public void initialize() {
-        roleBox.setItems(FXCollections.observableArrayList(UserRole.values()));
+        // Chỉ cho chọn BIDDER hoặc SELLER (không cho chọn ADMIN)
+        roleBox.setItems(FXCollections.observableArrayList(UserRole.BIDDER, UserRole.SELLER));
     }
 
     @FXML
@@ -32,6 +33,7 @@ public class RegisterController {
 
         if (user.isEmpty() || pass.isEmpty() || email.isEmpty() || role == null) {
             messageLabel.setText("Nhập đủ thông tin!");
+            messageLabel.setStyle("-fx-text-fill: #e74c3c;");
             return;
         }
 
@@ -43,18 +45,35 @@ public class RegisterController {
             ClientRequest request = new ClientRequest(Action.REGISTER, req);
             ClientResponse res = client.sendRequest(request);
 
-            messageLabel.setText(res.getMessage());
+            if (res.isSuccess()) {
+                messageLabel.setText("Đăng ký thành công! Đang chuyển về đăng nhập...");
+                messageLabel.setStyle("-fx-text-fill: #2ecc71;");
+
+                // Chuyển về màn Login sau 1.5 giây
+                new Thread(() -> {
+                    try { Thread.sleep(1500); } catch (InterruptedException ignored) {}
+                    javafx.application.Platform.runLater(this::goBack);
+                }).start();
+            } else {
+                messageLabel.setText(res.getMessage());
+                messageLabel.setStyle("-fx-text-fill: #e74c3c;");
+            }
 
         } catch (Exception e) {
             messageLabel.setText("Lỗi kết nối!");
+            messageLabel.setStyle("-fx-text-fill: #e74c3c;");
         }
     }
+
     @FXML
     public void goBack() {
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/view/login.fxml"));
             Stage stage = (Stage) usernameField.getScene().getWindow();
-            stage.setScene(new Scene(root));
+            Scene scene = new Scene(root);
+            String css = getClass().getResource("/css/style.css").toExternalForm();
+            scene.getStylesheets().add(css);
+            stage.setScene(scene);
         } catch (Exception e) {
             e.printStackTrace();
         }

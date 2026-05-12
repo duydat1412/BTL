@@ -1,41 +1,127 @@
-/* Nền tối cho toàn bộ ứng dụng */
-.root {
-    -fx-background-color: #1e1e1e;
-    -fx-font-family: "Segoe UI Semibold";
+/* ==============================
+   BIDVAULT MODERN THEME
+   ============================== */
+
+.main-bg {
+    -fx-background-color: #f8fafc;
+    -fx-font-family: "Segoe UI", "Inter", sans-serif;
 }
 
-/* Biến ListView thành danh sách chuyên nghiệp */
-.list-view {
-    -fx-background-color: transparent;
-    -fx-border-color: #333333;
-    -fx-border-width: 1;
+.gradient-primary {
+    -fx-background-color: linear-gradient(to bottom right, #1e293b, #334155);
 }
 
-.list-cell {
-    -fx-background-color: #252526;
-    -fx-text-fill: #cccccc;
-    -fx-padding: 15;
-    -fx-margin: 5;
-    -fx-background-radius: 5;
+.bg-white {
+    -fx-background-color: #ffffff;
 }
 
-.list-cell:hover {
-    -fx-background-color: #2a2d2e;
+.text-white { -fx-text-fill: white; }
+.text-gold { -fx-text-fill: #f59e0b; }
+.text-muted { -fx-text-fill: #64748b; }
+.text-foreground { -fx-text-fill: #0f172a; }
+.text-danger { -fx-text-fill: #ef4444; }
+
+.font-bold { -fx-font-weight: bold; }
+.text-3xl { -fx-font-size: 32px; }
+.text-2xl { -fx-font-size: 24px; }
+.text-xl { -fx-font-size: 20px; }
+.text-lg { -fx-font-size: 18px; }
+.text-sm { -fx-font-size: 14px; }
+.text-xs { -fx-font-size: 12px; }
+
+.auth-card {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0, 0, 4);
+    -fx-padding: 30;
 }
 
-.list-cell:selected {
-    -fx-background-color: #007acc;
-    -fx-text-fill: white;
+.input-field {
+    -fx-background-color: white;
+    -fx-border-color: #cbd5e1;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 10 12;
+    -fx-font-size: 14px;
+    -fx-text-fill: #0f172a;
+}
+.input-field:focused {
+    -fx-border-color: #f59e0b;
+    -fx-border-width: 2;
 }
 
-/* Nút bấm hiện đại */
-.button {
-    -fx-background-color: #007acc;
+.btn-gold {
+    -fx-background-color: #f59e0b;
     -fx-text-fill: white;
     -fx-font-weight: bold;
-    -fx-background-radius: 4;
+    -fx-font-size: 14px;
+    -fx-padding: 10 20;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+.btn-gold:hover { -fx-background-color: #d97706; }
+
+.btn-outline {
+    -fx-background-color: transparent;
+    -fx-text-fill: #0f172a;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-padding: 10 20;
+    -fx-border-color: #cbd5e1;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-cursor: hand;
+}
+.btn-outline:hover { 
+    -fx-background-color: #f1f5f9; 
 }
 
-.button:hover {
-    -fx-background-color: #1f8ad2;
+/* Card */
+.card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 2);
+    -fx-padding: 20;
+}
+
+/* TableView / ListView */
+.list-view {
+    -fx-background-color: white;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+.list-view .list-cell {
+    -fx-background-color: white;
+    -fx-text-fill: #0f172a;
+    -fx-padding: 10;
+    -fx-border-color: transparent transparent #f1f5f9 transparent;
+}
+.list-view .list-cell:hover {
+    -fx-background-color: #f8fafc;
+}
+.list-view .list-cell:selected {
+    -fx-background-color: #fef3c7;
+    -fx-text-fill: #d97706;
+}
+
+/* ComboBox */
+.combo-box {
+    -fx-background-color: white;
+    -fx-border-color: #cbd5e1;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+.combo-box .list-cell {
+    -fx-text-fill: #0f172a;
+    -fx-background-color: white;
+}
+.combo-box-popup .list-view {
+    -fx-background-color: white;
+    -fx-border-color: #e2e8f0;
+}
+.combo-box-popup .list-view .list-cell:hover {
+    -fx-background-color: #f1f5f9;
 }

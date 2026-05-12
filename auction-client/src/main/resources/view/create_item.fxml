@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.controller.CreateItemController"
+      prefHeight="750.0" prefWidth="1000.0"
+      styleClass="main-bg">
+
+    <!-- Navbar -->
+    <HBox alignment="CENTER_LEFT" spacing="20" styleClass="bg-white" style="-fx-padding: 15 30; -fx-border-color: #e2e8f0; -fx-border-width: 0 0 1 0;">
+        <Button text="← Quay lại" onAction="#goBack" styleClass="btn-outline"/>
+        <Label text="Tạo Phiên Đấu Giá Mới" styleClass="text-lg, font-bold, text-foreground"/>
+    </HBox>
+
+    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
+        <HBox alignment="TOP_CENTER" style="-fx-padding: 30;">
+            <VBox spacing="20" styleClass="card" maxWidth="600" HBox.hgrow="ALWAYS">
+                <Label text="Thông tin phiên đấu" styleClass="text-2xl, font-bold, text-foreground"/>
+                
+                <VBox spacing="5">
+                    <Label text="Tên sản phẩm" styleClass="text-sm, font-bold, text-foreground"/>
+                    <TextField fx:id="nameField" promptText="VD: Rolex Submariner" styleClass="input-field"/>
+                </VBox>
+                
+                <HBox spacing="15">
+                    <VBox spacing="5" HBox.hgrow="ALWAYS">
+                        <Label text="Giá khởi điểm ($)" styleClass="text-sm, font-bold, text-foreground"/>
+                        <TextField fx:id="priceField" promptText="VD: 5000" styleClass="input-field"/>
+                    </VBox>
+                    <VBox spacing="5" HBox.hgrow="ALWAYS">
+                        <Label text="Danh mục" styleClass="text-sm, font-bold, text-foreground"/>
+                        <ComboBox fx:id="typeBox" promptText="Chọn loại" styleClass="combo-box" maxWidth="Infinity"/>
+                    </VBox>
+                </HBox>
+
+                <VBox spacing="5">
+                    <Label text="Mô tả chi tiết" styleClass="text-sm, font-bold, text-foreground"/>
+                    <TextArea fx:id="descArea" promptText="Mô tả chi tiết tình trạng sản phẩm..." styleClass="input-field" prefRowCount="4"/>
+                </VBox>
+                
+                <VBox spacing="5">
+                    <Label text="Thời gian diễn ra (Phút)" styleClass="text-sm, font-bold, text-foreground"/>
+                    <TextField fx:id="durationField" promptText="VD: 60" styleClass="input-field"/>
+                </VBox>
+                
+                <VBox spacing="5">
+                    <Label text="Ảnh sản phẩm" styleClass="text-sm, font-bold, text-foreground"/>
+                    <HBox spacing="10">
+                        <TextField fx:id="imagePathField" editable="false" promptText="Chưa chọn ảnh..." styleClass="input-field" HBox.hgrow="ALWAYS"/>
+                        <Button text="Chọn ảnh" onAction="#handleChooseImage" styleClass="btn-outline"/>
+                    </HBox>
+                </VBox>
+                
+                <Button text="Tạo Phiên Đấu Giá" onAction="#handleCreateItem" styleClass="btn-gold" maxWidth="Infinity">
+                    <VBox.margin><Insets top="15"/></VBox.margin>
+                </Button>
+                
+                <Label fx:id="statusLabel" styleClass="text-sm, text-danger" wrapText="true"/>
+            </VBox>
+        </HBox>
+    </ScrollPane>
+
+</VBox>

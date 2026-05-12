@@ -1,14 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.auction.client.controller.SellerDashboardController"
-            prefHeight="400.0" prefWidth="600.0">
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.controller.SellerDashboardController"
+      prefHeight="750.0" prefWidth="1000.0"
+      styleClass="main-bg">
 
-</AnchorPane>
+    <!-- Navbar -->
+    <HBox alignment="CENTER_LEFT" spacing="20" styleClass="bg-white" style="-fx-padding: 15 30; -fx-border-color: #e2e8f0; -fx-border-width: 0 0 1 0;">
+        <Label text="BidVault - Kênh Người Bán" styleClass="text-2xl, font-bold, text-foreground"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="userInfoLabel" styleClass="text-sm, text-muted, font-bold"/>
+        <Button text="Đăng xuất" onAction="#handleLogout" styleClass="btn-outline"/>
+    </HBox>
+
+    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
+        <VBox spacing="25" alignment="TOP_CENTER" style="-fx-padding: 30;">
+            
+            <VBox spacing="15" styleClass="card" VBox.vgrow="ALWAYS" maxWidth="800">
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Sản phẩm của tôi" styleClass="text-xl, font-bold, text-foreground"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="statusLabel" styleClass="text-sm, text-danger" wrapText="true"/>
+                    <Button text="Tải lại" onAction="#handleRefresh" styleClass="btn-outline"/>
+                    <Button text="+ Tạo phiên đấu giá" onAction="#navigateToCreate" styleClass="btn-gold"/>
+                </HBox>
+                
+                <ListView fx:id="itemListView" styleClass="list-view" VBox.vgrow="ALWAYS" prefHeight="500"/>
+            </VBox>
+            
+        </VBox>
+    </ScrollPane>
+
+</VBox>

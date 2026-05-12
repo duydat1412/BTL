@@ -40,7 +40,7 @@ import java.util.List;
  * và trả về Object qua Output Stream.
  */
 public class ClientHandler implements Runnable {
-    
+
     private final Socket clientSocket;
 
     // Khởi tạo các services và event manager dùng chung cho các handlers
@@ -49,8 +49,7 @@ public class ClientHandler implements Runnable {
     private static final BidService bidService = new BidService(
             new SerializableAuctionRepository(),
             new SerializableBidRepository(),
-            eventManager
-    );
+            eventManager);
 
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
@@ -59,10 +58,9 @@ public class ClientHandler implements Runnable {
     @Override
     public void run() {
         try (
-            // Quan trọng: output stream phải được tạo trước để ghi header gửi qua client
-            ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
-            ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream())
-        ) {
+                // Quan trọng: output stream phải được tạo trước để ghi header gửi qua client
+                ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
+                ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream())) {
             System.out.println("Đã sẵn sàng giao tiếp với client: " + clientSocket.getInetAddress());
 
             while (true) {
@@ -159,7 +157,8 @@ public class ClientHandler implements Runnable {
         if (!(payload instanceof DeleteItemRequest req)) {
             return failure("DELETE_ITEM payload must be DeleteItemRequest");
         }
-        // Truyền getSellerId cho cả 2 tham số vì ClientRequest không có session/senderId hiện tại
+        // Truyền getSellerId cho cả 2 tham số vì ClientRequest không có
+        // session/senderId hiện tại
         return itemService.D(req, req.getSellerId());
     }
 
@@ -172,7 +171,8 @@ public class ClientHandler implements Runnable {
         }
         BidStrategy strategy = new ManualBidStrategy();
         try {
-            BidTransaction result = bidService.placeBid(req.getAuctionId(), req.getBidderId(), req.getAmount(), strategy);
+            BidTransaction result = bidService.placeBid(req.getAuctionId(), req.getBidderId(), req.getAmount(),
+                    strategy);
             return new ClientResponse(true, "Đặt giá thành công", result);
         } catch (AuctionClosedException | InvalidBidException e) {
             return failure(e.getMessage());
