@@ -14,7 +14,11 @@
     <!-- Trái: Phần giới thiệu -->
     <VBox HBox.hgrow="ALWAYS" style="-fx-background-color: #87ceeb;" alignment="CENTER">
         <padding><Insets top="40" bottom="40" left="40" right="40"/></padding>
+        <Label text="DHDH" styleClass="text-white, text-lg, font-bold" maxWidth="Infinity" alignment="CENTER_LEFT"/>
+        <Region VBox.vgrow="ALWAYS"/>
         <Label text="Tạo tài khoản mới&#10;Tham gia ngay!" styleClass="text-white, text-3xl, font-bold" wrapText="true" textAlignment="CENTER"/>
+        <Region VBox.vgrow="ALWAYS"/>
+        <Label text="© DHDH 2025" styleClass="text-white, text-xs" maxWidth="Infinity" alignment="CENTER_LEFT"/>
     </VBox>
 
     <!-- Phải: Form đăng ký -->

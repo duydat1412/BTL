@@ -11,7 +11,7 @@
 
     <!-- Navbar -->
     <HBox alignment="CENTER_LEFT" spacing="20" styleClass="bg-white" style="-fx-padding: 15 30; -fx-border-color: #e2e8f0; -fx-border-width: 0 0 1 0;">
-        <Label text="BidVault" styleClass="text-2xl, font-bold, text-foreground"/>
+        <Label text="DHDH - Danh sách đấu giá" styleClass="text-2xl, font-bold, text-foreground"/>
         <Region HBox.hgrow="ALWAYS"/>
         <Label fx:id="userInfoLabel" styleClass="text-sm, text-muted, font-bold"/>
         <Button text="Đăng xuất" onAction="#handleLogout" styleClass="btn-outline"/>
