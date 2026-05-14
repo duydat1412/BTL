@@ -8,15 +8,22 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Lên lịch tự động kết thúc phiên đấu giá sau khoảng thời gian đã định.
+ * Sử dụng ScheduledExecutorService để chạy task trên thread pool riêng.
+ */
 public class AuctionScheduler {
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
     private static final SerializableAuctionRepository auctionRepo = new SerializableAuctionRepository();
 
+    /**
+     * Lên lịch kết thúc phiên đấu giá sau durationMinutes phút.
+     */
     public static void scheduleAuctionEnd(String auctionId, long durationMinutes) {
         scheduler.schedule(() -> {
             try {
                 Auction auction = auctionRepo.findById(auctionId);
-                if (auction != null && auction.getStatus() == AuctionStatus.OPEN) {
+                if (auction != null && auction.getStatus() == AuctionStatus.RUNNING) {
                     auction.setStatus(AuctionStatus.FINISHED);
                     auctionRepo.update(auction);
                     System.out.println("[Scheduler] Phiên đấu giá " + auctionId + " đã tự động kết thúc!");
