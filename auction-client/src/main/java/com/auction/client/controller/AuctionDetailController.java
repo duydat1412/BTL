@@ -98,7 +98,7 @@ public class AuctionDetailController {
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/view/auction_list.fxml"));
             Stage stage = (Stage) nameLabel.getScene().getWindow();
-            stage.setScene(new Scene(root));
+            stage.getScene().setRoot(root);
         } catch (Exception e) {
             e.printStackTrace();
         }

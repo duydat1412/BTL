@@ -72,8 +72,8 @@
     -fx-border-radius: 6;
     -fx-cursor: hand;
 }
-.btn-outline:hover { 
-    -fx-background-color: #f1f5f9; 
+.btn-outline:hover {
+    -fx-background-color: #f1f5f9;
 }
 
 /* Card */

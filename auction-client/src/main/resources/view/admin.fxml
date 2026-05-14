@@ -11,17 +11,17 @@
 
     <!-- Navbar -->
     <HBox alignment="CENTER_LEFT" spacing="20" styleClass="bg-white" style="-fx-padding: 15 30; -fx-border-color: #e2e8f0; -fx-border-width: 0 0 1 0;">
-        <Label text="BidVault - Quản Trị Hệ Thống" styleClass="text-2xl, font-bold, text-foreground"/>
+        <Label text="DHDH - Quản Trị Hệ Thống" styleClass="text-2xl, font-bold, text-foreground"/>
         <Region HBox.hgrow="ALWAYS"/>
         <Button text="Đăng xuất" styleClass="btn-outline"/>
     </HBox>
 
     <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
         <VBox spacing="25" alignment="TOP_CENTER" style="-fx-padding: 30;">
-            
+
             <VBox spacing="20" styleClass="card" maxWidth="800">
                 <Label text="Thống kê tổng quan" styleClass="text-xl, font-bold, text-foreground"/>
-                
+
                 <HBox spacing="20">
                     <VBox spacing="5" style="-fx-background-color: #f1f5f9; -fx-padding: 20; -fx-background-radius: 8;" HBox.hgrow="ALWAYS">
                         <Label text="Người dùng" styleClass="text-sm, text-muted"/>

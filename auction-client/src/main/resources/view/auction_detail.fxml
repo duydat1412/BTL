@@ -17,35 +17,30 @@
 
     <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
         <HBox alignment="TOP_CENTER" style="-fx-padding: 30;">
-            
+
             <VBox spacing="20" styleClass="card" maxWidth="600" HBox.hgrow="ALWAYS">
                 <HBox spacing="20">
                     <!-- Fake Image Area -->
                     <StackPane style="-fx-background-color: #e2e8f0; -fx-background-radius: 8;" prefWidth="250" prefHeight="250">
                         <Label text="Ảnh sản phẩm" styleClass="text-muted"/>
                     </StackPane>
-                    
+
                     <!-- Detail Info -->
                     <VBox spacing="15" HBox.hgrow="ALWAYS">
                         <Label fx:id="nameLabel" text="Tên sản phẩm" styleClass="text-2xl, font-bold, text-foreground" wrapText="true"/>
-                        
+
                         <VBox spacing="5">
                             <Label text="Giá hiện tại" styleClass="text-sm, text-muted"/>
                             <Label fx:id="priceLabel" text="$0" styleClass="text-3xl, font-bold, text-gold"/>
                         </VBox>
-                        
-                        <VBox spacing="5">
-                            <Label text="Mô tả" styleClass="text-sm, text-muted"/>
-                            <Label fx:id="descLabel" text="Không có mô tả" wrapText="true" styleClass="text-sm, text-foreground"/>
-                        </VBox>
-                        
+
                         <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-background-color: #fef3c7; -fx-padding: 10; -fx-background-radius: 6;">
                             <Label text="⏱" styleClass="text-lg"/>
                             <Label fx:id="timeLabel" text="Thời gian còn lại: 00:00" styleClass="text-sm, font-bold, text-foreground"/>
                         </HBox>
-                        
+
                         <Separator/>
-                        
+
                         <VBox spacing="10">
                             <Label text="Đặt giá mới" styleClass="text-sm, font-bold, text-foreground"/>
                             <HBox spacing="10">
@@ -56,7 +51,7 @@
                     </VBox>
                 </HBox>
             </VBox>
-            
+
         </HBox>
     </ScrollPane>
 

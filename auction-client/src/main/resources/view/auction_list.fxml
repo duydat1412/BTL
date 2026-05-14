@@ -11,7 +11,7 @@
 
     <!-- Navbar -->
     <HBox alignment="CENTER_LEFT" spacing="20" styleClass="bg-white" style="-fx-padding: 15 30; -fx-border-color: #e2e8f0; -fx-border-width: 0 0 1 0;">
-        <Label text="BidVault" styleClass="text-2xl, font-bold, text-foreground"/>
+        <Label text="DHDH - Danh sách đấu giá" styleClass="text-2xl, font-bold, text-foreground"/>
         <Region HBox.hgrow="ALWAYS"/>
         <Label fx:id="userInfoLabel" styleClass="text-sm, text-muted, font-bold"/>
         <Button text="Đăng xuất" onAction="#handleLogout" styleClass="btn-outline"/>
@@ -19,7 +19,7 @@
 
     <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
         <VBox spacing="25" alignment="TOP_CENTER" style="-fx-padding: 30;">
-            
+
             <!-- Hero / Title -->
             <VBox alignment="CENTER" spacing="10" styleClass="card" style="-fx-background-color: linear-gradient(to bottom right, #1e293b, #334155); -fx-padding: 40;">
                 <Label text="Đấu giá trực tuyến chuyên nghiệp." styleClass="text-white, text-3xl, font-bold"/>
@@ -36,7 +36,7 @@
                     <Region HBox.hgrow="ALWAYS"/>
                     <Label fx:id="statusLabel" styleClass="text-sm, text-danger"/>
                 </HBox>
-                
+
                 <ListView fx:id="listView" styleClass="list-view" VBox.vgrow="ALWAYS" prefHeight="400"/>
             </VBox>
 

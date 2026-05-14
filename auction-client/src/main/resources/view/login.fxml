@@ -10,41 +10,38 @@
       styleClass="main-bg">
 
     <!-- Trái: Phần giới thiệu -->
-    <VBox HBox.hgrow="ALWAYS" styleClass="gradient-primary" alignment="CENTER_LEFT">
+    <VBox HBox.hgrow="ALWAYS" style="-fx-background-color: #87ceeb;" alignment="CENTER">
         <padding><Insets top="40" bottom="40" left="40" right="40"/></padding>
-        <Label text="BidVault" styleClass="text-white, text-lg, font-bold"/>
+        <Label text="DHDH" styleClass="text-white, text-lg, font-bold" maxWidth="Infinity" alignment="CENTER_LEFT"/>
         <Region VBox.vgrow="ALWAYS"/>
-        <Label text="Nền tảng đấu giá&#10;minh bạch &amp; tốc độ." styleClass="text-white, text-3xl, font-bold" wrapText="true"/>
-        <Label text="Tham gia cùng hàng ngàn nhà sưu tập và người bán trên BidVault — nơi mỗi lượt bid đều được bảo chứng." styleClass="text-muted, text-sm" wrapText="true" maxWidth="350">
-            <VBox.margin><Insets top="10"/></VBox.margin>
-        </Label>
+        <Label text="Nền Tảng Đấu Giá&#10;Minh Bạch &amp; Tự Động" styleClass="text-white, text-3xl, font-bold" wrapText="true" textAlignment="CENTER"/>
         <Region VBox.vgrow="ALWAYS"/>
-        <Label text="© BidVault 2025" styleClass="text-muted, text-xs"/>
+        <Label text="© DHDH 2025" styleClass="text-white, text-xs" maxWidth="Infinity" alignment="CENTER_LEFT"/>
     </VBox>
 
     <!-- Phải: Form đăng nhập -->
     <StackPane prefWidth="450" styleClass="bg-white">
         <VBox alignment="CENTER_LEFT" spacing="20" maxWidth="350">
-            
+
             <VBox spacing="5">
                 <Label text="Chào mừng trở lại" styleClass="text-2xl, font-bold, text-foreground"/>
                 <Label text="Dùng tài khoản đã đăng ký hoặc đăng ký mới" styleClass="text-sm, text-muted"/>
             </VBox>
-            
+
             <VBox spacing="5">
                 <Label text="Tên đăng nhập" styleClass="text-sm, font-bold, text-foreground"/>
                 <TextField fx:id="usernameField" promptText="Nhập tên đăng nhập" styleClass="input-field"/>
             </VBox>
-            
+
             <VBox spacing="5">
                 <Label text="Mật khẩu" styleClass="text-sm, font-bold, text-foreground"/>
                 <PasswordField fx:id="passwordField" promptText="••••••••" styleClass="input-field"/>
             </VBox>
 
             <Button text="Đăng nhập" onAction="#handleLogin" styleClass="btn-gold" maxWidth="Infinity"/>
-            
+
             <Button text="Tạo tài khoản mới" onAction="#handleRegister" styleClass="btn-outline" maxWidth="Infinity"/>
-            
+
             <Label fx:id="errorLabel" styleClass="text-danger, text-sm" wrapText="true" alignment="CENTER" maxWidth="Infinity"/>
         </VBox>
     </StackPane>
