@@ -18,13 +18,20 @@ import java.util.Map;
 
 public class CreateItemController {
 
-    @FXML private TextField nameField;
-    @FXML private TextField priceField;
-    @FXML private ComboBox<ItemType> typeBox;
-    @FXML private TextArea descArea;
-    @FXML private TextField durationField;
-    @FXML private TextField imagePathField;
-    @FXML private Label statusLabel;
+    @FXML
+    private TextField nameField;
+    @FXML
+    private TextField priceField;
+    @FXML
+    private ComboBox<ItemType> typeBox;
+    @FXML
+    private TextArea descArea;
+    @FXML
+    private TextField durationField;
+    @FXML
+    private TextField imagePathField;
+    @FXML
+    private Label statusLabel;
 
     @FXML
     public void initialize() {
@@ -36,8 +43,7 @@ public class CreateItemController {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Chọn ảnh sản phẩm");
         fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.gif")
-        );
+                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.gif"));
         File selectedFile = fileChooser.showOpenDialog(nameField.getScene().getWindow());
         if (selectedFile != null) {
             imagePathField.setText(selectedFile.getAbsolutePath());
@@ -75,18 +81,21 @@ public class CreateItemController {
                 extraAttrs.put("imagePath", imagePath);
             }
 
-            CreateItemRequest req = new CreateItemRequest(name, desc, price, user.getId(), type, extraAttrs);
+            CreateItemRequest req = new CreateItemRequest(name, desc, price, user.getUserId(), type, extraAttrs);
             ClientRequest request = new ClientRequest(Action.CREATE_ITEM, req);
-            
+
             ClientResponse res = NetworkClient.getInstance().sendRequest(request);
 
             if (res.isSuccess()) {
                 statusLabel.setText("Tạo sản phẩm & lên lịch đấu giá thành công!");
                 statusLabel.setStyle("-fx-text-fill: #2ecc71;");
-                
+
                 // Chuyển về Dashboard sau 1 giây
                 new Thread(() -> {
-                    try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ignored) {
+                    }
                     javafx.application.Platform.runLater(this::goBack);
                 }).start();
             } else {

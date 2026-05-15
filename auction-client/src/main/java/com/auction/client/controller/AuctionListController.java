@@ -39,7 +39,7 @@ public class AuctionListController {
                 openDetail(newVal);
             }
         });
-        
+
         if (userInfoLabel != null) {
             userInfoLabel.setText("Xin chào, User");
         }
@@ -69,7 +69,7 @@ public class AuctionListController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/auction_detail.fxml"));
             Parent root = loader.load();
             AuctionDetailController controller = loader.getController();
-            controller.setData(selected);
+            controller.setData(selected, null);
             Stage stage = (Stage) listView.getScene().getWindow();
             stage.getScene().setRoot(root);
         } catch (Exception e) {
