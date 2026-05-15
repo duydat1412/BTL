@@ -6,6 +6,9 @@ package com.auction.common.message;
 public enum Action {
     REGISTER,
     LOGIN,
+    GET_USERS,
+    BAN_USER,
+    CANCEL_AUCTION,
     GET_AUCTIONS,
     GET_AUCTION,
     CREATE_AUCTION,
