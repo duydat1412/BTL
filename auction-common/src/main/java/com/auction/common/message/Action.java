@@ -17,6 +17,9 @@ public enum Action {
     GET_ITEMS,
     CREATE_ITEM,
     UPDATE_ITEM,
-    DELETE_ITEM
+    DELETE_ITEM,
+    GET_USERS,
+    BAN_USER,
+    CANCEL_AUCTION
 }
 
