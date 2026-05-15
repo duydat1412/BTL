@@ -4,6 +4,8 @@ import com.auction.common.message.Action;
 import com.auction.common.message.ClientRequest;
 import com.auction.common.message.ClientResponse;
 import com.auction.common.message.CreateItemRequest;
+import com.auction.common.message.BanUserRequest;
+import com.auction.common.message.CancelAuctionRequest;
 import com.auction.common.message.GetItemsRequest;
 import com.auction.common.message.UpdateItemRequest;
 import com.auction.common.message.DeleteItemRequest;
@@ -113,6 +115,9 @@ public class ClientHandler implements Runnable {
         return switch (action) {
             case REGISTER -> handleRegister(payload);
             case LOGIN -> handleLogin(payload);
+            case GET_USERS -> handleGetUsers(payload);
+            case BAN_USER -> handleBanUser(payload);
+            case CANCEL_AUCTION -> handleCancelAuction(payload);
             case GET_AUCTIONS -> handleGetAuctions(payload);
             case GET_AUCTION -> handleGetAuction(payload);
             case CREATE_AUCTION -> handleCreateAuction(payload);
@@ -123,6 +128,24 @@ public class ClientHandler implements Runnable {
             case UPDATE_ITEM -> handleUpdateItem(payload);
             case DELETE_ITEM -> handleDeleteItem(payload);
         };
+    }
+
+    private ClientResponse handleGetUsers(Serializable payload) {
+        return failure("GET_USERS pending: admin service integration");
+    }
+
+    private ClientResponse handleBanUser(Serializable payload) {
+        if (!(payload instanceof BanUserRequest)) {
+            return failure("BAN_USER payload must be BanUserRequest");
+        }
+        return failure("BAN_USER pending: admin service integration");
+    }
+
+    private ClientResponse handleCancelAuction(Serializable payload) {
+        if (!(payload instanceof CancelAuctionRequest)) {
+            return failure("CANCEL_AUCTION payload must be CancelAuctionRequest");
+        }
+        return failure("CANCEL_AUCTION pending: admin service integration");
     }
 
     private ClientResponse handleRegister(Serializable payload) {
