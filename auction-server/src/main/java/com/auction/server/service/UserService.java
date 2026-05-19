@@ -69,22 +69,17 @@ public class UserService{
     }
 
     public static ClientResponse getAllUsers(GetAllUsersRequest gaur) throws AuthenticationException{
+        requireAdminById(gaur.getAdminId());
         try{
-            User admin = requireAdminById(gaur.getAdminId());
-            if (admin == null) {
-                throw new AuthenticationException("Admin not found.");
-            }
             return new ClientResponse(true, "Successfully retrieved all users.", (Serializable) sur.findAll());
-        } catch (AuthenticationException e) {
-            throw e;
         } catch (Exception e){
             return new ClientResponse(false, e.getMessage(), null);
         }
     }
 
     public static ClientResponse banUser(BanUserRequest bur) throws AuthenticationException{
+        requireAdminById(bur.getAdminId());
         try{
-            requireAdminById(bur.getAdminId());
             User target = sur.findById(bur.getTargetUserId());
             if (target == null) {
                 return new ClientResponse(false, "Target user not found.", null);
@@ -99,16 +94,14 @@ public class UserService{
             target.setBanReason(bur.getReason());
             sur.update(target);
             return new ClientResponse(true, "Successfully banned user.", null);
-        } catch (AuthenticationException e) {
-            throw e;
         } catch (Exception e){
             return new ClientResponse(false, e.getMessage(), null);
         }
     }
 
     public static ClientResponse unbanUser(UnbanUserRequest ubur) throws AuthenticationException{
+        requireAdminById(ubur.getAdminId());
         try{
-            requireAdminById(ubur.getAdminId());
             User target = sur.findById(ubur.getTargetUserId());
             if (target == null) {
                 return new ClientResponse(false, "Target user not found.", null);
@@ -117,11 +110,9 @@ public class UserService{
                 return new ClientResponse(false, "Target user is not banned.", null);
             }
             target.setBanned(false);
-            target.setBanReason(null);
+            target.setBanReason(ubur.getReason());
             sur.update(target);
             return new ClientResponse(true, "Unbanned target user.", null);
-        } catch (AuthenticationException e) {
-            throw e;
         } catch (Exception e){
             return new ClientResponse(false, e.getMessage(), null);
         }
