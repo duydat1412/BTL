@@ -92,7 +92,8 @@ public class ItemService {
             auctionRepo.save(auction);
             
             // Lên lịch tự động kết thúc
-            AuctionScheduler.scheduleAuctionEnd(auction.getId(), durationMins);
+            AuctionScheduler.scheduleAuctionStart(auction.getId(), auction.getStartTime());
+            AuctionScheduler.scheduleAuctionEndAt(auction.getId(), auction.getEndTime());
 
             return new ClientResponse(true, "Tạo sản phẩm và phiên đấu giá thành công", item);
 

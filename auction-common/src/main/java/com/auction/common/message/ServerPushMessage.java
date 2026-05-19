@@ -42,6 +42,7 @@ public class ServerPushMessage implements Serializable {
      */
     public enum PushType {
         NEW_BID,
+        PRICE_UPDATE,
         AUCTION_ENDED,
         AUCTION_STARTED
     }

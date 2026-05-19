@@ -20,7 +20,7 @@ public class RegisterController {
 
     @FXML
     public void initialize() {
-        roleBox.setItems(FXCollections.observableArrayList(UserRole.values()));
+        roleBox.setItems(FXCollections.observableArrayList(UserRole.BIDDER, UserRole.SELLER));
     }
 
     @FXML
