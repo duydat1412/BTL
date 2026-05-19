@@ -1,5 +1,6 @@
 package com.auction.server.service;
 
+import java.io.Serializable;
 import java.util.regex.*;
 
 import com.auction.common.entity.User;
@@ -7,10 +8,7 @@ import com.auction.common.entity.Admin;
 import com.auction.common.entity.Bidder;
 import com.auction.common.entity.Seller;
 import com.auction.common.enums.UserRole;
-import com.auction.common.message.AuthUserData;
-import com.auction.common.message.ClientResponse;
-import com.auction.common.message.LoginRequest;
-import com.auction.common.message.RegisterRequest;
+import com.auction.common.message.*;
 import com.auction.server.exception.AuthenticationException;
 import com.auction.server.repository.SerializableUserRepository;
 import org.mindrot.jbcrypt.BCrypt;
@@ -34,9 +32,9 @@ public class UserService{
             throw new AuthenticationException("parameters cannot be null");
         } else if(sur.findByUsername(username)!=null){
             throw new AuthenticationException("Username is taken.");
-        } else if(m.matches()==false){
+        } else if(!m.matches()){
             throw new AuthenticationException("Invalid email format.");
-        } else if(pm.matches()==false){
+        } else if(!pm.matches()){
             throw new AuthenticationException("Password must be at least 8 character and contain at least 1 upper case, 1 lower case, 1 number and 1 special character.");
         } else{
             String hashedPassword=BCrypt.hashpw(password, BCrypt.gensalt());
@@ -57,7 +55,7 @@ public class UserService{
         }
         return new ClientResponse(true, "Dang ki thanh cong", toAuthUserData(newUser));
     }
-    public static ClientResponse xlogin(LoginRequest loginRequest)throws AuthenticationException{
+    public static ClientResponse login(LoginRequest loginRequest)throws AuthenticationException{
         String username=loginRequest.getUsername();
         String password=loginRequest.getPassword();
         User log=sur.findByUsername(username);
@@ -65,8 +63,59 @@ public class UserService{
             throw new AuthenticationException("Username not found.");
         } else if(BCrypt.checkpw(password, log.getPassword())==false){
             throw new AuthenticationException("Invalid password");
+        } else if(log.isBanned()){
+            return new ClientResponse(false, "You has been banned for: "+log.getBanReason(), null);
         }
         return new ClientResponse(true, "Login successfully", toAuthUserData(log));
+    }
+
+    public static ClientResponse getAllUsers(GetAllUsersRequest gaur) throws AuthenticationException{
+        if (sur.findByUsername(gaur.getAdminId()).getRole()!=UserRole.ADMIN){
+            throw new AuthenticationException("ADMIN PERMISSION REQUIRED.");
+        }
+        try{
+            return new ClientResponse(true, "Successfully retrived all user.",(Serializable) sur.findAll());
+        } catch (Exception e){
+            return new ClientResponse(false, e.getMessage(), null);
+        }
+    }
+
+    public static ClientResponse banUser(BanUserRequest bur) throws AuthenticationException{
+        if(sur.findById(bur.getAdminId()).getRole()!=UserRole.ADMIN){
+            throw new AuthenticationException("ADMIN PERM REQUIRED.");
+        }
+        if(sur.findById(bur.getTargetUserId()).getRole()==UserRole.ADMIN){
+            throw new AuthenticationException("Cannot ban an admin.");
+        }
+        try{
+            User target=sur.findById(bur.getTargetUserId());
+            if (target.isBanned()){
+                return new ClientResponse(false, "Target user was already banned.", null);
+            }
+            target.setBanned(true);
+            target.setBanReason(bur.getReason());
+            return new ClientResponse(true, "Successfully banned user.", null);
+        } catch (Exception e){
+            return new ClientResponse(false, e.getMessage(), null);
+        }
+    }
+
+    public static ClientResponse unbanUser(UnbanUserRequest ubur) throws AuthenticationException{
+        if (sur.findById(ubur.getAdminId()).getRole()!=UserRole.ADMIN){
+            throw new AuthenticationException("ADMIN PERM REQUIRED");
+        }
+        try{
+            User target=sur.findById(ubur.getTargetUserId());
+            if(!target.isBanned()){
+                return new ClientResponse(false, "Target user is not banned.", null);
+            }
+            target.setBanned(false);
+            target.setBanReason(ubur.getReason());
+            return new ClientResponse(true, "Unbanned target user.", null);
+        } catch (Exception e){
+            return new ClientResponse(false, e.getMessage(), null);
+        }
+
     }
 
     private static AuthUserData toAuthUserData(User user) {

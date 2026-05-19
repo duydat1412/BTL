@@ -170,7 +170,7 @@ public class ClientHandler implements Runnable {
         if (!(payload instanceof LoginRequest req)) {
             return failure("LOGIN payload must be LoginRequest");
         }
-        return executeAuthAction(() -> UserService.xlogin(req));
+        return executeAuthAction(() -> UserService.login(req));
     }
 
     private ClientResponse executeAuthAction(AuthAction action) {
