@@ -8,6 +8,7 @@ public enum Action {
     LOGIN,
     GET_USERS,
     BAN_USER,
+    UNBAN_USER,
     CANCEL_AUCTION,
     GET_AUCTIONS,
     GET_AUCTION,
