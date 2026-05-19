@@ -7,6 +7,7 @@ import com.auction.common.message.CreateItemRequest;
 import com.auction.common.message.BanUserRequest;
 import com.auction.common.message.CancelAuctionRequest;
 import com.auction.common.message.GetItemsRequest;
+import com.auction.common.message.GetAllUsersRequest;
 import com.auction.common.message.UpdateItemRequest;
 import com.auction.common.message.DeleteItemRequest;
 import com.auction.common.message.LoginRequest;
@@ -135,21 +136,24 @@ public class ClientHandler implements Runnable {
     }
 
     private ClientResponse handleGetUsers(Serializable payload) {
-        return failure("GET_USERS pending: admin service integration");
+        if (!(payload instanceof GetAllUsersRequest req)) {
+            return failure("GET_USERS payload must be GetAllUsersRequest");
+        }
+        return executeAuthAction(() -> UserService.getAllUsers(req));
     }
 
     private ClientResponse handleBanUser(Serializable payload) {
-        if (!(payload instanceof BanUserRequest)) {
+        if (!(payload instanceof BanUserRequest req)) {
             return failure("BAN_USER payload must be BanUserRequest");
         }
-        return failure("BAN_USER pending: admin service integration");
+        return executeAuthAction(() -> UserService.banUser(req));
     }
 
     private ClientResponse handleUnbanUser(Serializable payload) {
-        if (!(payload instanceof UnbanUserRequest)) {
+        if (!(payload instanceof UnbanUserRequest req)) {
             return failure("UNBAN_USER payload must be UnbanUserRequest");
         }
-        return failure("UNBAN_USER pending: admin service integration");
+        return executeAuthAction(() -> UserService.unbanUser(req));
     }
 
     private ClientResponse handleCancelAuction(Serializable payload) {
