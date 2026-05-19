@@ -1,61 +1,79 @@
 package com.auction.server.datastore;
 
+import com.auction.common.entity.Admin;
 import com.auction.common.entity.Auction;
 import com.auction.common.entity.BidTransaction;
 import com.auction.common.entity.Item;
 import com.auction.common.entity.User;
-
-import java.io.*;
+import com.auction.common.enums.UserRole;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import org.mindrot.jbcrypt.BCrypt;
 
 /**
- * Quản lý dữ liệu hệ thống bằng Singleton Pattern và Java Serialization.
- * Tất cả Data được lưu xuống một file duy nhất: data/auction_data.dat
+ * Stores application data in memory and persists it through Java serialization.
  */
 public class DataStore implements Serializable {
     private static final long serialVersionUID = 1L;
-    
+
     private static final String FILE_PATH = "data/auction_data.dat";
-    
-    // Thuộc tính lưu trữ duy nhất của hệ thống
+    private static final String DEFAULT_ADMIN_USERNAME = "admin";
+    private static final String DEFAULT_ADMIN_PASSWORD = "Admin@123";
+    private static final String DEFAULT_ADMIN_EMAIL = "admin@auction.local";
+
     private static volatile DataStore instance;
 
-    // Các danh sách dữ liệu trong hệ thống
     private List<User> users = new ArrayList<>();
     private List<Item> items = new ArrayList<>();
     private List<Auction> auctions = new ArrayList<>();
     private List<BidTransaction> bidTransactions = new ArrayList<>();
 
-    // Private constructor (chỉ cho phép lấy qua getInstance)
     private DataStore() {
     }
 
     public static DataStore getInstance() {
         if (instance == null) {
             synchronized (DataStore.class) {
-                if (instance==null) {
+                if (instance == null) {
                     instance = new DataStore();
                 }
-            };
+            }
         }
         return instance;
     }
 
-    public List<User> getUsers() { return users; }
-    public List<Item> getItems() { return items; }
-    public List<Auction> getAuctions() { return auctions; }
-    public List<BidTransaction> getBidTransactions() { return bidTransactions; }
+    public List<User> getUsers() {
+        return users;
+    }
 
-    /**
-     * Tải dữ liệu từ file lên RAM
-     */
+    public List<Item> getItems() {
+        return items;
+    }
+
+    public List<Auction> getAuctions() {
+        return auctions;
+    }
+
+    public List<BidTransaction> getBidTransactions() {
+        return bidTransactions;
+    }
+
     public synchronized void loadData() {
         File file = new File(FILE_PATH);
         if (!file.exists()) {
-            System.out.println("File dữ liệu chưa tồn tại, bắt đầu với DataStore rỗng.");
-            // Đảm bảo thư mục tồn tại
-            file.getParentFile().mkdirs();
+            System.out.println("Data file does not exist. Starting with empty store.");
+            File parent = file.getParentFile();
+            if (parent != null) {
+                parent.mkdirs();
+            }
+            ensureDefaultAdminAccount();
             return;
         }
 
@@ -65,21 +83,36 @@ public class DataStore implements Serializable {
             this.items = loadedData.items;
             this.auctions = loadedData.auctions;
             this.bidTransactions = loadedData.bidTransactions;
-            System.out.println("Tải dữ liệu từ " + FILE_PATH + " thành công!");
+            ensureDefaultAdminAccount();
+            System.out.println("Loaded data from " + FILE_PATH);
         } catch (Exception e) {
-            System.err.println("Lỗi khi đọc file dữ liệu: " + e.getMessage());
+            System.err.println("Failed to load data file: " + e.getMessage());
         }
     }
 
-    /**
-     * Lưu dữ liệu từ RAM xuống file
-     */
     public synchronized void saveData() {
         try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(FILE_PATH))) {
             out.writeObject(this);
-            System.out.println("Đã lưu dữ liệu xuống " + FILE_PATH);
+            System.out.println("Saved data to " + FILE_PATH);
         } catch (IOException e) {
-            System.err.println("Lỗi khi ghi file dữ liệu: " + e.getMessage());
+            System.err.println("Failed to write data file: " + e.getMessage());
         }
+    }
+
+    private void ensureDefaultAdminAccount() {
+        boolean hasAdmin = users.stream().anyMatch(user -> user.getRole() == UserRole.ADMIN);
+        if (hasAdmin) {
+            return;
+        }
+
+        Admin admin = new Admin(
+                DEFAULT_ADMIN_USERNAME,
+                BCrypt.hashpw(DEFAULT_ADMIN_PASSWORD, BCrypt.gensalt()),
+                DEFAULT_ADMIN_EMAIL,
+                "System"
+        );
+        users.add(admin);
+        saveData();
+        System.out.println("Created default admin account.");
     }
 }

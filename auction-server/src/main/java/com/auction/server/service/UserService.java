@@ -30,6 +30,8 @@ public class UserService{
         User newUser=null;
         if(userRole==null||username==null||email==null||password==null){
             throw new AuthenticationException("parameters cannot be null");
+        } else if(userRole == UserRole.ADMIN){
+            throw new AuthenticationException("Admin accounts cannot self-register.");
         } else if(sur.findByUsername(username)!=null){
             throw new AuthenticationException("Username is taken.");
         } else if(!m.matches()){
@@ -44,9 +46,6 @@ public class UserService{
                     break;
                 case SELLER:
                     newUser=new Seller(username, hashedPassword, email);
-                    break;
-                case ADMIN:
-                    newUser=new Admin(username, hashedPassword, email, department);
                     break;
                 default:
                     throw new AuthenticationException("Invalid role.");
