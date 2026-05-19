@@ -13,6 +13,7 @@ import com.auction.common.message.LoginRequest;
 import com.auction.common.message.RegisterRequest;
 import com.auction.common.message.PlaceBidRequest;
 import com.auction.common.message.GetBidHistoryRequest;
+import com.auction.common.message.UnbanUserRequest;
 import com.auction.common.entity.BidTransaction;
 import com.auction.common.strategy.BidStrategy;
 import com.auction.common.strategy.ManualBidStrategy;
@@ -29,6 +30,7 @@ import com.auction.server.service.ItemService;
 import com.auction.server.service.UserService;
 import com.auction.server.service.BidService;
 import com.auction.server.service.AuctionService;
+import com.auction.server.service.AuctionScheduler;
 import com.auction.common.message.CreateAuctionRequest;
 import com.auction.common.message.GetAuctionsRequest;
 
@@ -55,6 +57,7 @@ public class ClientHandler implements Runnable {
     static {
         // Đăng ký BroadcastObserver để push real-time khi có bid mới
         eventManager.subscribe(new BroadcastObserver());
+        AuctionScheduler.setEventManager(eventManager);
     }
     private static final BidService bidService = new BidService(
             new SerializableAuctionRepository(),
@@ -117,6 +120,7 @@ public class ClientHandler implements Runnable {
             case LOGIN -> handleLogin(payload);
             case GET_USERS -> handleGetUsers(payload);
             case BAN_USER -> handleBanUser(payload);
+            case UNBAN_USER -> handleUnbanUser(payload);
             case CANCEL_AUCTION -> handleCancelAuction(payload);
             case GET_AUCTIONS -> handleGetAuctions(payload);
             case GET_AUCTION -> handleGetAuction(payload);
@@ -139,6 +143,13 @@ public class ClientHandler implements Runnable {
             return failure("BAN_USER payload must be BanUserRequest");
         }
         return failure("BAN_USER pending: admin service integration");
+    }
+
+    private ClientResponse handleUnbanUser(Serializable payload) {
+        if (!(payload instanceof UnbanUserRequest)) {
+            return failure("UNBAN_USER payload must be UnbanUserRequest");
+        }
+        return failure("UNBAN_USER pending: admin service integration");
     }
 
     private ClientResponse handleCancelAuction(Serializable payload) {
