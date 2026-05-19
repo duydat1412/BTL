@@ -70,7 +70,7 @@ public class UserService{
     }
 
     public static ClientResponse getAllUsers(GetAllUsersRequest gaur) throws AuthenticationException{
-        if (sur.findByUsername(gaur.getAdminId()).getRole()!=UserRole.ADMIN){
+        if (sur.findById(gaur.getAdminId()).getRole()!=UserRole.ADMIN){
             throw new AuthenticationException("ADMIN PERMISSION REQUIRED.");
         }
         try{
@@ -89,11 +89,15 @@ public class UserService{
         }
         try{
             User target=sur.findById(bur.getTargetUserId());
+            if (target==null){
+                return new ClientResponse(false,"Target user cannot be null.", null);
+            }
             if (target.isBanned()){
                 return new ClientResponse(false, "Target user was already banned.", null);
             }
             target.setBanned(true);
             target.setBanReason(bur.getReason());
+            sur.update(target);
             return new ClientResponse(true, "Successfully banned user.", null);
         } catch (Exception e){
             return new ClientResponse(false, e.getMessage(), null);
@@ -106,11 +110,15 @@ public class UserService{
         }
         try{
             User target=sur.findById(ubur.getTargetUserId());
+            if(target==null){
+                return new ClientResponse(false, "Target user cannot be null.", null);
+            }
             if(!target.isBanned()){
                 return new ClientResponse(false, "Target user is not banned.", null);
             }
             target.setBanned(false);
             target.setBanReason(ubur.getReason());
+            sur.update(target);
             return new ClientResponse(true, "Unbanned target user.", null);
         } catch (Exception e){
             return new ClientResponse(false, e.getMessage(), null);
