@@ -94,6 +94,7 @@ public class UserService{
             }
             target.setBanned(true);
             target.setBanReason(bur.getReason());
+            sur.save(target);
             return new ClientResponse(true, "Successfully banned user.", null);
         } catch (Exception e){
             return new ClientResponse(false, e.getMessage(), null);
@@ -111,6 +112,7 @@ public class UserService{
             }
             target.setBanned(false);
             target.setBanReason(ubur.getReason());
+            sur.save(target);
             return new ClientResponse(true, "Unbanned target user.", null);
         } catch (Exception e){
             return new ClientResponse(false, e.getMessage(), null);
