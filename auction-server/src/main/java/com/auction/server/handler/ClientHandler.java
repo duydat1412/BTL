@@ -4,6 +4,8 @@ import com.auction.common.message.Action;
 import com.auction.common.message.ClientRequest;
 import com.auction.common.message.ClientResponse;
 import com.auction.common.message.CreateItemRequest;
+import com.auction.common.message.BanUserRequest;
+import com.auction.common.message.CancelAuctionRequest;
 import com.auction.common.message.GetItemsRequest;
 import com.auction.common.message.UpdateItemRequest;
 import com.auction.common.message.DeleteItemRequest;
@@ -22,9 +24,13 @@ import com.auction.server.exception.InvalidBidException;
 import com.auction.server.repository.SerializableAuctionRepository;
 import com.auction.server.repository.SerializableBidRepository;
 import com.auction.server.observer.AuctionEventManager;
+import com.auction.server.observer.BroadcastObserver;
 import com.auction.server.service.ItemService;
 import com.auction.server.service.UserService;
 import com.auction.server.service.BidService;
+import com.auction.server.service.AuctionService;
+import com.auction.common.message.CreateAuctionRequest;
+import com.auction.common.message.GetAuctionsRequest;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -40,17 +46,20 @@ import java.util.List;
  * và trả về Object qua Output Stream.
  */
 public class ClientHandler implements Runnable {
-    
+
     private final Socket clientSocket;
 
     // Khởi tạo các services và event manager dùng chung cho các handlers
     private static final ItemService itemService = new ItemService();
     private static final AuctionEventManager eventManager = new AuctionEventManager();
+    static {
+        // Đăng ký BroadcastObserver để push real-time khi có bid mới
+        eventManager.subscribe(new BroadcastObserver());
+    }
     private static final BidService bidService = new BidService(
             new SerializableAuctionRepository(),
             new SerializableBidRepository(),
-            eventManager
-    );
+            eventManager);
 
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
@@ -58,26 +67,32 @@ public class ClientHandler implements Runnable {
 
     @Override
     public void run() {
+        String clientId = clientSocket.getInetAddress() + ":" + clientSocket.getPort();
         try (
-            // Quan trọng: output stream phải được tạo trước để ghi header gửi qua client
-            ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
-            ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream())
-        ) {
-            System.out.println("Đã sẵn sàng giao tiếp với client: " + clientSocket.getInetAddress());
+                ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
+                ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream())) {
+
+            // Đăng ký client vào registry để Server có thể push tin nhắn
+            ClientRegistry.getInstance().register(clientId, out);
+            System.out.println("Đã sẵn sàng giao tiếp với client: " + clientId);
 
             while (true) {
                 Object requestObj = in.readObject();
                 ClientResponse response = handleIncomingRequest(requestObj);
-                out.writeObject(response);
-                out.flush();
+                // synchronized vì broadcast() cũng có thể ghi vào out cùng lúc
+                synchronized (out) {
+                    out.writeObject(response);
+                    out.flush();
+                }
             }
 
         } catch (EOFException e) {
-            System.out.println("Client đã ngắt kết nối: " + clientSocket.getInetAddress());
+            System.out.println("Client đã ngắt kết nối: " + clientId);
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Lỗi quá trình giao tiếp Socket với client: " + e.getMessage());
-            // e.printStackTrace();
         } finally {
+            // Hủy đăng ký khi client ngắt
+            ClientRegistry.getInstance().unregister(clientId);
             try {
                 clientSocket.close();
             } catch (IOException e) {
@@ -100,9 +115,12 @@ public class ClientHandler implements Runnable {
         return switch (action) {
             case REGISTER -> handleRegister(payload);
             case LOGIN -> handleLogin(payload);
-            case GET_AUCTIONS -> pending(action, "AuctionService integration");
-            case GET_AUCTION -> pending(action, "AuctionService integration");
-            case CREATE_AUCTION -> pending(action, "AuctionService integration");
+            case GET_USERS -> handleGetUsers(payload);
+            case BAN_USER -> handleBanUser(payload);
+            case CANCEL_AUCTION -> handleCancelAuction(payload);
+            case GET_AUCTIONS -> handleGetAuctions(payload);
+            case GET_AUCTION -> handleGetAuction(payload);
+            case CREATE_AUCTION -> handleCreateAuction(payload);
             case PLACE_BID -> handlePlaceBid(payload);
             case GET_BID_HISTORY -> handleGetBidHistory(payload);
             case GET_ITEMS -> handleGetItems(payload);
@@ -110,6 +128,24 @@ public class ClientHandler implements Runnable {
             case UPDATE_ITEM -> handleUpdateItem(payload);
             case DELETE_ITEM -> handleDeleteItem(payload);
         };
+    }
+
+    private ClientResponse handleGetUsers(Serializable payload) {
+        return failure("GET_USERS pending: admin service integration");
+    }
+
+    private ClientResponse handleBanUser(Serializable payload) {
+        if (!(payload instanceof BanUserRequest)) {
+            return failure("BAN_USER payload must be BanUserRequest");
+        }
+        return failure("BAN_USER pending: admin service integration");
+    }
+
+    private ClientResponse handleCancelAuction(Serializable payload) {
+        if (!(payload instanceof CancelAuctionRequest)) {
+            return failure("CANCEL_AUCTION payload must be CancelAuctionRequest");
+        }
+        return failure("CANCEL_AUCTION pending: admin service integration");
     }
 
     private ClientResponse handleRegister(Serializable payload) {
@@ -123,7 +159,7 @@ public class ClientHandler implements Runnable {
         if (!(payload instanceof LoginRequest req)) {
             return failure("LOGIN payload must be LoginRequest");
         }
-        return executeAuthAction(() -> UserService.xlogin(req));
+        return executeAuthAction(() -> UserService.login(req));
     }
 
     private ClientResponse executeAuthAction(AuthAction action) {
@@ -159,7 +195,8 @@ public class ClientHandler implements Runnable {
         if (!(payload instanceof DeleteItemRequest req)) {
             return failure("DELETE_ITEM payload must be DeleteItemRequest");
         }
-        // Truyền getSellerId cho cả 2 tham số vì ClientRequest không có session/senderId hiện tại
+        // Truyền getSellerId cho cả 2 tham số vì ClientRequest không có
+        // session/senderId hiện tại
         return itemService.D(req, req.getSellerId());
     }
 
@@ -172,7 +209,8 @@ public class ClientHandler implements Runnable {
         }
         BidStrategy strategy = new ManualBidStrategy();
         try {
-            BidTransaction result = bidService.placeBid(req.getAuctionId(), req.getBidderId(), req.getAmount(), strategy);
+            BidTransaction result = bidService.placeBid(req.getAuctionId(), req.getBidderId(), req.getAmount(),
+                    strategy);
             return new ClientResponse(true, "Đặt giá thành công", result);
         } catch (AuctionClosedException | InvalidBidException e) {
             return failure(e.getMessage());
@@ -187,12 +225,28 @@ public class ClientHandler implements Runnable {
         return new ClientResponse(true, "Lấy lịch sử thành công", (Serializable) history);
     }
 
-    private ClientResponse failure(String message) {
-        return new ClientResponse(false, message, null);
+    private ClientResponse handleGetAuctions(Serializable payload) {
+        GetAuctionsRequest req = (payload instanceof GetAuctionsRequest)
+                ? (GetAuctionsRequest) payload : null;
+        return AuctionService.getAuctions(req);
     }
 
-    private ClientResponse pending(Action action, String waitingFor) {
-        return failure(action + " pending: " + waitingFor);
+    private ClientResponse handleGetAuction(Serializable payload) {
+        if (!(payload instanceof String auctionId)) {
+            return failure("GET_AUCTION payload must be auctionId (String)");
+        }
+        return AuctionService.getAuction(auctionId);
+    }
+
+    private ClientResponse handleCreateAuction(Serializable payload) {
+        if (!(payload instanceof CreateAuctionRequest req)) {
+            return failure("CREATE_AUCTION payload must be CreateAuctionRequest");
+        }
+        return AuctionService.createAuction(req);
+    }
+
+    private ClientResponse failure(String message) {
+        return new ClientResponse(false, message, null);
     }
 
     @FunctionalInterface

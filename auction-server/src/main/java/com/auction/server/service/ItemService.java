@@ -68,7 +68,33 @@ public class ItemService {
             }
 
             sir.save(item);
-            return new ClientResponse(true, "Tạo sản phẩm thành công", item);
+            
+            // Tự động tạo Auction cho Item này
+            com.auction.common.entity.Auction auction = new com.auction.common.entity.Auction();
+            auction.setItemId(item.getId());
+            auction.setSellerId(item.getSellerId());
+            auction.setTitle(item.getName() + " - Phiên Đấu Giá");
+            auction.setStartPrice(item.getStartingPrice());
+            auction.setCurrentPrice(item.getStartingPrice());
+            auction.setStatus(com.auction.common.enums.AuctionStatus.OPEN);
+            
+            long durationMins = 60; // default 60 minutes
+            if (attr != null && attr.containsKey("durationMinutes")) {
+                try {
+                    durationMins = Long.parseLong(attr.get("durationMinutes"));
+                } catch (Exception ignored) {}
+            }
+            
+            auction.setStartTime(java.time.LocalDateTime.now());
+            auction.setEndTime(java.time.LocalDateTime.now().plusMinutes(durationMins));
+            
+            com.auction.server.repository.SerializableAuctionRepository auctionRepo = new com.auction.server.repository.SerializableAuctionRepository();
+            auctionRepo.save(auction);
+            
+            // Lên lịch tự động kết thúc
+            AuctionScheduler.scheduleAuctionEnd(auction.getId(), durationMins);
+
+            return new ClientResponse(true, "Tạo sản phẩm và phiên đấu giá thành công", item);
 
         } catch (Exception e) {
             return new ClientResponse(false, "Lỗi khi tạo sản phẩm: " + e.getMessage(), null);

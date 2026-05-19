@@ -28,10 +28,34 @@ public class LoginController {
         try {
             NetworkClient client = NetworkClient.getInstance();
             client.connect();
-
             ClientResponse res = client.login(user, pass);
 
-            errorLabel.setText(res.getMessage());
+            if (res.isSuccess()) {
+                errorLabel.setStyle("-fx-text-fill: green;");
+                errorLabel.setText(res.getMessage());
+                
+                AuthUserData authData = (AuthUserData) res.getData();
+                String fxmlFile = "";
+                switch (authData.getRole()) {
+                    case BIDDER:
+                        fxmlFile = "/view/auction_list.fxml";
+                        break;
+                    case SELLER:
+                        fxmlFile = "/view/seller_dashboard.fxml";
+                        break;
+                    case ADMIN:
+                        fxmlFile = "/view/admin.fxml";
+                        break;
+                }
+                
+                if (!fxmlFile.isEmpty()) {
+                    Parent root = FXMLLoader.load(getClass().getResource(fxmlFile));
+                    usernameField.getScene().setRoot(root);
+                }
+            } else {
+                errorLabel.setStyle("-fx-text-fill: #ef4444;");
+                errorLabel.setText(res.getMessage());
+            }
 
         } catch (Exception e) {
             errorLabel.setText("Không kết nối được server!");
@@ -43,7 +67,7 @@ public class LoginController {
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/view/register.fxml"));
             Stage stage = (Stage) usernameField.getScene().getWindow();
-            stage.setScene(new Scene(root));
+            stage.getScene().setRoot(root);
         } catch (Exception e) {
             e.printStackTrace();
         }

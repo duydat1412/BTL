@@ -1,66 +1,72 @@
-# Hệ Thống Đấu Giá Trực Tuyến (Online Auction System)
-**Bài Tập Lớn - Môn Lập Trình Nâng Cao (Java OOP)**
+# 🏛️ Hệ thống Đấu giá Trực tuyến (Auction System)
 
-Một hệ thống đấu giá thời gian thực (real-time) được xây dựng hoàn toàn bằng Java, áp dụng kiến trúc mô hình Java TCP Socket, đa luồng (Multithreading), cơ sở dữ liệu qua Java Serialization (.dat) và giao diện JavaFX.
+Ứng dụng đấu giá trực tuyến xây dựng bằng Java, sử dụng kiến trúc Client-Server với Java Socket và JavaFX.
 
-##  Danh sách thành viên nhóm
-* **Người A - Team Lead & Server:** Cấu trúc hệ thống, Java Socket đa luồng (ClientHandler), Thread pool, Thiết lập Singleton DataStore.
-* **Người B - OOP & Model:** Xây dựng cấu trúc Object/Entity (Serializable), Factory, Observer Pattern (Cập nhật giá Real-time).
-* **Người C - Client & GUI:** Thiết kế giao diện JavaFX, kết nối NetworkClient (ObjectStream) để nói chuyện với Server.
-* **Người D - Features & QA:** Quản lý logic nghiệp vụ các Handler, thuật toán Auto-bidding, Anti-sniping, Custom Exceptions và Unit Test.
+## 📋 Yêu cầu hệ thống
 
-## 🛠 Công nghệ sử dụng
-* **Ngôn ngữ:** Java (JDK 17+)
-* **Giao diện (GUI):** JavaFX & FXML (Scene Builder)
-* **Quản lý dự án:** Maven multi-module
-* **Kiến trúc mạng:** Raw TCP Socket (ServerSocket & Socket) giao tiếp bằng ObjectOutputStream / ObjectInputStream.
-* **Lưu trữ dữ liệu:** Java Serialization (Ghi xuất Object vào file tĩnh).
-* **Kiến trúc:** Client-Server, MVC Pattern.
+- **Java**: JDK 17 trở lên
+- **Maven**: Đã tích hợp Maven Wrapper (`mvnw`) — không cần cài riêng
 
-##  Hướng dẫn cài đặt và chạy thử nghiệm
-### Yêu cầu môi trường
-* Đã cài đặt JDK (phiên bản 17 trở lên).
-* Cửa sổ dòng lệnh CMD/PowerShell hoặc Terminal có hỗ trợ chạy script.
+## 🚀 Hướng dẫn chạy
 
-### Cấu trúc thư mục (Multi-module)
-- `auction-common`: Chứa Entity, Enum và Interfaces dùng chung.
-- `auction-server`: Chứa Main App mở Socket Server lắng nghe port 8080 và quản lý file data.
-- `auction-client`: Chứa giao diện hiển thị cho người chơi (JavaFX) và trình gửi/nhận Request.
-- `docs/`: Tài liệu đồ án chi tiết.
+### Bước 1: Build toàn bộ dự án
+```bash
+.\mvnw clean compile
+```
 
-### Cách chạy Server cục bộ (Chỉ dành cho Test hoặc cho Backend/Server Auth)
-1. **Clone dự án về máy:**
-   ```bash
-   git clone https://github.com/duydat1412/BTL.git
-   cd BTL
-   ```
-2. **Khởi chạy Socket Server:**
-   Đứng tại thư mục **BTL**, chạy lệnh sau để build và boot server (chỉ lắng nghe, đợi Client nối vào):
-   ```powershell
-   .\mvnw.cmd clean compile exec:java -pl auction-server -am
-   ```
-   Nếu console in ra `Server đang lắng nghe trên cổng 8080` tức là thành công!
+### Bước 2: Chạy Server (Terminal 1)
+```bash
+.\mvnw exec:java -pl auction-server "-Dexec.mainClass=com.auction.server.AuctionServerApp"
+```
+Server sẽ lắng nghe trên cổng **8080**.
 
-> **Chi tiết các lệnh và báo lỗi**: Xem thêm ở [docs/RUN_SERVER_LOCAL.md](docs/RUN_SERVER_LOCAL.md)
+### Bước 3: Chạy Client (Terminal 2)
+```bash
+.\mvnw javafx:run -pl auction-client
+```
+Mở thêm terminal khác và chạy lại lệnh trên để mô phỏng nhiều người dùng cùng lúc.
 
-## Các IDE hỗ trợ việc vibe code nên dùng : 
+> **Lưu ý**: Tất cả lệnh phải chạy từ **thư mục gốc** của project (nơi chứa file `pom.xml` chính).
 
-### AntiGravity model Claude Opus 4.6 
-**Nhược điểm:**
-1. Free quotas ít, hết thì phải đợi cooldown có khi lên tới 7 ngày - 30 ngày.
-2. Hết quotas cho ClaudeOpus4.6 thì phải dùng Gemini 3 Flash.
+## 📁 Cấu trúc dự án
 
-**Ưu điểm:**
-1. Claude Opus 4.6 cho hiệu suất cao, xử lí được các tác vụ logic phức tạp.
-2. Lên plan rõ ràng trước khi code.
-3. Chỉ cần đọc context là hiểu project đang làm gì.
+```
+BTL/
+├── auction-common/     # Shared: Entity, Message, Enum, Design Patterns
+├── auction-server/     # Server: Socket, Handler, Service, Repository, DataStore
+├── auction-client/     # Client: JavaFX UI, Controller, NetworkClient
+├── docs/               # Tài liệu, sơ đồ, báo cáo tiến độ
+└── pom.xml             # Maven parent POM (multi-module)
+```
 
-### VSCode Copilot Pro 
-**Nhược điểm:**
-1. Chỉ thực sự mạnh nếu như có Pro ( có thể có được free nếu có github student pack, chưa có github student pack thì lên mạng học cách đăng kí free )
-2. Limit 300 Premium Requests / tháng. Dùng hết sẽ không thể tiếp tục dùng Chat với các model cao cấp.
-3. Nếu dùng model Clade Opus 4.6 thì chỉ tương đương 100 Requests.
+## 🏗️ Kiến trúc
 
-**Ưu điểm:**
-1. Nếu hết Premium Requests thì có thể dùng model Gemini 3.1 Pro hoặc Claude Sonnet 4.6, hiệu suất cũng khá cao.
-2. Có hỗ trợ autocompletion unlimited ( gợi ý code khi gõ trong VSCode ).
+| Tầng | Mô tả |
+|------|-------|
+| **Client (JavaFX)** | Giao diện người dùng, gửi `ClientRequest` qua Socket |
+| **ClientHandler** | Dispatcher nhận request, phân loại theo `Action`, chuyển cho Service |
+| **Service** | Xử lý nghiệp vụ (validation, business logic) |
+| **Repository** | Thao tác CRUD trên DataStore (RAM) |
+| **DataStore** | Singleton lưu trữ dữ liệu, Serialization xuống file `.dat` |
+
+## 🎨 Design Patterns đã áp dụng
+
+- **Factory Method** — `ItemFactory` tạo Electronics/Art/Vehicle
+- **Observer** — `AuctionEventManager` thông báo khi có bid mới
+- **Strategy** — `ManualBidStrategy` / `AutoBidStrategy`
+- **Singleton** — `DataStore`, `NetworkClient`
+
+## 🧪 Chạy Unit Test
+
+```bash
+.\mvnw test -pl auction-server
+```
+
+## 👥 Phân công
+
+| Thành viên | Vai trò |
+|-----------|---------|
+| **A** | Team Lead, Server Core, ClientHandler, CI/CD |
+| **B** | OOP Entities, Design Patterns, Unit Tests |
+| **C** | Client UI/UX (JavaFX, FXML, CSS) |
+| **D** | Business Logic (Services), Scheduler, QA |

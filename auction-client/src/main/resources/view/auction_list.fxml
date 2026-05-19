@@ -1,17 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
 
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ListView?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.VBox?>
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.controller.AuctionListController"
+      prefHeight="700.0" prefWidth="900.0"
+      styleClass="main-bg">
 
-<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.client.controller.AuctionListController">
-    <children>
-        <VBox layoutX="20.0" layoutY="20.0" spacing="10.0" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="20.0">
-            <children>
-                <Label style="-fx-font-size: 20px; -fx-font-weight: bold;" text="Danh sách phiên đấu giá" />
-                <ListView fx:id="listView" VBox.vgrow="ALWAYS" />
-            </children>
+    <!-- Navbar -->
+    <HBox alignment="CENTER_LEFT" spacing="20" styleClass="bg-white" style="-fx-padding: 15 30; -fx-border-color: #e2e8f0; -fx-border-width: 0 0 1 0;">
+        <Label text="DHDH - Danh sách đấu giá" styleClass="text-2xl, font-bold, text-foreground"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="userInfoLabel" styleClass="text-sm, text-muted, font-bold"/>
+        <Button text="Đăng xuất" onAction="#handleLogout" styleClass="btn-outline"/>
+    </HBox>
+
+    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
+        <VBox spacing="25" alignment="TOP_CENTER" style="-fx-padding: 30;">
+
+            <!-- Hero / Title -->
+            <VBox alignment="CENTER" spacing="10" styleClass="card" style="-fx-background-color: linear-gradient(to bottom right, #1e293b, #334155); -fx-padding: 40;">
+                <Label text="Đấu giá trực tuyến chuyên nghiệp." styleClass="text-white, text-3xl, font-bold"/>
+                <Label text="Khám phá các phiên đấu giá đang diễn ra và đặt giá cho sản phẩm bạn yêu thích." styleClass="text-muted, text-sm"/>
+                <Button text="Tải lại danh sách" onAction="#handleRefresh" styleClass="btn-gold">
+                    <VBox.margin><Insets top="15"/></VBox.margin>
+                </Button>
+            </VBox>
+
+            <!-- Main Content -->
+            <VBox spacing="15" styleClass="card" VBox.vgrow="ALWAYS" maxWidth="800">
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Phiên nổi bật" styleClass="text-xl, font-bold, text-foreground"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="statusLabel" styleClass="text-sm, text-danger"/>
+                </HBox>
+
+                <ListView fx:id="listView" styleClass="list-view" VBox.vgrow="ALWAYS" prefHeight="400"/>
+            </VBox>
+
         </VBox>
-    </children>
-</AnchorPane>
+    </ScrollPane>
+
+</VBox>

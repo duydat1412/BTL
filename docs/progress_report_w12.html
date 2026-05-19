@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Báo cáo Tiến độ Tuần 12 — Auction System</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+  body { font-family: 'Inter', sans-serif; max-width: 900px; margin: 0 auto; padding: 30px; color: #1a1a2e; line-height: 1.7; }
+  h1 { font-size: 26px; border-bottom: 3px solid #4facfe; padding-bottom: 10px; }
+  h2 { font-size: 20px; color: #16213e; margin-top: 30px; border-left: 4px solid #4facfe; padding-left: 12px; }
+  h3 { font-size: 17px; color: #0f3460; }
+  table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px; }
+  th { background: #16213e; color: white; padding: 10px 12px; text-align: left; }
+  td { border: 1px solid #ddd; padding: 8px 12px; }
+  tr:nth-child(even) { background: #f4f6ff; }
+  blockquote { border-left: 4px solid #e94560; background: #fff5f5; padding: 12px 18px; margin: 15px 0; border-radius: 4px; }
+  code { background: #eef; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
+  ul { padding-left: 22px; }
+  li { margin-bottom: 4px; }
+  strong { color: #0f3460; }
+  hr { border: none; border-top: 2px solid #e0e0e0; margin: 25px 0; }
+  .checklist { list-style: none; padding-left: 5px; }
+  .checklist li::before { content: "☐ "; font-size: 16px; }
+  @media print { body { padding: 15px; font-size: 12px; } h1 { font-size: 22px; } h2 { font-size: 17px; } table { font-size: 12px; } }
+</style>
+</head>
+<body>
+
+<h1>📊 Báo cáo Tiến độ Dự án — 14/05/2026 (Tuần 12)</h1>
+<blockquote><strong>Deadline</strong>: Tuần 15 &nbsp;|&nbsp; <strong>Còn lại</strong>: ~3 tuần<br>
+<strong>Build Status</strong>: ✅ <strong>BUILD SUCCESS</strong> (4/4 modules) — Sau khi fix 3 lỗi compile</blockquote>
+
+<hr>
+
+<h2>📦 Tổng quan Module</h2>
+<table>
+<tr><th>Module</th><th>Số file Java</th><th>Trạng thái</th><th>Hoàn thành</th></tr>
+<tr><td><code>auction-common</code></td><td>37</td><td>✅ Ổn định</td><td><strong>95%</strong></td></tr>
+<tr><td><code>auction-server</code></td><td>23</td><td>⚠️ Còn thiếu</td><td><strong>72%</strong></td></tr>
+<tr><td><code>auction-client</code></td><td>9 controllers + 7 FXML</td><td>⚠️ Nhiều chỗ chưa nối</td><td><strong>55%</strong></td></tr>
+<tr><td>Test (JUnit)</td><td>5 files</td><td>⚠️ Thiếu JaCoCo</td><td><strong>70%</strong></td></tr>
+</table>
+
+<hr>
+
+<h2>👤 Tiến độ chi tiết theo từng người</h2>
+
+<h3>Người A — Team Lead &amp; Server Core (Tiến độ: 75%)</h3>
+<table>
+<tr><th>Task</th><th>Trạng thái</th><th>Ghi chú</th></tr>
+<tr><td>GitHub + Maven multi-module</td><td>✅</td><td>4 modules hoạt động</td></tr>
+<tr><td>Checkstyle + CI/CD</td><td>✅</td><td>GitHub Actions build pass</td></tr>
+<tr><td>ServerSocket multi-thread</td><td>✅</td><td>Thread pool</td></tr>
+<tr><td><strong>ClientHandler dispatcher</strong></td><td>⚠️ 85%</td><td>10/12 Actions nối. Còn 2 pending: <code>GET_AUCTIONS</code>, <code>CREATE_AUCTION</code></td></tr>
+<tr><td>DataStore (Serialization)</td><td>✅</td><td>Singleton, load/save hoạt động</td></tr>
+<tr><td>Repository layer (4 repos)</td><td>✅</td><td>User, Item, Bid, Auction</td></tr>
+<tr><td>Service integration</td><td>⚠️ 70%</td><td>UserService ✅, ItemService ✅, BidService ✅, <strong>AuctionService ❌ chưa nối</strong></td></tr>
+<tr><td>Realtime push (Observer → Client)</td><td>❌</td><td>Chưa triển khai</td></tr>
+<tr><td>README.md</td><td>⬜</td><td>Tuần 14-15</td></tr>
+</table>
+
+<h3>Người B — OOP &amp; Data Model (Tiến độ: 90% ⭐ Tốt nhất nhóm)</h3>
+<table>
+<tr><th>Task</th><th>Trạng thái</th><th>Ghi chú</th></tr>
+<tr><td>Entity hierarchy (User)</td><td>✅</td><td>User → Bidder, Seller, Admin</td></tr>
+<tr><td>Item hierarchy</td><td>✅</td><td>Item → Electronics, Art, Vehicle</td></tr>
+<tr><td>Auction + BidTransaction + AutoBid</td><td>✅</td><td>Đầy đủ fields</td></tr>
+<tr><td>Encapsulation, Polymorphism, Abstraction</td><td>✅</td><td></td></tr>
+<tr><td><strong>Factory Method</strong> (ItemFactory)</td><td>✅</td><td></td></tr>
+<tr><td><strong>Observer Pattern</strong> (AuctionEventManager)</td><td>✅</td><td></td></tr>
+<tr><td><strong>Strategy Pattern</strong> (Manual + Auto)</td><td>✅</td><td></td></tr>
+<tr><td><strong>Singleton</strong> (DataStore)</td><td>✅</td><td></td></tr>
+<tr><td>Concurrency (ReentrantLock)</td><td>✅</td><td>Fine-grained locking per auction</td></tr>
+<tr><td>JUnit Tests (5 files)</td><td>✅</td><td>Factory, BidService, Concurrency, Observer, Strategy</td></tr>
+<tr><td><strong>JaCoCo Coverage ≥ 60%</strong></td><td>❌</td><td>Plugin chưa cấu hình</td></tr>
+</table>
+
+<h3>Người C — Client UI/UX (Tiến độ: 58%)</h3>
+<table>
+<tr><th>Task</th><th>Trạng thái</th><th>Ghi chú</th></tr>
+<tr><td>Login screen</td><td>✅</td><td>Chuyển hướng theo role, CSS Glassmorphism</td></tr>
+<tr><td>Register screen</td><td>✅</td><td>Validate + gửi server</td></tr>
+<tr><td><strong>Auction List screen</strong></td><td>⚠️ 40%</td><td><code>handleRefresh()</code> <strong>chỉ print console</strong>, không gọi server</td></tr>
+<tr><td><strong>Auction Detail + Bidding</strong></td><td>⚠️ 60%</td><td>Gọi PLACE_BID nhưng thiếu bid history</td></tr>
+<tr><td><strong>Seller Dashboard</strong></td><td>⚠️ 30%</td><td><code>handleCreateItem()</code> <strong>chỉ print console</strong></td></tr>
+<tr><td><strong>Create Item screen</strong></td><td>✅ 80%</td><td>Form đầy đủ + gọi server</td></tr>
+<tr><td>Admin Panel</td><td>⚠️ 15%</td><td>Controller chỉ print console</td></tr>
+<tr><td>NetworkClient</td><td>✅</td><td>Singleton, session management</td></tr>
+<tr><td>Realtime update</td><td>❌</td><td></td></tr>
+</table>
+
+<h3>Người D — Features &amp; QA (Tiến độ: 48%)</h3>
+<table>
+<tr><th>Task</th><th>Trạng thái</th><th>Ghi chú</th></tr>
+<tr><td>UserService (Login + Register)</td><td>✅</td><td></td></tr>
+<tr><td>ItemService CRUD</td><td>✅</td><td>Đã fix bug + null-safe</td></tr>
+<tr><td>Custom Exceptions (3 classes)</td><td>✅</td><td></td></tr>
+<tr><td><strong>AuctionScheduler</strong></td><td>⚠️ 50%</td><td>Có scheduleAuctionEnd() nhưng chưa tích hợp đầy đủ</td></tr>
+<tr><td>Auto-create Auction khi tạo Item</td><td>✅</td><td></td></tr>
+<tr><td><strong>AuctionService</strong></td><td>❌</td><td>Chưa tồn tại trên dev</td></tr>
+<tr><td>Status transitions</td><td>⚠️ 30%</td><td>Chỉ OPEN→FINISHED, thiếu RUNNING</td></tr>
+<tr><td>Edge case testing</td><td>❌</td><td></td></tr>
+</table>
+
+<hr>
+
+<h2>🔴 Lỗi compile đã fix trong lần merge này</h2>
+<table>
+<tr><th>#</th><th>File</th><th>Lỗi</th><th>Fix</th></tr>
+<tr><td>1</td><td><code>AuctionDetailController:71</code></td><td><code>getId()</code> không tồn tại</td><td>→ <code>getUserId()</code></td></tr>
+<tr><td>2</td><td><code>CreateItemController:78</code></td><td><code>getId()</code> không tồn tại</td><td>→ <code>getUserId()</code></td></tr>
+<tr><td>3</td><td><code>AuctionListController:72</code></td><td><code>setData(Auction)</code> thiếu tham số</td><td>→ <code>setData(selected, null)</code></td></tr>
+</table>
+
+<hr>
+
+<h2>📈 Tổng kết tiến độ</h2>
+<table>
+<tr><th>Người</th><th>Tuần 11</th><th>Tuần 12</th><th>Thay đổi</th></tr>
+<tr><td><strong>A</strong> (Team Lead)</td><td>70%</td><td><strong>75%</strong></td><td>+5%</td></tr>
+<tr><td><strong>B</strong> (OOP/Model)</td><td>88%</td><td><strong>90%</strong></td><td>+2%</td></tr>
+<tr><td><strong>C</strong> (Client UI)</td><td>42%</td><td><strong>58%</strong></td><td>+16%</td></tr>
+<tr><td><strong>D</strong> (Features)</td><td>32%</td><td><strong>48%</strong></td><td>+16%</td></tr>
+</table>
+<h3>🎯 Tổng dự án: ~60% (tăng từ 50%)</h3>
+
+<hr>
+
+<h2>⚠️ Rủi ro hiện tại</h2>
+<blockquote>
+<strong>🔴 Rủi ro #1:</strong> <code>AuctionListController</code> và <code>SellerDashboardController</code> <strong>không gọi server</strong> → Demo sẽ thấy màn hình trống.<br><br>
+<strong>🟡 Rủi ro #2:</strong> <code>ClientHandler</code> vẫn trả <code>pending</code> cho <code>GET_AUCTIONS</code>/<code>CREATE_AUCTION</code>.<br><br>
+<strong>🟡 Rủi ro #3:</strong> JaCoCo chưa cấu hình → không có báo cáo test coverage.
+</blockquote>
+
+<hr>
+
+<h2>✅ Checklist — Các task còn lại</h2>
+
+<h3>🔴 Ưu tiên CAO (Tuần 13)</h3>
+<ul class="checklist">
+<li><strong>(A)</strong> Viết lại <code>AuctionService</code> và nối vào <code>ClientHandler</code></li>
+<li><strong>(C)</strong> Fix <code>AuctionListController.handleRefresh()</code> — gọi server</li>
+<li><strong>(C)</strong> Fix <code>SellerDashboardController.handleCreateItem()</code> — gọi server</li>
+<li><strong>(C)</strong> Fix <code>SellerDashboardController.handleRefresh()</code> — gọi server</li>
+<li><strong>(D)</strong> Fix bug <code>ItemService.D()</code>: đổi <code>!=</code> sang <code>.equals()</code></li>
+<li><strong>(B)</strong> Cấu hình JaCoCo plugin trong <code>pom.xml</code></li>
+</ul>
+
+<h3>🟡 Ưu tiên TRUNG BÌNH (Tuần 13-14)</h3>
+<ul class="checklist">
+<li><strong>(D)</strong> Hoàn thiện <code>AuctionScheduler</code>: thêm OPEN → RUNNING</li>
+<li><strong>(C)</strong> Implement Bid History trên <code>AuctionDetailController</code></li>
+<li><strong>(C)</strong> Fix <code>AdminController</code> — quản lý user và phiên đấu giá</li>
+<li><strong>(A)</strong> Server push notification (Observer → Client)</li>
+<li><strong>(D)</strong> Viết thêm Unit Test cho UserService, ItemService</li>
+<li><strong>(D)</strong> Edge case testing</li>
+</ul>
+
+<h3>🟢 Ưu tiên THẤP (Tuần 14-15)</h3>
+<ul class="checklist">
+<li><strong>(D)</strong> Auto-bidding strategy integration</li>
+<li><strong>(D)</strong> Anti-sniping</li>
+<li><strong>(C)</strong> Bid History chart</li>
+<li><strong>(C)</strong> CSS polish: animation, hover effects</li>
+<li><strong>(A)</strong> Viết README.md</li>
+<li><strong>(A)</strong> Final documentation: JavaDoc</li>
+</ul>
+
+</body>
+</html>

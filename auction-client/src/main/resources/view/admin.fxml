@@ -1,14 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.auction.client.controller.AuctionDetailController"
-            prefHeight="400.0" prefWidth="600.0">
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.auction.client.controller.AdminController"
+      prefHeight="700.0" prefWidth="900.0"
+      styleClass="main-bg">
 
-</AnchorPane>
+    <!-- Navbar -->
+    <HBox alignment="CENTER_LEFT" spacing="20" styleClass="bg-white" style="-fx-padding: 15 30; -fx-border-color: #e2e8f0; -fx-border-width: 0 0 1 0;">
+        <Label text="DHDH - Quản Trị Hệ Thống" styleClass="text-2xl, font-bold, text-foreground"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Đăng xuất" styleClass="btn-outline"/>
+    </HBox>
+
+    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
+        <VBox spacing="25" alignment="TOP_CENTER" style="-fx-padding: 30;">
+
+            <VBox spacing="20" styleClass="card" maxWidth="800">
+                <Label text="Thống kê tổng quan" styleClass="text-xl, font-bold, text-foreground"/>
+
+                <HBox spacing="20">
+                    <VBox spacing="5" style="-fx-background-color: #f1f5f9; -fx-padding: 20; -fx-background-radius: 8;" HBox.hgrow="ALWAYS">
+                        <Label text="Người dùng" styleClass="text-sm, text-muted"/>
+                        <Label text="0" styleClass="text-3xl, font-bold, text-foreground"/>
+                    </VBox>
+                    <VBox spacing="5" style="-fx-background-color: #fef3c7; -fx-padding: 20; -fx-background-radius: 8;" HBox.hgrow="ALWAYS">
+                        <Label text="Phiên đang chạy" styleClass="text-sm, text-muted"/>
+                        <Label text="0" styleClass="text-3xl, font-bold, text-gold"/>
+                    </VBox>
+                    <VBox spacing="5" style="-fx-background-color: #f1f5f9; -fx-padding: 20; -fx-background-radius: 8;" HBox.hgrow="ALWAYS">
+                        <Label text="Cảnh báo" styleClass="text-sm, text-muted"/>
+                        <Label text="0" styleClass="text-3xl, font-bold, text-danger"/>
+                    </VBox>
+                </HBox>
+
+                <Separator/>
+
+                <Label text="Tính năng đang phát triển..." styleClass="text-muted"/>
+            </VBox>
+
+        </VBox>
+    </ScrollPane>
+
+</VBox>
