@@ -70,52 +70,74 @@ public class UserService{
     }
 
     public static ClientResponse getAllUsers(GetAllUsersRequest gaur) throws AuthenticationException{
-        if (sur.findByUsername(gaur.getAdminId()).getRole()!=UserRole.ADMIN){
-            throw new AuthenticationException("ADMIN PERMISSION REQUIRED.");
-        }
         try{
-            return new ClientResponse(true, "Successfully retrived all user.",(Serializable) sur.findAll());
+            User admin = requireAdminById(gaur.getAdminId());
+            if (admin == null) {
+                throw new AuthenticationException("Admin not found.");
+            }
+            return new ClientResponse(true, "Successfully retrieved all users.", (Serializable) sur.findAll());
+        } catch (AuthenticationException e) {
+            throw e;
         } catch (Exception e){
             return new ClientResponse(false, e.getMessage(), null);
         }
     }
 
     public static ClientResponse banUser(BanUserRequest bur) throws AuthenticationException{
-        if(sur.findById(bur.getAdminId()).getRole()!=UserRole.ADMIN){
-            throw new AuthenticationException("ADMIN PERM REQUIRED.");
-        }
-        if(sur.findById(bur.getTargetUserId()).getRole()==UserRole.ADMIN){
-            throw new AuthenticationException("Cannot ban an admin.");
-        }
         try{
-            User target=sur.findById(bur.getTargetUserId());
+            requireAdminById(bur.getAdminId());
+            User target = sur.findById(bur.getTargetUserId());
+            if (target == null) {
+                return new ClientResponse(false, "Target user not found.", null);
+            }
+            if (target.getRole() == UserRole.ADMIN) {
+                throw new AuthenticationException("Cannot ban an admin.");
+            }
             if (target.isBanned()){
                 return new ClientResponse(false, "Target user was already banned.", null);
             }
             target.setBanned(true);
             target.setBanReason(bur.getReason());
+            sur.update(target);
             return new ClientResponse(true, "Successfully banned user.", null);
+        } catch (AuthenticationException e) {
+            throw e;
         } catch (Exception e){
             return new ClientResponse(false, e.getMessage(), null);
         }
     }
 
     public static ClientResponse unbanUser(UnbanUserRequest ubur) throws AuthenticationException{
-        if (sur.findById(ubur.getAdminId()).getRole()!=UserRole.ADMIN){
-            throw new AuthenticationException("ADMIN PERM REQUIRED");
-        }
         try{
-            User target=sur.findById(ubur.getTargetUserId());
+            requireAdminById(ubur.getAdminId());
+            User target = sur.findById(ubur.getTargetUserId());
+            if (target == null) {
+                return new ClientResponse(false, "Target user not found.", null);
+            }
             if(!target.isBanned()){
                 return new ClientResponse(false, "Target user is not banned.", null);
             }
             target.setBanned(false);
-            target.setBanReason(ubur.getReason());
+            target.setBanReason(null);
+            sur.update(target);
             return new ClientResponse(true, "Unbanned target user.", null);
+        } catch (AuthenticationException e) {
+            throw e;
         } catch (Exception e){
             return new ClientResponse(false, e.getMessage(), null);
         }
 
+    }
+
+    private static User requireAdminById(String adminId) throws AuthenticationException {
+        User admin = sur.findById(adminId);
+        if (admin == null) {
+            throw new AuthenticationException("Admin not found.");
+        }
+        if (admin.getRole() != UserRole.ADMIN) {
+            throw new AuthenticationException("ADMIN PERMISSION REQUIRED.");
+        }
+        return admin;
     }
 
     private static AuthUserData toAuthUserData(User user) {
