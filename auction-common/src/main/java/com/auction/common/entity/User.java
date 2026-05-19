@@ -3,44 +3,47 @@ package com.auction.common.entity;
 import com.auction.common.enums.UserRole;
 
 /**
- * Lớp trừu tượng đại diện cho người dùng trong hệ thống.
+ * Lop truu tuong dai dien cho nguoi dung trong he thong.
  *
- * <p>Kế thừa từ {@link Entity}. Là lớp cha của {@link Bidder},
+ * <p>Ke thua tu {@link Entity}. La lop cha cua {@link Bidder},
  * {@link Seller}, {@link Admin}.
- *
- * <p>Encapsulation: tất cả fields đều private, truy cập qua getter/setter.
- * Inheritance: các subclass kế thừa và mở rộng thêm thuộc tính riêng.
  */
 public abstract class User extends Entity {
 
     private static final long serialVersionUID = 1L;
 
-    /** Tên đăng nhập — duy nhất trong hệ thống. */
+    /** Ten dang nhap - duy nhat trong he thong. */
     private String username;
 
-    /** Mật khẩu (đã hash bằng BCrypt — Người D xử lý). */
+    /** Mat khau (da hash bang BCrypt). */
     private String password;
 
-    /** Địa chỉ email. */
+    /** Dia chi email. */
     private String email;
 
-    /** Vai trò: BIDDER, SELLER, hoặc ADMIN. */
+    /** Vai tro: BIDDER, SELLER, hoac ADMIN. */
     private UserRole role;
 
-    /**
-     * Constructor mặc định.
-     */
+    /** Ban status set by admin. */
+    private boolean banned;
+
+    /** Reason for ban, nullable when user is not banned. */
+    private String banReason;
+
+    /** Constructor mac dinh. */
     protected User() {
         super();
+        this.banned = false;
+        this.banReason = null;
     }
 
     /**
-     * Constructor đầy đủ.
+     * Constructor day du.
      *
-     * @param username tên đăng nhập
-     * @param password mật khẩu
-     * @param email    email
-     * @param role     vai trò
+     * @param username ten dang nhap
+     * @param password mat khau
+     * @param email email
+     * @param role vai tro
      */
     protected User(String username, String password, String email, UserRole role) {
         super();
@@ -48,6 +51,8 @@ public abstract class User extends Entity {
         this.password = password;
         this.email = email;
         this.role = role;
+        this.banned = false;
+        this.banReason = null;
     }
 
     // ==================== Getters & Setters ====================
@@ -82,5 +87,21 @@ public abstract class User extends Entity {
 
     public void setRole(UserRole role) {
         this.role = role;
+    }
+
+    public boolean isBanned() {
+        return banned;
+    }
+
+    public void setBanned(boolean banned) {
+        this.banned = banned;
+    }
+
+    public String getBanReason() {
+        return banReason;
+    }
+
+    public void setBanReason(String banReason) {
+        this.banReason = banReason;
     }
 }
