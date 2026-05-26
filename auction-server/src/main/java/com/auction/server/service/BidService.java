@@ -1,5 +1,7 @@
 package com.auction.server.service;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -132,7 +134,19 @@ public class BidService {
             bidRepository.save(bidTransaction);
             auctionRepository.update(auction);
 
-            // 6. Thông báo observer
+            // 6. Anti-sniping: nếu bid trong X giây cuối, gia hạn thêm Y giây
+            if (auction.getEndTime() != null) {
+                long secondsLeft = Duration.between(LocalDateTime.now(), auction.getEndTime()).getSeconds();
+                if (secondsLeft > 0 && secondsLeft <= AuctionScheduler.ANTI_SNIPE_WINDOW_SECONDS) {
+                    AuctionScheduler.extendAuctionEnd(
+                            auction.getId(), AuctionScheduler.ANTI_SNIPE_EXTENSION_SECONDS);
+                    System.out.println("[Anti-Snipe] Extended auction " + auction.getId()
+                            + " by " + AuctionScheduler.ANTI_SNIPE_EXTENSION_SECONDS
+                            + "s (bid at " + secondsLeft + "s remaining)");
+                }
+            }
+
+            // 7. Thông báo observer
             eventManager.notifyNewBid(auction, bidTransaction);
 
             return bidTransaction;
