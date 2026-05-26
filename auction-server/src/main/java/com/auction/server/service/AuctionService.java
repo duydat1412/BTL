@@ -3,11 +3,15 @@ package com.auction.server.service;
 import com.auction.common.entity.Auction;
 import com.auction.common.entity.Item;
 import com.auction.common.enums.AuctionStatus;
+import com.auction.common.message.CancelAuctionRequest;
 import com.auction.common.message.ClientResponse;
 import com.auction.common.message.CreateAuctionRequest;
 import com.auction.common.message.GetAuctionsRequest;
 import com.auction.server.repository.SerializableAuctionRepository;
 import com.auction.server.repository.SerializableItemRepository;
+import com.auction.server.repository.SerializableUserRepository;
+import com.auction.common.entity.User;
+import com.auction.common.enums.UserRole;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,6 +26,9 @@ public final class AuctionService {
             new SerializableAuctionRepository();
     private static final SerializableItemRepository ITEM_REPOSITORY =
             new SerializableItemRepository();
+
+    private static final SerializableUserRepository USER_REPOSITORY =
+            new SerializableUserRepository();
 
     private AuctionService() {
     }
@@ -110,6 +117,43 @@ public final class AuctionService {
             return new ClientResponse(true, "Fetched auction successfully", auction);
         } catch (Exception e) {
             return new ClientResponse(false, "Failed to fetch auction: " + e.getMessage(), null);
+        }
+    }
+
+    public static ClientResponse cancelAuction(CancelAuctionRequest request) {
+        try {
+            String adminId = request.getAdminId();
+            User admin = USER_REPOSITORY.findById(adminId);
+            if (admin == null || admin.getRole() != UserRole.ADMIN) {
+                return new ClientResponse(false, "ADMIN PERMISSION REQUIRED", null);
+            }
+
+            Auction auction = AUCTION_REPOSITORY.findById(request.getAuctionId());
+            if (auction == null) {
+                return new ClientResponse(false, "Auction not found: " + request.getAuctionId(), null);
+            }
+            if (auction.getStatus() == AuctionStatus.FINISHED || auction.getStatus() == AuctionStatus.CANCELED) {
+                return new ClientResponse(false, "Auction already " + auction.getStatus().getDisplayName(), null);
+            }
+
+            AuctionStatus oldStatus = auction.getStatus();
+            auction.setStatus(AuctionStatus.CANCELED);
+            AUCTION_REPOSITORY.update(auction);
+
+            com.auction.server.observer.AuctionEventManager eventManager =
+                    com.auction.server.handler.ClientHandler.getEventManager();
+            if (eventManager != null) {
+                eventManager.notifyStatusChanged(auction, oldStatus, AuctionStatus.CANCELED);
+                eventManager.notifyAuctionEnded(auction);
+            }
+
+            System.out.println("[Cancel] Auction " + request.getAuctionId()
+                    + " cancelled by admin " + adminId
+                    + ". Reason: " + request.getReason());
+
+            return new ClientResponse(true, "Auction cancelled successfully", auction);
+        } catch (Exception e) {
+            return new ClientResponse(false, "Failed to cancel auction: " + e.getMessage(), null);
         }
     }
 }

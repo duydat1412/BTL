@@ -3,6 +3,7 @@ package com.auction.client.controller;
 import com.auction.client.network.NetworkClient;
 import com.auction.common.enums.UserRole;
 import com.auction.common.message.*;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -35,19 +36,22 @@ public class RegisterController {
             return;
         }
 
-        try {
-            NetworkClient client = NetworkClient.getInstance();
-            client.connect();
+        NetworkClient client = NetworkClient.getInstance();
+        client.connect();
 
-            RegisterRequest req = new RegisterRequest(user, pass, email, role);
-            ClientRequest request = new ClientRequest(Action.REGISTER, req);
-            ClientResponse res = client.sendRequest(request);
+        messageLabel.setText("Đang đăng ký...");
+        messageLabel.setStyle("-fx-text-fill: gray;");
 
+        RegisterRequest req = new RegisterRequest(user, pass, email, role);
+        ClientRequest request = new ClientRequest(Action.REGISTER, req);
+
+        client.sendRequestAsync(request).thenAccept(res -> Platform.runLater(() -> {
+            messageLabel.setStyle(res.isSuccess() ? "-fx-text-fill: green;" : "-fx-text-fill: #ef4444;");
             messageLabel.setText(res.getMessage());
-
-        } catch (Exception e) {
-            messageLabel.setText("Lỗi kết nối!");
-        }
+        })).exceptionally(ex -> {
+            Platform.runLater(() -> messageLabel.setText("Lỗi kết nối!"));
+            return null;
+        });
     }
     @FXML
     public void goBack() {

@@ -65,6 +65,10 @@ public class ClientHandler implements Runnable {
             new SerializableBidRepository(),
             eventManager);
 
+    public static AuctionEventManager getEventManager() {
+        return eventManager;
+    }
+
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
     }
@@ -157,10 +161,10 @@ public class ClientHandler implements Runnable {
     }
 
     private ClientResponse handleCancelAuction(Serializable payload) {
-        if (!(payload instanceof CancelAuctionRequest)) {
+        if (!(payload instanceof CancelAuctionRequest req)) {
             return failure("CANCEL_AUCTION payload must be CancelAuctionRequest");
         }
-        return failure("CANCEL_AUCTION pending: admin service integration");
+        return AuctionService.cancelAuction(req);
     }
 
     private ClientResponse handleRegister(Serializable payload) {

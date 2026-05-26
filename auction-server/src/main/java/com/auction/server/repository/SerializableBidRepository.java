@@ -13,7 +13,8 @@ public class SerializableBidRepository implements BidRepository {
 
     @Override
     public List<BidTransaction> findByAuctionId(String auctionId) {
-        // stub: sau này sẽ filter theo auctionId khi có thuộc tính đó trong BidTransaction
-        return DataStore.getInstance().getBidTransactions();
+        return DataStore.getInstance().getBidTransactions().stream()
+                .filter(b -> b.getAuctionId() != null && b.getAuctionId().equals(auctionId))
+                .collect(java.util.stream.Collectors.toList());
     }
 }
