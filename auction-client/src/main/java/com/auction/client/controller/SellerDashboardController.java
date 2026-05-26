@@ -10,13 +10,20 @@ import javafx.stage.Stage;
 
 public class SellerDashboardController {
 
-    @FXML private Label userInfoLabel;
-    @FXML private TextField nameField;
-    @FXML private TextField priceField;
-    @FXML private ComboBox<String> typeBox;
-    @FXML private TextField descField;
-    @FXML private Label statusLabel;
-    @FXML private ListView<Auction> itemListView;
+    @FXML
+    private Label userInfoLabel;
+    @FXML
+    private TextField nameField;
+    @FXML
+    private TextField priceField;
+    @FXML
+    private ComboBox<String> typeBox;
+    @FXML
+    private TextField descField;
+    @FXML
+    private Label statusLabel;
+    @FXML
+    private ListView<Auction> itemListView;
 
     @FXML
     public void initialize() {

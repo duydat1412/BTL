@@ -35,6 +35,7 @@ public class LoginController {
                 errorLabel.setText(res.getMessage());
                 
                 AuthUserData authData = (AuthUserData) res.getData();
+                client.setCurrentUser(authData);
                 String fxmlFile = "";
                 switch (authData.getRole()) {
                     case BIDDER:
