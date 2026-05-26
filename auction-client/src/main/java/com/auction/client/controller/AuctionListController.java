@@ -118,6 +118,8 @@ public class AuctionListController {
         } catch (Exception e) {
             System.err.println("Lỗi khi mở màn hình chi tiết: " + e.getMessage());
             e.printStackTrace();
+            statusLabel.setText("Lỗi: " + e.getMessage());
+            statusLabel.setStyle("-fx-text-fill: #e74c3c;");
         }
     }
 }
