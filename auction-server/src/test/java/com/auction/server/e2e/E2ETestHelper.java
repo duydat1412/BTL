@@ -2,6 +2,7 @@ package com.auction.server.e2e;
 
 import com.auction.common.message.ClientRequest;
 import com.auction.common.message.ClientResponse;
+import com.auction.common.message.ServerPushMessage;
 import com.auction.server.datastore.DataStore;
 import com.auction.server.handler.ClientHandler;
 
@@ -28,7 +29,12 @@ public class E2ETestHelper {
             throws Exception {
         out.writeObject(request);
         out.flush();
-        return (ClientResponse) in.readObject();
+        while (true) {
+            Object obj = in.readObject();
+            if (obj instanceof ClientResponse) {
+                return (ClientResponse) obj;
+            }
+        }
     }
 
     public static ObjectOutputStream createOutStream(Socket socket) throws IOException {
@@ -37,6 +43,15 @@ public class E2ETestHelper {
 
     public static ObjectInputStream createInStream(Socket socket) throws IOException {
         return new ObjectInputStream(socket.getInputStream());
+    }
+
+    public static ServerPushMessage readPush(ObjectInputStream in) throws Exception {
+        while (true) {
+            Object obj = in.readObject();
+            if (obj instanceof ServerPushMessage) {
+                return (ServerPushMessage) obj;
+            }
+        }
     }
 
     public static ClientResponse sendRequest(Socket socket, ClientRequest request) throws Exception {

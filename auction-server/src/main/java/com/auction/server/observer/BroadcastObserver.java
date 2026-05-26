@@ -14,6 +14,7 @@ public class BroadcastObserver implements AuctionObserver {
 
     @Override
     public void onNewBid(Auction auction, BidTransaction bid) {
+        if (auction == null || bid == null) return;
         ServerPushMessage bidPush = new ServerPushMessage(
                 ServerPushMessage.PushType.NEW_BID,
                 "New bid placed on auction: " + auction.getTitle(),
@@ -33,6 +34,7 @@ public class BroadcastObserver implements AuctionObserver {
     public void onAuctionStatusChanged(Auction auction,
                                        AuctionStatus oldStatus,
                                        AuctionStatus newStatus) {
+        if (auction == null || newStatus == null) return;
         if (newStatus == AuctionStatus.RUNNING && oldStatus != AuctionStatus.RUNNING) {
             ServerPushMessage push = new ServerPushMessage(
                     ServerPushMessage.PushType.AUCTION_STARTED,
@@ -45,6 +47,7 @@ public class BroadcastObserver implements AuctionObserver {
 
     @Override
     public void onAuctionEnded(Auction auction) {
+        if (auction == null) return;
         ServerPushMessage push = new ServerPushMessage(
                 ServerPushMessage.PushType.AUCTION_ENDED,
                 "Auction ended: " + auction.getTitle(),

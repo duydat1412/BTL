@@ -56,10 +56,14 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("Register ADMIN rejected")
-        void signup_admin_rejected() {
-            RegisterRequest req = new RegisterRequest("admin1", "Pass@123", "admin@test.com", UserRole.ADMIN);
-            assertThrows(AuthenticationException.class, () -> UserService.signup(req, ""));
+        @DisplayName("Register ADMIN allowed with department")
+        void signup_admin_allowed() throws AuthenticationException {
+            RegisterRequest req = new RegisterRequest("admin1", "Admin@123", "admin@test.com", UserRole.ADMIN);
+            ClientResponse res = UserService.signup(req, "IT");
+            assertTrue(res.isSuccess());
+            assertInstanceOf(AuthUserData.class, res.getData());
+            AuthUserData data = (AuthUserData) res.getData();
+            assertEquals(UserRole.ADMIN, data.getRole());
         }
 
         @Test

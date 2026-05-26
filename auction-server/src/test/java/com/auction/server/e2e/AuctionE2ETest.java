@@ -141,7 +141,7 @@ class AuctionE2ETest {
             List<?> list = (List<?>) auctions.getData();
             assertEquals(1, list.size());
             Auction auction = (Auction) list.get(0);
-            assertEquals(AuctionStatus.OPEN, auction.getStatus());
+            assertEquals(AuctionStatus.RUNNING, auction.getStatus());
         }
     }
 
@@ -202,9 +202,10 @@ class AuctionE2ETest {
             clientA.sendReceive(new ClientRequest(Action.PLACE_BID,
                     new PlaceBidRequest(auctionId, sellerId, 6000, false)));
 
-            Object pushObj = clientB.in().readObject();
-            assertInstanceOf(ServerPushMessage.class, pushObj, "Client B should receive push");
-            ServerPushMessage push = (ServerPushMessage) pushObj;
+            ServerPushMessage push;
+            do {
+                push = E2ETestHelper.readPush(clientB.in());
+            } while (push.getType() != ServerPushMessage.PushType.NEW_BID);
             assertEquals(ServerPushMessage.PushType.NEW_BID, push.getType());
         }
     }

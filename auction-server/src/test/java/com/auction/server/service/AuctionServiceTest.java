@@ -66,7 +66,8 @@ class AuctionServiceTest {
         @Test
         @DisplayName("Create auction success")
         void createAuction_success() {
-            CreateAuctionRequest req = new CreateAuctionRequest(itemId, null, null);
+            java.time.LocalDateTime startTime = java.time.LocalDateTime.now().plusHours(1);
+            CreateAuctionRequest req = new CreateAuctionRequest(itemId, startTime, null);
             ClientResponse res = AuctionService.createAuction(req);
             assertTrue(res.isSuccess());
             assertNotNull(res.getData());
@@ -96,9 +97,10 @@ class AuctionServiceTest {
         @Test
         @DisplayName("Cannot create duplicate auction for same item")
         void createAuction_duplicate_fails() {
-            CreateAuctionRequest req1 = new CreateAuctionRequest(itemId, null, null);
+            java.time.LocalDateTime startTime = java.time.LocalDateTime.now().plusHours(1);
+            CreateAuctionRequest req1 = new CreateAuctionRequest(itemId, startTime, null);
             assertTrue(AuctionService.createAuction(req1).isSuccess());
-            CreateAuctionRequest req2 = new CreateAuctionRequest(itemId, null, null);
+            CreateAuctionRequest req2 = new CreateAuctionRequest(itemId, startTime, null);
             assertFalse(AuctionService.createAuction(req2).isSuccess());
         }
 
@@ -121,7 +123,8 @@ class AuctionServiceTest {
 
         @BeforeEach
         void createAuction() {
-            CreateAuctionRequest req = new CreateAuctionRequest(itemId, null, null);
+            java.time.LocalDateTime startTime = java.time.LocalDateTime.now().plusHours(1);
+            CreateAuctionRequest req = new CreateAuctionRequest(itemId, startTime, null);
             ClientResponse res = AuctionService.createAuction(req);
             auctionId = ((Auction) res.getData()).getId();
         }
@@ -172,7 +175,8 @@ class AuctionServiceTest {
 
         @BeforeEach
         void createAuction() {
-            CreateAuctionRequest req = new CreateAuctionRequest(itemId, null, null);
+            java.time.LocalDateTime startTime = java.time.LocalDateTime.now().plusHours(1);
+            CreateAuctionRequest req = new CreateAuctionRequest(itemId, startTime, null);
             auctionId = ((Auction) AuctionService.createAuction(req).getData()).getId();
         }
 
@@ -200,7 +204,8 @@ class AuctionServiceTest {
 
         @BeforeEach
         void createAuction() {
-            CreateAuctionRequest req = new CreateAuctionRequest(itemId, null, null);
+            java.time.LocalDateTime startTime = java.time.LocalDateTime.now().plusHours(1);
+            CreateAuctionRequest req = new CreateAuctionRequest(itemId, startTime, null);
             auctionId = ((Auction) AuctionService.createAuction(req).getData()).getId();
         }
 
