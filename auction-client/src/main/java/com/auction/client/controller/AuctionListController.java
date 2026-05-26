@@ -1,13 +1,18 @@
 package com.auction.client.controller;
 
+import com.auction.client.network.NetworkClient;
+import com.auction.common.entity.Auction;
+import com.auction.common.message.*;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.*;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Label;
 import javafx.stage.Stage;
-import com.auction.common.entity.Auction;
 import javafx.scene.control.ListCell;
+
+import java.util.List;
 
 public class AuctionListController {
 
@@ -19,6 +24,8 @@ public class AuctionListController {
 
     @FXML
     private Label statusLabel;
+
+    private NetworkClient.PushListener pushListener;
 
     @FXML
     public void initialize() {
@@ -40,13 +47,52 @@ public class AuctionListController {
             }
         });
 
-        if (userInfoLabel != null) {
-            userInfoLabel.setText("Xin chào, User");
+        AuthUserData user = NetworkClient.getInstance().getCurrentUser();
+        if (user != null && userInfoLabel != null) {
+            userInfoLabel.setText("Xin chào, " + user.getUsername());
         }
+
+        loadAuctions();
+        registerPushListener();
+    }
+
+    private void loadAuctions() {
+        statusLabel.setText("Đang tải...");
+        ClientRequest req = new ClientRequest(Action.GET_AUCTIONS, null);
+        NetworkClient.getInstance().sendRequestAsync(req).thenAccept(res -> Platform.runLater(() -> {
+            if (res.isSuccess() && res.getData() != null) {
+                List<?> rawList = (List<?>) res.getData();
+                List<Auction> auctions = rawList.stream()
+                        .filter(Auction.class::isInstance)
+                        .map(Auction.class::cast)
+                        .toList();
+                listView.getItems().setAll(auctions);
+                statusLabel.setText("Có " + auctions.size() + " phiên đấu giá");
+            } else {
+                statusLabel.setText("Lỗi tải dữ liệu: " + res.getMessage());
+            }
+        })).exceptionally(ex -> {
+            Platform.runLater(() -> statusLabel.setText("Lỗi kết nối server!"));
+            return null;
+        });
+    }
+
+    private void registerPushListener() {
+        pushListener = pushMsg -> {
+            if (pushMsg.getType() == ServerPushMessage.PushType.AUCTION_STARTED
+                    || pushMsg.getType() == ServerPushMessage.PushType.NEW_BID
+                    || pushMsg.getType() == ServerPushMessage.PushType.PRICE_UPDATE) {
+                Platform.runLater(this::loadAuctions);
+            }
+        };
+        NetworkClient.getInstance().addPushListener(pushListener);
     }
 
     @FXML
     public void handleLogout() {
+        if (pushListener != null) {
+            NetworkClient.getInstance().removePushListener(pushListener);
+        }
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/view/login.fxml"));
             Stage stage = (Stage) listView.getScene().getWindow();
@@ -58,10 +104,7 @@ public class AuctionListController {
 
     @FXML
     public void handleRefresh() {
-        if (statusLabel != null) {
-            statusLabel.setText("Đã tải lại danh sách.");
-        }
-        System.out.println("Tải lại danh sách đấu giá...");
+        loadAuctions();
     }
 
     private void openDetail(Auction selected) {

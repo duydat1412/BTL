@@ -120,7 +120,7 @@ public class CreateItemController {
             Parent root = FXMLLoader.load(getClass().getResource("/view/seller_dashboard.fxml"));
             Stage stage = (Stage) nameField.getScene().getWindow();
             Scene scene = new Scene(root);
-            String css = getClass().getResource("/css/style.css").toExternalForm();
+            String css = getClass().getResource("/CSS/style.css").toExternalForm();
             scene.getStylesheets().add(css);
             stage.setScene(scene);
         } catch (Exception e) {
