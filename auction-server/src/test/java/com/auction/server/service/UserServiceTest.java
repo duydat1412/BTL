@@ -35,7 +35,7 @@ class UserServiceTest {
 
         @Test
         @DisplayName("Register BIDDER success")
-        void signup_bidder_success() {
+        void signup_bidder_success() throws AuthenticationException {
             RegisterRequest req = new RegisterRequest("bidder1", "Pass@123", "bidder@test.com", UserRole.BIDDER);
             ClientResponse res = UserService.signup(req, "");
             assertTrue(res.isSuccess());
@@ -46,7 +46,7 @@ class UserServiceTest {
 
         @Test
         @DisplayName("Register SELLER success")
-        void signup_seller_success() {
+        void signup_seller_success() throws AuthenticationException {
             RegisterRequest req = new RegisterRequest("seller1", "Pass@123", "seller@test.com", UserRole.SELLER);
             ClientResponse res = UserService.signup(req, "");
             assertTrue(res.isSuccess());
@@ -105,7 +105,7 @@ class UserServiceTest {
 
         @Test
         @DisplayName("Login success with correct credentials")
-        void login_success() {
+        void login_success() throws AuthenticationException {
             LoginRequest req = new LoginRequest("logintest", "Pass@123");
             ClientResponse res = UserService.login(req);
             assertTrue(res.isSuccess());
@@ -164,7 +164,7 @@ class UserServiceTest {
 
         @Test
         @DisplayName("getAllUsers returns all users for admin")
-        void getAllUsers_admin_success() {
+        void getAllUsers_admin_success() throws AuthenticationException {
             GetAllUsersRequest req = new GetAllUsersRequest(adminId);
             ClientResponse res = UserService.getAllUsers(req);
             assertTrue(res.isSuccess());
@@ -179,7 +179,7 @@ class UserServiceTest {
 
         @Test
         @DisplayName("banUser by admin success")
-        void banUser_success() {
+        void banUser_success() throws AuthenticationException {
             BanUserRequest req = new BanUserRequest(adminId, bidderId, "Spam");
             ClientResponse res = UserService.banUser(req);
             assertTrue(res.isSuccess());
@@ -205,7 +205,7 @@ class UserServiceTest {
 
         @Test
         @DisplayName("unbanUser by admin success")
-        void unbanUser_success() {
+        void unbanUser_success() throws AuthenticationException {
             UserService.banUser(new BanUserRequest(adminId, bidderId, "Spam"));
             UnbanUserRequest req = new UnbanUserRequest(adminId, bidderId, "Appeal granted");
             ClientResponse res = UserService.unbanUser(req);
