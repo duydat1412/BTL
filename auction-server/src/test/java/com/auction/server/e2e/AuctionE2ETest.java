@@ -262,13 +262,14 @@ class AuctionE2ETest {
             Auction auction = DataStore.getInstance().getAuctions().stream()
                     .filter(a -> a.getId().equals(auctionId)).findFirst().orElseThrow();
             auction.setStatus(AuctionStatus.RUNNING);
-            auction.setEndTime(java.time.LocalDateTime.now().plusSeconds(25));
+            java.time.LocalDateTime shortEnd = java.time.LocalDateTime.now().plusSeconds(25);
+            auction.setEndTime(shortEnd);
 
             client.sendReceive(new ClientRequest(Action.PLACE_BID, new PlaceBidRequest(auctionId, bidderId, 200, false)));
 
             Auction updated = DataStore.getInstance().getAuctions().stream()
                     .filter(a -> a.getId().equals(auctionId)).findFirst().orElseThrow();
-            assertTrue(updated.getEndTime().isAfter(auction.getEndTime()),
+            assertTrue(updated.getEndTime().isAfter(shortEnd),
                     "End time should be extended after bid near end");
         }
     }
