@@ -37,7 +37,20 @@
 
             <VBox spacing="5">
                 <Label text="Mật khẩu" styleClass="text-sm, font-bold, text-foreground"/>
-                <PasswordField fx:id="passwordField" promptText="VD: Abc@1234" styleClass="input-field"/>
+                <StackPane>
+                    <PasswordField fx:id="passwordField" promptText="VD: Abc@1234" styleClass="input-field"/>
+                    <TextField fx:id="visiblePasswordField" promptText="VD: Abc@1234" styleClass="input-field" visible="false" managed="false"/>
+                </StackPane>
+                <Label fx:id="strengthLabel" styleClass="text-xs" managed="false" visible="false"/>
+            </VBox>
+
+            <VBox spacing="5">
+                <Label text="Nhập lại mật khẩu" styleClass="text-sm, font-bold, text-foreground"/>
+                <StackPane>
+                    <PasswordField fx:id="confirmPasswordField" promptText="••••••••" styleClass="input-field" onAction="#handleRegister"/>
+                    <TextField fx:id="visibleConfirmPasswordField" promptText="••••••••" styleClass="input-field" visible="false" managed="false"/>
+                </StackPane>
+                <CheckBox fx:id="showPasswordCheckBox" text="Hiện mật khẩu" onAction="#togglePasswordVisibility" styleClass="text-sm, text-muted"/>
             </VBox>
 
             <VBox spacing="5">

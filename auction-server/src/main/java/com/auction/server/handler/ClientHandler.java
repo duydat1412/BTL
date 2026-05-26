@@ -73,6 +73,7 @@ public class ClientHandler implements Runnable {
                 ClientResponse response = handleIncomingRequest(requestObj);
                 // synchronized vì broadcast() cũng có thể ghi vào out cùng lúc
                 synchronized (out) {
+                    out.reset();
                     out.writeObject(response);
                     out.flush();
                 }

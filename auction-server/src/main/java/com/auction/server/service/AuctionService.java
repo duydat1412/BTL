@@ -85,6 +85,13 @@ public final class AuctionService {
     public static ClientResponse getAuctions(GetAuctionsRequest request) {
         try {
             List<Auction> auctions = AUCTION_REPOSITORY.findAll();
+            // Filter out orphan auctions whose items no longer exist (giữ lại FINISHED để bidder xem lịch sử)
+            auctions = auctions.stream()
+                    .filter(auction -> auction.getStatus() == AuctionStatus.FINISHED
+                            || ITEM_REPOSITORY.findById(auction.getItemId()) != null)
+                    .collect(Collectors.toList());
+            System.out.println("[DEBUG] getAuctions: total in repo = " + auctions.size());
+            auctions.forEach(a -> System.out.println("[DEBUG]  - auction: " + a.getId() + " | " + a.getTitle() + " | " + a.getStatus()));
             if (request != null) {
                 auctions = auctions.stream()
                         .filter(auction -> {

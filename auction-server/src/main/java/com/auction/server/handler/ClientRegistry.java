@@ -55,6 +55,7 @@ public class ClientRegistry {
             try {
                 ObjectOutputStream out = entry.getValue();
                 synchronized (out) {
+                    out.reset();
                     out.writeObject(pushMessage);
                     out.flush();
                 }

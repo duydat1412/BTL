@@ -6,7 +6,7 @@
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.auction.client.controller.AuctionDetailController"
-      prefHeight="600.0" prefWidth="800.0"
+      prefHeight="700.0" prefWidth="900.0"
       styleClass="main-bg">
 
     <!-- Navbar -->
@@ -16,9 +16,10 @@
     </HBox>
 
     <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
-        <HBox alignment="TOP_CENTER" style="-fx-padding: 30;">
+        <VBox alignment="TOP_CENTER" spacing="20" style="-fx-padding: 30;">
 
-            <VBox spacing="20" styleClass="card" maxWidth="600" HBox.hgrow="ALWAYS">
+            <!-- Main auction card -->
+            <VBox spacing="20" styleClass="card" maxWidth="700">
                 <HBox spacing="20">
                     <!-- Fake Image Area -->
                     <StackPane style="-fx-background-color: #e2e8f0; -fx-background-radius: 8;" prefWidth="250" prefHeight="250">
@@ -31,7 +32,7 @@
 
                         <VBox spacing="5">
                             <Label text="Giá hiện tại" styleClass="text-sm, text-muted"/>
-                            <Label fx:id="priceLabel" text="$0" styleClass="text-3xl, font-bold, text-gold"/>
+                            <Label fx:id="priceLabel" text="0" styleClass="text-3xl, font-bold, text-gold"/>
                         </VBox>
 
                         <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-background-color: #fef3c7; -fx-padding: 10; -fx-background-radius: 6;">
@@ -52,14 +53,39 @@
                             <Label text="Đặt giá mới" styleClass="text-sm, font-bold, text-foreground"/>
                             <HBox spacing="10">
                                 <TextField fx:id="bidAmountField" promptText="Nhập mức giá..." styleClass="input-field" HBox.hgrow="ALWAYS"/>
-                                <Button text="Đặt giá" onAction="#handlePlaceBid" styleClass="btn-gold"/>
+                                <Button fx:id="placeBidBtn" text="Đặt giá" onAction="#handlePlaceBid" styleClass="btn-gold"/>
+                            </HBox>
+                        </VBox>
+
+                        <Separator/>
+
+                        <!-- Auto-bid section -->
+                        <VBox spacing="10">
+                            <Label text="Tự động đặt giá (Auto-bid)" styleClass="text-sm, font-bold, text-foreground"/>
+                            <HBox spacing="10">
+                                <TextField fx:id="maxBidField" promptText="Giá tối đa..." styleClass="input-field" HBox.hgrow="ALWAYS"/>
+                                <Button fx:id="autoBidBtn" text="Bật auto-bid" onAction="#handleAutoBid" styleClass="btn-gold"/>
+                            </HBox>
+                            <HBox spacing="10">
+                                <Label text="Bước tăng:" styleClass="text-sm, text-muted" alignment="CENTER_LEFT"/>
+                                <TextField fx:id="incrementField" text="500" promptText="Bước tăng (VNĐ)" styleClass="input-field" prefWidth="150"/>
                             </HBox>
                         </VBox>
                     </VBox>
                 </HBox>
             </VBox>
 
-        </HBox>
+            <!-- Bid History -->
+            <VBox spacing="10" styleClass="card" maxWidth="700" VBox.vgrow="ALWAYS">
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Lịch sử đặt giá" styleClass="text-lg, font-bold, text-foreground"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="bidHistoryStatus" styleClass="text-sm, text-muted"/>
+                </HBox>
+                <ListView fx:id="bidHistoryView" styleClass="list-view" VBox.vgrow="ALWAYS" prefHeight="200"/>
+            </VBox>
+
+        </VBox>
     </ScrollPane>
 
 </VBox>

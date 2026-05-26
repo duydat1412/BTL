@@ -46,3 +46,4 @@ application-dev.yml
 *.sqlite
 *.mv.db
 *.trace.db
+data/
