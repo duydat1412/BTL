@@ -31,6 +31,8 @@ public class SellerDashboardController {
     @FXML
     private TextField descField;
     @FXML
+    private TextField durationField;
+    @FXML
     private Label statusLabel;
     @FXML
     private ListView<Item> itemListView;
@@ -114,15 +116,17 @@ public class SellerDashboardController {
         String priceStr = priceField.getText();
         ItemType type = typeBox.getValue();
         String desc = descField.getText();
+        String durationStr = durationField.getText();
 
-        if (name.isEmpty() || priceStr.isEmpty() || type == null) {
-            statusLabel.setText("Vui lòng điền Tên, Giá và Loại!");
+        if (name.isEmpty() || priceStr.isEmpty() || type == null || durationStr.isEmpty()) {
+            statusLabel.setText("Vui lòng điền Tên, Giá, Loại và Thời gian!");
             statusLabel.setStyle("-fx-text-fill: #e74c3c;");
             return;
         }
 
         try {
             double price = Double.parseDouble(priceStr);
+            long duration = Long.parseLong(durationStr);
             AuthUserData user = NetworkClient.getInstance().getCurrentUser();
             if (user == null) {
                 statusLabel.setText("Vui lòng đăng nhập lại!");
@@ -130,7 +134,7 @@ public class SellerDashboardController {
             }
 
             Map<String, String> attrs = new HashMap<>();
-            attrs.put("durationMinutes", "60");
+            attrs.put("durationMinutes", String.valueOf(duration));
 
             CreateItemRequest req = new CreateItemRequest(name, desc, price, user.getUserId(), type, attrs);
             ClientRequest request = new ClientRequest(Action.CREATE_ITEM, req);

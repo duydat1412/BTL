@@ -46,6 +46,11 @@
                         <TextField fx:id="descField" promptText="Mô tả chi tiết sản phẩm..." styleClass="input-field"/>
                     </VBox>
 
+                    <VBox spacing="5">
+                        <Label text="Thời gian đấu giá (phút)" styleClass="text-sm, font-bold, text-foreground"/>
+                        <TextField fx:id="durationField" promptText="VD: 60" styleClass="input-field"/>
+                    </VBox>
+
                     <Button text="Tạo sản phẩm" onAction="#handleCreateItem" styleClass="btn-gold" maxWidth="Infinity">
                         <VBox.margin><Insets top="10"/></VBox.margin>
                     </Button>
