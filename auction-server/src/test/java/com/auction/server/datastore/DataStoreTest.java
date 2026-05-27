@@ -30,7 +30,7 @@ class DataStoreTest {
     }
 
     @AfterEach
-    void tearDown() throws IOException {
+    void tearDown() throws IOException, InterruptedException {
         DataStore.getInstance().getUsers().clear();
         DataStore.getInstance().getItems().clear();
         DataStore.getInstance().getAuctions().clear();
@@ -40,7 +40,7 @@ class DataStoreTest {
             Files.createDirectories(DATA_FILE.getParent());
             Files.write(DATA_FILE, originalDataFile);
         } else {
-            Files.deleteIfExists(DATA_FILE);
+            deleteWithRetries(DATA_FILE);
         }
     }
 
@@ -154,5 +154,21 @@ class DataStoreTest {
 
         assertDoesNotThrow(ds::loadData);
         assertTrue(ds.getUsers().stream().anyMatch(user -> "existing".equals(user.getUsername())));
+    }
+
+    private void deleteWithRetries(Path path) throws IOException, InterruptedException {
+        IOException lastError = null;
+        for (int attempt = 0; attempt < 5; attempt++) {
+            try {
+                Files.deleteIfExists(path);
+                return;
+            } catch (IOException ex) {
+                lastError = ex;
+                Thread.sleep(100);
+            }
+        }
+        if (lastError != null) {
+            throw lastError;
+        }
     }
 }
