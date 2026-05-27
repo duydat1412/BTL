@@ -3,6 +3,7 @@ package com.auction.server.service;
 import com.auction.common.entity.Auction;
 import com.auction.common.entity.Item;
 import com.auction.common.enums.AuctionStatus;
+import com.auction.common.message.CancelAuctionRequest;
 import com.auction.common.message.ClientResponse;
 import com.auction.common.message.CreateAuctionRequest;
 import com.auction.common.message.GetAuctionsRequest;
@@ -111,5 +112,8 @@ public final class AuctionService {
         } catch (Exception e) {
             return new ClientResponse(false, "Failed to fetch auction: " + e.getMessage(), null);
         }
+    }
+    public static ClientResponse cancelAuction(CancelAuctionRequest car){
+
     }
 }
