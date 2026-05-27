@@ -4,6 +4,7 @@ import com.auction.client.network.NetworkClient;
 import com.auction.common.entity.Auction;
 import com.auction.common.entity.BidTransaction;
 import com.auction.common.entity.Item;
+import com.auction.common.enums.AuctionStatus;
 import com.auction.common.message.*;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -11,6 +12,8 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.*;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -35,7 +38,10 @@ public class AuctionDetailController {
     @FXML private TextField incrementField;
     @FXML private Button autoBidBtn;
     @FXML private Label balanceLabel;
+    @FXML private LineChart<Number, Number> priceChart;
 
+    private XYChart.Series<Number, Number> allBidsSeries;
+    private XYChart.Series<Number, Number> myBidsSeries;
     private Auction currentAuction;
     private Item currentItem;
     private NetworkClient.PushListener pushListener;
@@ -62,21 +68,86 @@ public class AuctionDetailController {
             descLabel.setText(desc);
         }
 
+        // Init price chart
+        initPriceChart();
+
         // Load balance
         loadBalance();
 
-        // Start countdown timer
-        startCountdown();
-
-        // Load bid history
-        loadBidHistory();
+        // Fetch fresh auction data từ server để check status mới nhất
+        loadFreshAuctionData();
 
         // Register push listener
         registerPushListener();
     }
 
+    private void initPriceChart() {
+        if (priceChart == null) return;
+
+        allBidsSeries = new XYChart.Series<>();
+        allBidsSeries.setName("Tất cả lượt đặt");
+        myBidsSeries = new XYChart.Series<>();
+        myBidsSeries.setName("Lượt đặt của tôi");
+
+        priceChart.getData().clear();
+        priceChart.getData().add(allBidsSeries);
+        priceChart.getData().add(myBidsSeries);
+
+        // Style series via lookup after render
+        priceChart.setAnimated(false);
+    }
+
+    private void loadFreshAuctionData() {
+        if (currentAuction == null) return;
+        String auctionId = currentAuction.getId();
+        NetworkClient.getInstance().sendRequestAsync(
+                new ClientRequest(Action.GET_AUCTION, auctionId)
+        ).thenAccept(res -> Platform.runLater(() -> {
+            if (res.isSuccess() && res.getData() instanceof Auction fresh) {
+                currentAuction = fresh;
+                currentAuction.setCurrentPrice(fresh.getCurrentPrice());
+                if (fresh.getEndTime() != null) currentAuction.setEndTime(fresh.getEndTime());
+                priceLabel.setText(String.format("%,.0f VNĐ", fresh.getCurrentPrice()));
+
+                if (fresh.getStatus() == AuctionStatus.CANCELED) {
+                    timeLabel.setText("Phiên đã bị hủy");
+                    timeLabel.setStyle("-fx-text-fill: #ef4444; -fx-font-weight: bold;");
+                    disableAllControls();
+                    return;
+                }
+                if (fresh.getStatus() == AuctionStatus.FINISHED) {
+                    timeLabel.setText("Phiên đã kết thúc");
+                    timeLabel.setStyle("-fx-text-fill: #ef4444; -fx-font-weight: bold;");
+                    disableAllControls();
+                    return;
+                }
+                // Auction còn hoạt động — start countdown + load bid history
+                startCountdown();
+                loadBidHistory();
+            } else {
+                // Không fetch được — start với dữ liệu hiện tại
+                startCountdown();
+                loadBidHistory();
+            }
+        }));
+    }
+
+    private void disableAllControls() {
+        placeBidBtn.setDisable(true);
+        bidAmountField.setDisable(true);
+        maxBidField.setDisable(true);
+        incrementField.setDisable(true);
+        autoBidBtn.setDisable(true);
+        if (countdownTimeline != null) {
+            countdownTimeline.stop();
+            countdownTimeline = null;
+        }
+    }
+
     private void startCountdown() {
         if (currentAuction == null || currentAuction.getEndTime() == null) return;
+        if (currentAuction.getStatus() == AuctionStatus.CANCELED
+                || currentAuction.getStatus() == AuctionStatus.FINISHED) return;
 
         if (countdownTimeline != null) countdownTimeline.stop();
 
@@ -159,6 +230,25 @@ public class AuctionDetailController {
         String currentUserId = user != null ? user.getUserId() : "";
 
         bidHistoryView.getItems().clear();
+
+        // Update price chart
+        if (priceChart != null) {
+            allBidsSeries.getData().clear();
+            myBidsSeries.getData().clear();
+            // chronological order (oldest first)
+            for (int i = 0; i < bids.size(); i++) {
+                BidTransaction bid = bids.get(i);
+                double y = bid.getBidAmount();
+                allBidsSeries.getData().add(new XYChart.Data<>(i + 1, y));
+            }
+            // my bids — same X indices
+            for (int i = 0; i < bids.size(); i++) {
+                BidTransaction bid = bids.get(i);
+                if (bid.getBidderId().equals(currentUserId)) {
+                    myBidsSeries.getData().add(new XYChart.Data<>(i + 1, bid.getBidAmount()));
+                }
+            }
+        }
         int seq = bids.size();
         for (int i = bids.size() - 1; i >= 0; i--) {
             BidTransaction bid = bids.get(i);
@@ -225,19 +315,18 @@ public class AuctionDetailController {
                     });
                 }
             } else if (pushMsg.getType() == ServerPushMessage.PushType.AUCTION_ENDED) {
-                String pushMessage = pushMsg.getMessage();
                 if (pushMsg.getData() instanceof Auction endedAuction
                         && currentAuction != null
                         && endedAuction.getId().equals(currentAuction.getId())) {
                     Platform.runLater(() -> {
-                        timeLabel.setText(pushMessage != null ? pushMessage : "Đã kết thúc");
+                        currentAuction.setStatus(endedAuction.getStatus());
+                        if (endedAuction.getStatus() == AuctionStatus.CANCELED) {
+                            timeLabel.setText("Phiên đã bị hủy");
+                        } else {
+                            timeLabel.setText(pushMsg.getMessage() != null ? pushMsg.getMessage() : "Đã kết thúc");
+                        }
                         timeLabel.setStyle("-fx-text-fill: #ef4444; -fx-font-weight: bold;");
-                        placeBidBtn.setDisable(true);
-                        bidAmountField.setDisable(true);
-                        maxBidField.setDisable(true);
-                        incrementField.setDisable(true);
-                        autoBidBtn.setDisable(true);
-                        if (countdownTimeline != null) countdownTimeline.stop();
+                        disableAllControls();
                         loadBidHistory();
                         loadBalance();
                     });

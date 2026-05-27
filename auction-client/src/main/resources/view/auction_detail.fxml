@@ -2,6 +2,8 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
 
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
@@ -23,10 +25,21 @@
             <!-- Main auction card -->
             <VBox spacing="20" styleClass="card" maxWidth="700">
                 <HBox spacing="20">
-                    <!-- Fake Image Area -->
-                    <StackPane style="-fx-background-color: #e2e8f0; -fx-background-radius: 8;" prefWidth="250" prefHeight="250">
-                        <Label text="Ảnh sản phẩm" styleClass="text-muted"/>
-                    </StackPane>
+                    <!-- Price Chart -->
+                    <LineChart fx:id="priceChart" prefWidth="280" prefHeight="250"
+                               styleClass="chart-card"
+                               createSymbols="true" legendVisible="false"
+                               alternativeRowFillVisible="false" alternativeColumnFillVisible="false"
+                               animated="false">
+                        <xAxis>
+                            <NumberAxis side="BOTTOM" label="Lần"
+                                        autoRanging="true" minorTickVisible="false"/>
+                        </xAxis>
+                        <yAxis>
+                            <NumberAxis side="LEFT" label="Giá (VNĐ)"
+                                        autoRanging="true" minorTickVisible="false"/>
+                        </yAxis>
+                    </LineChart>
 
                     <!-- Detail Info -->
                     <VBox spacing="15" HBox.hgrow="ALWAYS">
