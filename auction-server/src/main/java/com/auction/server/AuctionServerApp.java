@@ -26,6 +26,14 @@ public class AuctionServerApp {
         // Nạp dữ liệu từ DataStore (nếu có)
         com.auction.server.datastore.DataStore.getInstance().loadData();
 
+        // Đảm bảo lưu data khi nhấn Ctrl+C (SIGINT)
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("\n=== Server đang tắt, lưu dữ liệu... ===");
+            com.auction.server.datastore.DataStore.getInstance().saveData();
+            pool.shutdownNow();
+            System.out.println("=== Server đã tắt an toàn ===");
+        }));
+
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             System.out.println("Server đang lắng nghe trên cổng " + PORT);
 

@@ -3,6 +3,7 @@ package com.auction.client.controller;
 import com.auction.client.network.NetworkClient;
 import com.auction.common.enums.ItemType;
 import com.auction.common.message.*;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -84,32 +85,32 @@ public class CreateItemController {
             CreateItemRequest req = new CreateItemRequest(name, desc, price, user.getUserId(), type, extraAttrs);
             ClientRequest request = new ClientRequest(Action.CREATE_ITEM, req);
 
-            ClientResponse res = NetworkClient.getInstance().sendRequest(request);
+            statusLabel.setText("Đang tạo sản phẩm...");
+            statusLabel.setStyle("-fx-text-fill: gray;");
 
-            if (res.isSuccess()) {
-                statusLabel.setText("Tạo sản phẩm & lên lịch đấu giá thành công!");
-                statusLabel.setStyle("-fx-text-fill: #2ecc71;");
-
-                // Chuyển về Dashboard sau 1 giây
-                new Thread(() -> {
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException ignored) {
-                    }
-                    javafx.application.Platform.runLater(this::goBack);
-                }).start();
-            } else {
-                statusLabel.setText(res.getMessage());
-                statusLabel.setStyle("-fx-text-fill: #e74c3c;");
-            }
+            NetworkClient.getInstance().sendRequestAsync(request).thenAccept(res -> Platform.runLater(() -> {
+                if (res.isSuccess()) {
+                    statusLabel.setText("Tạo sản phẩm & lên lịch đấu giá thành công!");
+                    statusLabel.setStyle("-fx-text-fill: #2ecc71;");
+                    new Thread(() -> {
+                        try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+                        Platform.runLater(this::goBack);
+                    }).start();
+                } else {
+                    statusLabel.setText(res.getMessage());
+                    statusLabel.setStyle("-fx-text-fill: #e74c3c;");
+                }
+            })).exceptionally(ex -> {
+                Platform.runLater(() -> {
+                    statusLabel.setText("Lỗi kết nối server!");
+                    statusLabel.setStyle("-fx-text-fill: #e74c3c;");
+                });
+                return null;
+            });
 
         } catch (NumberFormatException e) {
             statusLabel.setText("Giá và Thời gian phải là số hợp lệ!");
             statusLabel.setStyle("-fx-text-fill: #e74c3c;");
-        } catch (Exception e) {
-            statusLabel.setText("Lỗi kết nối server!");
-            statusLabel.setStyle("-fx-text-fill: #e74c3c;");
-            e.printStackTrace();
         }
     }
 
@@ -119,7 +120,7 @@ public class CreateItemController {
             Parent root = FXMLLoader.load(getClass().getResource("/view/seller_dashboard.fxml"));
             Stage stage = (Stage) nameField.getScene().getWindow();
             Scene scene = new Scene(root);
-            String css = getClass().getResource("/css/style.css").toExternalForm();
+            String css = getClass().getResource("/CSS/style.css").toExternalForm();
             scene.getStylesheets().add(css);
             stage.setScene(scene);
         } catch (Exception e) {

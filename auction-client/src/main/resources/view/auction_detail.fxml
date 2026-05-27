@@ -41,6 +41,13 @@
 
                         <Separator/>
 
+                        <VBox spacing="5">
+                            <Label text="Mô tả" styleClass="text-sm, font-bold, text-foreground"/>
+                            <Label fx:id="descLabel" text="Không có mô tả" wrapText="true" styleClass="text-sm, text-muted"/>
+                        </VBox>
+
+                        <Separator/>
+
                         <VBox spacing="10">
                             <Label text="Đặt giá mới" styleClass="text-sm, font-bold, text-foreground"/>
                             <HBox spacing="10">

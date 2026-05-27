@@ -115,26 +115,31 @@ public class AuctionDetailController {
             PlaceBidRequest req = new PlaceBidRequest(auctionId, user.getUserId(), amount, false);
             ClientRequest request = new ClientRequest(Action.PLACE_BID, req);
 
-            NetworkClient client = NetworkClient.getInstance();
-            ClientResponse res = client.sendRequest(request);
+            timeLabel.setText("Đang xử lý...");
+            timeLabel.setStyle("-fx-text-fill: gray;");
 
-            if (res.isSuccess()) {
-                timeLabel.setText("Đặt giá thành công: " + String.format("%,.0f", amount) + " VNĐ");
-                timeLabel.setStyle("-fx-text-fill: #2ecc71;");
-                priceLabel.setText(String.format("%,.0f VNĐ", amount));
-                if (currentAuction != null) currentAuction.setCurrentPrice(amount);
-                bidAmountField.clear();
-            } else {
-                timeLabel.setText("Lỗi: " + res.getMessage());
-                timeLabel.setStyle("-fx-text-fill: #e74c3c;");
-            }
+            NetworkClient.getInstance().sendRequestAsync(request).thenAccept(res -> Platform.runLater(() -> {
+                if (res.isSuccess()) {
+                    timeLabel.setText("Đặt giá thành công: " + String.format("%,.0f", amount) + " VNĐ");
+                    timeLabel.setStyle("-fx-text-fill: #2ecc71;");
+                    priceLabel.setText(String.format("%,.0f VNĐ", amount));
+                    if (currentAuction != null) currentAuction.setCurrentPrice(amount);
+                    bidAmountField.clear();
+                } else {
+                    timeLabel.setText("Lỗi: " + res.getMessage());
+                    timeLabel.setStyle("-fx-text-fill: #e74c3c;");
+                }
+            })).exceptionally(ex -> {
+                Platform.runLater(() -> {
+                    timeLabel.setText("Lỗi kết nối server!");
+                    timeLabel.setStyle("-fx-text-fill: #e74c3c;");
+                });
+                return null;
+            });
+
         } catch (NumberFormatException ex) {
             timeLabel.setText("Giá trị không hợp lệ!");
             timeLabel.setStyle("-fx-text-fill: #e74c3c;");
-        } catch (Exception e) {
-            timeLabel.setText("Lỗi kết nối server!");
-            timeLabel.setStyle("-fx-text-fill: #e74c3c;");
-            e.printStackTrace();
         }
     }
 

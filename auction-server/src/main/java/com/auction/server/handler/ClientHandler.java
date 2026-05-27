@@ -3,19 +3,9 @@ package com.auction.server.handler;
 import com.auction.common.message.Action;
 import com.auction.common.message.ClientRequest;
 import com.auction.common.message.ClientResponse;
-import com.auction.common.message.CreateItemRequest;
-import com.auction.common.message.BanUserRequest;
-import com.auction.common.message.CancelAuctionRequest;
-import com.auction.common.message.GetItemsRequest;
-import com.auction.common.message.GetAllUsersRequest;
-import com.auction.common.message.UpdateItemRequest;
-import com.auction.common.message.DeleteItemRequest;
-import com.auction.common.message.LoginRequest;
-import com.auction.common.message.RegisterRequest;
-import com.auction.common.message.PlaceBidRequest;
-import com.auction.common.message.GetBidHistoryRequest;
-import com.auction.common.message.UnbanUserRequest;
+import com.auction.common.entity.AutoBid;
 import com.auction.common.entity.BidTransaction;
+import com.auction.common.message.*;
 import com.auction.common.strategy.BidStrategy;
 import com.auction.common.strategy.ManualBidStrategy;
 import com.auction.common.strategy.AutoBidStrategy;
@@ -27,13 +17,7 @@ import com.auction.server.repository.SerializableAuctionRepository;
 import com.auction.server.repository.SerializableBidRepository;
 import com.auction.server.observer.AuctionEventManager;
 import com.auction.server.observer.BroadcastObserver;
-import com.auction.server.service.ItemService;
-import com.auction.server.service.UserService;
-import com.auction.server.service.BidService;
-import com.auction.server.service.AuctionService;
-import com.auction.server.service.AuctionScheduler;
-import com.auction.common.message.CreateAuctionRequest;
-import com.auction.common.message.GetAuctionsRequest;
+import com.auction.server.service.*;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -55,15 +39,19 @@ public class ClientHandler implements Runnable {
     // Khởi tạo các services và event manager dùng chung cho các handlers
     private static final ItemService itemService = new ItemService();
     private static final AuctionEventManager eventManager = new AuctionEventManager();
+    private static final SerializableAuctionRepository auctionRepo = new SerializableAuctionRepository();
+    private static final SerializableBidRepository bidRepo = new SerializableBidRepository();
+    private static final BidService bidService = new BidService(auctionRepo, bidRepo, eventManager);
+    private static final AutoBidService autoBidService = new AutoBidService(bidService, auctionRepo, bidRepo);
     static {
-        // Đăng ký BroadcastObserver để push real-time khi có bid mới
         eventManager.subscribe(new BroadcastObserver());
+        eventManager.subscribe(autoBidService);
         AuctionScheduler.setEventManager(eventManager);
     }
-    private static final BidService bidService = new BidService(
-            new SerializableAuctionRepository(),
-            new SerializableBidRepository(),
-            eventManager);
+
+    public static AuctionEventManager getEventManager() {
+        return eventManager;
+    }
 
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
@@ -132,6 +120,8 @@ public class ClientHandler implements Runnable {
             case CREATE_ITEM -> handleCreateItem(payload);
             case UPDATE_ITEM -> handleUpdateItem(payload);
             case DELETE_ITEM -> handleDeleteItem(payload);
+            case REGISTER_AUTO_BID -> handleRegisterAutoBid(payload);
+            case REMOVE_AUTO_BID -> handleRemoveAutoBid(payload);
         };
     }
 
@@ -157,10 +147,10 @@ public class ClientHandler implements Runnable {
     }
 
     private ClientResponse handleCancelAuction(Serializable payload) {
-        if (!(payload instanceof CancelAuctionRequest)) {
+        if (!(payload instanceof CancelAuctionRequest req)) {
             return failure("CANCEL_AUCTION payload must be CancelAuctionRequest");
         }
-        return failure("CANCEL_AUCTION pending: admin service integration");
+        return AuctionService.cancelAuction(req);
     }
 
     private ClientResponse handleRegister(Serializable payload) {
@@ -220,7 +210,12 @@ public class ClientHandler implements Runnable {
             return failure("PLACE_BID payload must be PlaceBidRequest");
         }
         if (req.isAutoBid()) {
-            return failure("Tính năng đấu giá tự động (Auto-bid) hiện chưa được hỗ trợ.");
+            if (autoBidService.hasAutoBid(req.getAuctionId(), req.getBidderId())) {
+                return failure("Bạn đã đăng ký auto-bid cho phiên này rồi.");
+            }
+            AutoBid config = new AutoBid(req.getAuctionId(), req.getBidderId(), req.getAmount(), 500);
+            autoBidService.registerAutoBid(config);
+            return new ClientResponse(true, "Đăng ký auto-bid thành công (max: " + String.format("%,.0f", req.getAmount()) + " VNĐ)", null);
         }
         BidStrategy strategy = new ManualBidStrategy();
         try {
@@ -258,6 +253,23 @@ public class ClientHandler implements Runnable {
             return failure("CREATE_AUCTION payload must be CreateAuctionRequest");
         }
         return AuctionService.createAuction(req);
+    }
+
+    private ClientResponse handleRegisterAutoBid(Serializable payload) {
+        if (!(payload instanceof RegisterAutoBidRequest req)) {
+            return failure("REGISTER_AUTO_BID payload must be RegisterAutoBidRequest");
+        }
+        AutoBid config = new AutoBid(req.getAuctionId(), req.getBidderId(), req.getMaxBid(), req.getIncrement());
+        autoBidService.registerAutoBid(config);
+        return new ClientResponse(true, "Đăng ký auto-bid thành công", null);
+    }
+
+    private ClientResponse handleRemoveAutoBid(Serializable payload) {
+        if (!(payload instanceof RemoveAutoBidRequest req)) {
+            return failure("REMOVE_AUTO_BID payload must be RemoveAutoBidRequest");
+        }
+        autoBidService.removeAutoBid(req.getAuctionId(), req.getBidderId());
+        return new ClientResponse(true, "Đã hủy auto-bid", null);
     }
 
     private ClientResponse failure(String message) {

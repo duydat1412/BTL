@@ -15,9 +15,9 @@ name: Build & Test
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: [ main, dev, feature/** ]
   pull_request:
-    branches: [ main, dev ]
+    branches: [ main, dev, feature/** ]
 
 jobs:
   build:
@@ -47,6 +47,14 @@ jobs:
       - name: Build & Test
         run: mvn clean test --batch-mode
 
-      # Bước 5: Checkstyle (giai đoạn đầu chỉ báo cáo, chưa fail CI)
+      # Bước 5: Upload JaCoCo coverage report
+      - name: Upload Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: auction-server/target/site/jacoco/
+
+      # Bước 6: Checkstyle (giai đoạn đầu chỉ báo cáo, chưa fail CI)
       - name: Checkstyle
         run: mvn checkstyle:check --batch-mode

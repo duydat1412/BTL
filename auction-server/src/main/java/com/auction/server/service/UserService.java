@@ -17,10 +17,18 @@ public class UserService{
     static SerializableUserRepository sur = new SerializableUserRepository();
     // Dang ki tai khoan moi,
     public static synchronized ClientResponse signup(RegisterRequest registerRequest, String department)throws AuthenticationException {
+        if (registerRequest == null) {
+            throw new AuthenticationException("parameters cannot be null");
+        }
         UserRole userRole=registerRequest.getRole();
         String username=registerRequest.getUsername();
         String password=registerRequest.getPassword();
         String email=registerRequest.getEmail();
+
+        if(userRole==null||username==null||email==null||password==null){
+            throw new AuthenticationException("parameters cannot be null");
+        }
+
         String mr="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";  ///Mail pattern
         Pattern mp=Pattern.compile(mr, Pattern.CASE_INSENSITIVE);
         Matcher m= mp.matcher(email);
