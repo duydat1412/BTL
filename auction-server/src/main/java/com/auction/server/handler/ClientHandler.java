@@ -16,6 +16,7 @@ import com.auction.server.exception.InvalidBidException;
 import com.auction.server.repository.SerializableAuctionRepository;
 import com.auction.server.repository.SerializableBidRepository;
 import com.auction.server.observer.AuctionEventManager;
+import com.auction.server.observer.BalanceObserver;
 import com.auction.server.observer.BroadcastObserver;
 import com.auction.server.service.*;
 
@@ -46,6 +47,7 @@ public class ClientHandler implements Runnable {
     static {
         eventManager.subscribe(new BroadcastObserver());
         eventManager.subscribe(autoBidService);
+        eventManager.subscribe(new BalanceObserver());
         AuctionScheduler.setEventManager(eventManager);
     }
 
@@ -123,6 +125,9 @@ public class ClientHandler implements Runnable {
             case DELETE_ITEM -> handleDeleteItem(payload);
             case REGISTER_AUTO_BID -> handleRegisterAutoBid(payload);
             case REMOVE_AUTO_BID -> handleRemoveAutoBid(payload);
+            case GET_BALANCE -> handleGetBalance(payload);
+            case TOP_UP -> handleTopUp(payload);
+            case SELLER_CANCEL_AUCTION -> handleSellerCancelAuction(payload);
         };
     }
 
@@ -214,10 +219,29 @@ public class ClientHandler implements Runnable {
             if (autoBidService.hasAutoBid(req.getAuctionId(), req.getBidderId())) {
                 return failure("Bạn đã đăng ký auto-bid cho phiên này rồi.");
             }
+            // Kiem tra so du >= maxBid (req.getAmount() la maxBid trong PlaceBidRequest)
+            com.auction.server.repository.SerializableUserRepository userRepo =
+                    new com.auction.server.repository.SerializableUserRepository();
+            com.auction.common.entity.User bidder = userRepo.findById(req.getBidderId());
+            if (bidder != null && bidder.getBalance() < req.getAmount()) {
+                return failure("So du khong du cho auto-bid. So du: "
+                        + String.format("%,.0f", bidder.getBalance())
+                        + " VND, can: " + String.format("%,.0f", req.getAmount()) + " VND");
+            }
             AutoBid config = new AutoBid(req.getAuctionId(), req.getBidderId(), req.getAmount(), 500);
             autoBidService.registerAutoBid(config);
             return new ClientResponse(true, "Đăng ký auto-bid thành công (max: " + String.format("%,.0f", req.getAmount()) + " VNĐ)", null);
         }
+
+        // Kiem tra so du cho manual bid
+        com.auction.server.repository.SerializableUserRepository userRepo =
+                new com.auction.server.repository.SerializableUserRepository();
+        com.auction.common.entity.User bidder = userRepo.findById(req.getBidderId());
+        if (bidder != null && bidder.getBalance() < req.getAmount()) {
+            return failure("So du khong du. So du: " + String.format("%,.0f", bidder.getBalance())
+                    + " VND, can: " + String.format("%,.0f", req.getAmount()) + " VND");
+        }
+
         BidStrategy strategy = new ManualBidStrategy();
         try {
             BidTransaction result = bidService.placeBid(req.getAuctionId(), req.getBidderId(), req.getAmount(),
@@ -260,6 +284,17 @@ public class ClientHandler implements Runnable {
         if (!(payload instanceof RegisterAutoBidRequest req)) {
             return failure("REGISTER_AUTO_BID payload must be RegisterAutoBidRequest");
         }
+
+        // Kiem tra so du >= maxBid
+        com.auction.server.repository.SerializableUserRepository userRepo =
+                new com.auction.server.repository.SerializableUserRepository();
+        com.auction.common.entity.User bidder = userRepo.findById(req.getBidderId());
+        if (bidder != null && bidder.getBalance() < req.getMaxBid()) {
+            return failure("So du khong du cho auto-bid. So du: "
+                    + String.format("%,.0f", bidder.getBalance())
+                    + " VND, can: " + String.format("%,.0f", req.getMaxBid()) + " VND");
+        }
+
         AutoBid config = new AutoBid(req.getAuctionId(), req.getBidderId(), req.getMaxBid(), req.getIncrement());
         autoBidService.registerAutoBid(config);
         return new ClientResponse(true, "Đăng ký auto-bid thành công", null);
@@ -282,4 +317,24 @@ public class ClientHandler implements Runnable {
         ClientResponse run() throws AuthenticationException;
     }
 
+    private ClientResponse handleGetBalance(Serializable payload) {
+        if (!(payload instanceof String userId)) {
+            return failure("GET_BALANCE payload must be userId (String)");
+        }
+        return UserService.getBalance(userId);
+    }
+
+    private ClientResponse handleTopUp(Serializable payload) {
+        if (!(payload instanceof TopUpRequest req)) {
+            return failure("TOP_UP payload must be TopUpRequest");
+        }
+        return UserService.topUp(req);
+    }
+
+    private ClientResponse handleSellerCancelAuction(Serializable payload) {
+        if (!(payload instanceof SellerCancelAuctionRequest req)) {
+            return failure("SELLER_CANCEL_AUCTION payload must be SellerCancelAuctionRequest");
+        }
+        return AuctionService.sellerCancelAuction(req);
+    }
 }

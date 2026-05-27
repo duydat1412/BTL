@@ -24,10 +24,14 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import com.auction.client.util.NotificationToast;
+
 public class SellerDashboardController {
 
     @FXML
     private Label userInfoLabel;
+    @FXML
+    private Label balanceLabel;
     @FXML
     private TextField nameField;
     @FXML
@@ -45,6 +49,7 @@ public class SellerDashboardController {
 
     private NetworkClient.PushListener pushListener;
     private Set<String> finishedItemIds = java.util.Collections.emptySet();
+    private Map<String, String> activeAuctionItemIds = new HashMap<>(); // itemId -> auctionId
 
     @FXML
     public void initialize() {
@@ -58,12 +63,14 @@ public class SellerDashboardController {
         itemListView.setCellFactory(param -> new ListCell<>() {
             private final Button editBtn = new Button("Sửa");
             private final Button deleteBtn = new Button("Xóa");
-            private final HBox buttons = new HBox(5, editBtn, deleteBtn);
+            private final Button cancelBtn = new Button("Hủy phiên");
+            private final HBox buttons = new HBox(5, editBtn, deleteBtn, cancelBtn);
             private final HBox container = new HBox(10);
 
             {
                 editBtn.setStyle("-fx-background-color: #3b82f6; -fx-text-fill: white; -fx-font-size: 12; -fx-padding: 4 10; -fx-background-radius: 4;");
                 deleteBtn.setStyle("-fx-background-color: #ef4444; -fx-text-fill: white; -fx-font-size: 12; -fx-padding: 4 10; -fx-background-radius: 4;");
+                cancelBtn.setStyle("-fx-background-color: #f97316; -fx-text-fill: white; -fx-font-size: 12; -fx-padding: 4 10; -fx-background-radius: 4;");
             }
 
             @Override
@@ -88,6 +95,14 @@ public class SellerDashboardController {
                         if (!hasFinished) handleDeleteItem(item);
                     });
 
+                    boolean hasActive = activeAuctionItemIds.containsKey(item.getId());
+                    cancelBtn.setVisible(hasActive);
+                    cancelBtn.setManaged(hasActive);
+                    if (hasActive) {
+                        String auctionId = activeAuctionItemIds.get(item.getId());
+                        cancelBtn.setOnAction(e -> handleCancelAuction(auctionId, item));
+                    }
+
                     setGraphic(container);
                     setText(null);
                 }
@@ -95,6 +110,7 @@ public class SellerDashboardController {
         });
 
         loadItems();
+        loadBalance();
         registerPushListener();
     }
 
@@ -114,17 +130,24 @@ public class SellerDashboardController {
                         .map(Item.class::cast)
                         .toList();
 
-                // Xác định item nào có FINISHED auction
+                // Xác định item nào có FINISHED auction và item nào có active auction
                 if (auctionsRes.isSuccess() && auctionsRes.getData() != null) {
                     List<?> rawAuctions = (List<?>) auctionsRes.getData();
-                    finishedItemIds = rawAuctions.stream()
+                    List<Auction> auctionList = rawAuctions.stream()
                             .filter(Auction.class::isInstance)
                             .map(Auction.class::cast)
+                            .toList();
+                    finishedItemIds = auctionList.stream()
                             .filter(a -> a.getStatus() == AuctionStatus.FINISHED)
                             .map(Auction::getItemId)
                             .collect(Collectors.toSet());
+                    activeAuctionItemIds = auctionList.stream()
+                            .filter(a -> a.getStatus() == AuctionStatus.OPEN
+                                    || a.getStatus() == AuctionStatus.RUNNING)
+                            .collect(Collectors.toMap(Auction::getItemId, Auction::getId, (a1, a2) -> a1));
                 } else {
                     finishedItemIds = java.util.Collections.emptySet();
+                    activeAuctionItemIds = new HashMap<>();
                 }
 
                 itemListView.getItems().setAll(items);
@@ -142,7 +165,10 @@ public class SellerDashboardController {
         pushListener = pushMsg -> {
             if (pushMsg.getType() == ServerPushMessage.PushType.AUCTION_STARTED
                     || pushMsg.getType() == ServerPushMessage.PushType.AUCTION_ENDED) {
-                Platform.runLater(this::loadItems);
+                Platform.runLater(() -> {
+                    loadItems();
+                    loadBalance();
+                });
             }
         };
         NetworkClient.getInstance().addPushListener(pushListener);
@@ -327,5 +353,80 @@ public class SellerDashboardController {
     @FXML
     public void handleRefresh() {
         loadItems();
+        loadBalance();
+    }
+
+    private void loadBalance() {
+        AuthUserData user = NetworkClient.getInstance().getCurrentUser();
+        if (user == null || balanceLabel == null) return;
+        ClientRequest req = new ClientRequest(Action.GET_BALANCE, user.getUserId());
+        NetworkClient.getInstance().sendRequestAsync(req).thenAccept(res -> Platform.runLater(() -> {
+            if (res.isSuccess() && res.getData() != null) {
+                double balance = (double) res.getData();
+                balanceLabel.setText("Số dư: " + String.format("%,.0f", balance) + " VNĐ");
+            }
+        }));
+    }
+
+    @FXML
+    public void handleTopUp() {
+        AuthUserData user = NetworkClient.getInstance().getCurrentUser();
+        if (user == null) return;
+
+        TextInputDialog dialog = new TextInputDialog("100000");
+        dialog.setTitle("Nạp tiền");
+        dialog.setHeaderText("Nhập số tiền muốn nạp:");
+        dialog.setContentText("Số tiền (VNĐ):");
+
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(amountStr -> {
+            try {
+                double amount = Double.parseDouble(amountStr);
+                if (amount <= 0) return;
+                TopUpRequest req = new TopUpRequest(user.getUserId(), amount);
+                NetworkClient.getInstance().sendRequestAsync(new ClientRequest(Action.TOP_UP, req))
+                    .thenAccept(res -> Platform.runLater(() -> {
+                        if (res.isSuccess()) {
+                            Stage stage = (Stage) userInfoLabel.getScene().getWindow();
+                            NotificationToast.show(stage, "Nạp thành công: " + String.format("%,.0f", amount) + " VNĐ", false);
+                            loadBalance();
+                        }
+                    }));
+            } catch (NumberFormatException e) {
+                // ignore
+            }
+        });
+    }
+
+    private void handleCancelAuction(String auctionId, Item item) {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Hủy phiên đấu giá");
+        confirm.setHeaderText("Xác nhận hủy phiên");
+        confirm.setContentText("Bạn có chắc muốn hủy phiên đấu giá cho sản phẩm \"" + item.getName() + "\"?");
+        Optional<ButtonType> result = confirm.showAndWait();
+
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            AuthUserData user = NetworkClient.getInstance().getCurrentUser();
+            if (user == null) return;
+
+            SellerCancelAuctionRequest req = new SellerCancelAuctionRequest(
+                    user.getUserId(), auctionId, "Seller cancelled");
+            ClientRequest request = new ClientRequest(Action.SELLER_CANCEL_AUCTION, req);
+
+            statusLabel.setText("Đang hủy...");
+            NetworkClient.getInstance().sendRequestAsync(request).thenAccept(res -> Platform.runLater(() -> {
+                if (res.isSuccess()) {
+                    statusLabel.setText("Hủy phiên thành công!");
+                    statusLabel.setStyle("-fx-text-fill: #2ecc71;");
+                    loadItems();
+                } else {
+                    statusLabel.setText(res.getMessage());
+                    statusLabel.setStyle("-fx-text-fill: #e74c3c;");
+                }
+            })).exceptionally(ex -> {
+                Platform.runLater(() -> statusLabel.setText("Lỗi kết nối server!"));
+                return null;
+            });
+        }
     }
 }

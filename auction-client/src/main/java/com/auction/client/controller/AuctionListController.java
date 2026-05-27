@@ -30,6 +30,9 @@ public class AuctionListController {
     private Label userInfoLabel;
 
     @FXML
+    private Label balanceLabel;
+
+    @FXML
     private Label statusLabel;
 
     @FXML
@@ -82,6 +85,7 @@ public class AuctionListController {
 
         loadAuctions();
         loadWonAuctions();
+        loadBalance();
         registerPushListener();
     }
 
@@ -176,6 +180,7 @@ public class AuctionListController {
                 Platform.runLater(() -> {
                     loadAuctions();
                     loadWonAuctions();
+                    loadBalance();
                     Stage stage = (Stage) listView.getScene().getWindow();
                     NotificationToast.show(stage, "Có lượt đặt giá mới!", false);
                 });
@@ -183,6 +188,7 @@ public class AuctionListController {
                 Platform.runLater(() -> {
                     loadAuctions();
                     loadWonAuctions();
+                    loadBalance();
                     String title = pushMsg.getData() instanceof Auction a ? a.getTitle() : "";
                     Stage stage = (Stage) listView.getScene().getWindow();
                     NotificationToast.show(stage, "Phiên \"" + title + "\" đã kết thúc!", true);
@@ -224,6 +230,62 @@ public class AuctionListController {
     public void handleRefresh() {
         loadAuctions();
         loadWonAuctions();
+        loadBalance();
+    }
+
+    private void loadBalance() {
+        AuthUserData user = NetworkClient.getInstance().getCurrentUser();
+        if (user == null || balanceLabel == null) return;
+        ClientRequest req = new ClientRequest(Action.GET_BALANCE, user.getUserId());
+        NetworkClient.getInstance().sendRequestAsync(req).thenAccept(res -> Platform.runLater(() -> {
+            if (res.isSuccess() && res.getData() != null) {
+                double balance = (double) res.getData();
+                balanceLabel.setText("Số dư: " + String.format("%,.0f", balance) + " VNĐ");
+            }
+        }));
+    }
+
+    @FXML
+    public void handleTopUp() {
+        AuthUserData user = NetworkClient.getInstance().getCurrentUser();
+        if (user == null) return;
+
+        TextInputDialog dialog = new TextInputDialog("100000");
+        dialog.setTitle("Nạp tiền");
+        dialog.setHeaderText("Nhập số tiền muốn nạp:");
+        dialog.setContentText("Số tiền (VNĐ):");
+
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(amountStr -> {
+            try {
+                double amount = Double.parseDouble(amountStr);
+                if (amount <= 0) {
+                    showAlert("Số tiền phải lớn hơn 0!");
+                    return;
+                }
+                TopUpRequest req = new TopUpRequest(user.getUserId(), amount);
+                NetworkClient.getInstance().sendRequestAsync(new ClientRequest(Action.TOP_UP, req))
+                    .thenAccept(res -> Platform.runLater(() -> {
+                        if (res.isSuccess()) {
+                            NotificationToast.show((Stage) balanceLabel.getScene().getWindow(),
+                                    "Nạp thành công: " + String.format("%,.0f", amount) + " VNĐ", false);
+                            loadBalance();
+                        } else {
+                            showAlert("Lỗi: " + res.getMessage());
+                        }
+                    }));
+            } catch (NumberFormatException e) {
+                showAlert("Số tiền không hợp lệ!");
+            }
+        });
+    }
+
+    private void showAlert(String msg) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Thông báo");
+        alert.setHeaderText(null);
+        alert.setContentText(msg);
+        alert.showAndWait();
     }
 
     private void openDetail(Auction selected) {

@@ -34,6 +34,7 @@ public class AuctionDetailController {
     @FXML private TextField maxBidField;
     @FXML private TextField incrementField;
     @FXML private Button autoBidBtn;
+    @FXML private Label balanceLabel;
 
     private Auction currentAuction;
     private Item currentItem;
@@ -60,6 +61,9 @@ public class AuctionDetailController {
         if (descLabel != null) {
             descLabel.setText(desc);
         }
+
+        // Load balance
+        loadBalance();
 
         // Start countdown timer
         startCountdown();
@@ -187,6 +191,20 @@ public class AuctionDetailController {
         });
     }
 
+    private void loadBalance() {
+        AuthUserData user = NetworkClient.getInstance().getCurrentUser();
+        if (user == null || balanceLabel == null) return;
+        ClientRequest req = new ClientRequest(Action.GET_BALANCE, user.getUserId());
+        NetworkClient.getInstance().sendRequestAsync(req).thenAccept(res -> Platform.runLater(() -> {
+            if (res.isSuccess() && res.getData() != null) {
+                double balance = (double) res.getData();
+                balanceLabel.setText("Số dư: " + String.format("%,.0f", balance) + " VNĐ");
+                // Cập nhật balance trong AuthUserData để dùng cho client-side check
+                user.setBalance(balance);
+            }
+        }));
+    }
+
     private void registerPushListener() {
         pushListener = pushMsg -> {
             // Cập nhật endTime + giá từ push (quan trọng cho anti-sniping và auto-bid)
@@ -221,6 +239,7 @@ public class AuctionDetailController {
                         autoBidBtn.setDisable(true);
                         if (countdownTimeline != null) countdownTimeline.stop();
                         loadBidHistory();
+                        loadBalance();
                     });
                 }
             }
@@ -244,6 +263,13 @@ public class AuctionDetailController {
             AuthUserData user = NetworkClient.getInstance().getCurrentUser();
             if (user == null) {
                 showStatus("Vui lòng đăng nhập lại!", true);
+                return;
+            }
+
+            // Client-side balance check
+            double balance = user.getBalance();
+            if (balance < amount) {
+                showStatus("Số dư không đủ! Số dư: " + String.format("%,.0f", balance) + " VNĐ", true);
                 return;
             }
 
@@ -305,6 +331,13 @@ public class AuctionDetailController {
             AuthUserData user = NetworkClient.getInstance().getCurrentUser();
             if (user == null) {
                 showStatus("Vui lòng đăng nhập lại!", true);
+                return;
+            }
+
+            // Client-side balance check
+            double balance = user.getBalance();
+            if (balance < maxBid) {
+                showStatus("Số dư không đủ cho auto-bid! Số dư: " + String.format("%,.0f", balance) + " VNĐ", true);
                 return;
             }
 
