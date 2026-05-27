@@ -4,10 +4,8 @@ import com.auction.client.network.NetworkClient;
 import com.auction.common.entity.Auction;
 import com.auction.common.entity.Item;
 import com.auction.common.enums.AuctionStatus;
-import com.auction.common.enums.ItemType;
 import com.auction.common.message.*;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -33,15 +31,11 @@ public class SellerDashboardController {
     @FXML
     private Label balanceLabel;
     @FXML
-    private TextField nameField;
+    private Label totalItemsLabel;
     @FXML
-    private TextField priceField;
+    private Label activeAuctionsLabel;
     @FXML
-    private ComboBox<ItemType> typeBox;
-    @FXML
-    private TextField descField;
-    @FXML
-    private TextField durationField;
+    private Label finishedAuctionsLabel;
     @FXML
     private Label statusLabel;
     @FXML
@@ -53,24 +47,22 @@ public class SellerDashboardController {
 
     @FXML
     public void initialize() {
-        typeBox.setItems(FXCollections.observableArrayList(ItemType.values()));
-
         AuthUserData user = NetworkClient.getInstance().getCurrentUser();
         if (user != null && userInfoLabel != null) {
             userInfoLabel.setText("Xin chào, " + user.getUsername());
         }
 
         itemListView.setCellFactory(param -> new ListCell<>() {
-            private final Button editBtn = new Button("Sửa");
             private final Button deleteBtn = new Button("Xóa");
             private final Button cancelBtn = new Button("Hủy phiên");
-            private final HBox buttons = new HBox(5, editBtn, deleteBtn, cancelBtn);
-            private final HBox container = new HBox(10);
+            private final HBox buttons = new HBox(8, deleteBtn, cancelBtn);
+            private final HBox container = new HBox(15);
 
             {
-                editBtn.setStyle("-fx-background-color: #3b82f6; -fx-text-fill: white; -fx-font-size: 12; -fx-padding: 4 10; -fx-background-radius: 4;");
-                deleteBtn.setStyle("-fx-background-color: #ef4444; -fx-text-fill: white; -fx-font-size: 12; -fx-padding: 4 10; -fx-background-radius: 4;");
-                cancelBtn.setStyle("-fx-background-color: #f97316; -fx-text-fill: white; -fx-font-size: 12; -fx-padding: 4 10; -fx-background-radius: 4;");
+                container.getStyleClass().add("custom-card-cell");
+                container.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                deleteBtn.getStyleClass().addAll("btn-sm", "btn-sm-red");
+                cancelBtn.getStyleClass().addAll("btn-sm", "btn-sm-orange");
             }
 
             @Override
@@ -80,17 +72,13 @@ public class SellerDashboardController {
                     setGraphic(null);
                     setText(null);
                 } else {
-                    Label nameLabel = new Label(item.getName() + " - " + String.format("%,.0f", item.getStartingPrice()) + " VNĐ");
-                    nameLabel.setStyle("-fx-text-fill: #0f172a; -fx-font-weight: bold;");
+                    Label nameLabel = new Label(item.getName() + " - Khởi điểm: " + String.format("%,.0f", item.getStartingPrice()) + " VNĐ");
+                    nameLabel.getStyleClass().addAll("text-white", "font-bold");
                     container.getChildren().setAll(nameLabel, new Region(), buttons);
-                    container.setHgrow(nameLabel, javafx.scene.layout.Priority.ALWAYS);
+                    container.setHgrow(container.getChildren().get(1), javafx.scene.layout.Priority.ALWAYS);
 
-                    editBtn.setOnAction(e -> showEditDialog(item));
                     boolean hasFinished = finishedItemIds.contains(item.getId());
                     deleteBtn.setDisable(hasFinished);
-                    deleteBtn.setStyle(hasFinished
-                            ? "-fx-background-color: #9ca3af; -fx-text-fill: white; -fx-font-size: 12; -fx-padding: 4 10; -fx-background-radius: 4;"
-                            : "-fx-background-color: #ef4444; -fx-text-fill: white; -fx-font-size: 12; -fx-padding: 4 10; -fx-background-radius: 4;");
                     deleteBtn.setOnAction(e -> {
                         if (!hasFinished) handleDeleteItem(item);
                     });
@@ -112,6 +100,25 @@ public class SellerDashboardController {
         loadItems();
         loadBalance();
         registerPushListener();
+
+        // Callback khi bị ban
+        NetworkClient.getInstance().setOnBannedCallback(reason -> {
+            com.auction.client.util.BanHandler.handleBan(userInfoLabel.getScene(), reason);
+        });
+    }
+
+    @FXML
+    public void goToAddItem() {
+        if (pushListener != null) {
+            NetworkClient.getInstance().removePushListener(pushListener);
+        }
+        try {
+            Parent root = FXMLLoader.load(getClass().getResource("/view/create_item.fxml"));
+            Stage stage = (Stage) userInfoLabel.getScene().getWindow();
+            stage.getScene().setRoot(root);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void loadItems() {
@@ -151,6 +158,12 @@ public class SellerDashboardController {
                 }
 
                 itemListView.getItems().setAll(items);
+                
+                // Cập nhật thẻ thống kê
+                if (totalItemsLabel != null) totalItemsLabel.setText(String.valueOf(items.size()));
+                if (activeAuctionsLabel != null) activeAuctionsLabel.setText(String.valueOf(activeAuctionItemIds.size()));
+                if (finishedAuctionsLabel != null) finishedAuctionsLabel.setText(String.valueOf(finishedItemIds.size()));
+
                 statusLabel.setText("Có " + items.size() + " sản phẩm");
             } else {
                 statusLabel.setText("Lỗi tải dữ liệu: " + itemsRes.getMessage());
@@ -174,75 +187,6 @@ public class SellerDashboardController {
         NetworkClient.getInstance().addPushListener(pushListener);
     }
 
-    private void showEditDialog(Item item) {
-        Dialog<Item> dialog = new Dialog<>();
-        dialog.setTitle("Sửa sản phẩm");
-        dialog.setHeaderText("Chỉnh sửa thông tin sản phẩm");
-
-        ButtonType saveBtnType = new ButtonType("Lưu", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(saveBtnType, ButtonType.CANCEL);
-
-        TextField nameField = new TextField(item.getName());
-        TextField priceField = new TextField(String.valueOf(item.getStartingPrice()));
-        TextField descField = new TextField(item.getDescription());
-        ComboBox<ItemType> typeField = new ComboBox<>(FXCollections.observableArrayList(ItemType.values()));
-        typeField.setValue(item.getItemType());
-
-        VBox content = new VBox(10,
-                new Label("Tên:"), nameField,
-                new Label("Giá:"), priceField,
-                new Label("Mô tả:"), descField,
-                new Label("Loại:"), typeField
-        );
-        dialog.getDialogPane().setContent(content);
-
-        dialog.setResultConverter(dialogBtn -> {
-            if (dialogBtn == saveBtnType) {
-                try {
-                    item.setName(nameField.getText());
-                    item.setStartingPrice(Double.parseDouble(priceField.getText()));
-                    item.setDescription(descField.getText());
-                    item.setItemType(typeField.getValue());
-                    return item;
-                } catch (NumberFormatException e) {
-                    return null;
-                }
-            }
-            return null;
-        });
-
-        Optional<Item> result = dialog.showAndWait();
-        result.ifPresent(updatedItem -> updateItem(updatedItem));
-    }
-
-    private void updateItem(Item item) {
-        AuthUserData user = NetworkClient.getInstance().getCurrentUser();
-        if (user == null) return;
-
-        UpdateItemRequest req = new UpdateItemRequest(
-                item.getId(), item.getName(), item.getDescription(),
-                item.getStartingPrice(), item.getItemType(), null
-        );
-        ClientRequest request = new ClientRequest(Action.UPDATE_ITEM, req);
-
-        statusLabel.setText("Đang cập nhật...");
-        statusLabel.setStyle("-fx-text-fill: gray;");
-
-        NetworkClient.getInstance().sendRequestAsync(request).thenAccept(res -> Platform.runLater(() -> {
-            if (res.isSuccess()) {
-                statusLabel.setText("Cập nhật thành công!");
-                statusLabel.setStyle("-fx-text-fill: #2ecc71;");
-                loadItems();
-            } else {
-                statusLabel.setText(res.getMessage());
-                statusLabel.setStyle("-fx-text-fill: #e74c3c;");
-            }
-        })).exceptionally(ex -> {
-            Platform.runLater(() -> statusLabel.setText("Lỗi kết nối server!"));
-            return null;
-        });
-    }
-
     private void handleDeleteItem(Item item) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Xóa sản phẩm");
@@ -261,11 +205,11 @@ public class SellerDashboardController {
             NetworkClient.getInstance().sendRequestAsync(request).thenAccept(res -> Platform.runLater(() -> {
                 if (res.isSuccess()) {
                     statusLabel.setText("Xóa thành công!");
-                    statusLabel.setStyle("-fx-text-fill: #2ecc71;");
+                    statusLabel.getStyleClass().setAll("status-success");
                     loadItems();
                 } else {
                     statusLabel.setText(res.getMessage());
-                    statusLabel.setStyle("-fx-text-fill: #e74c3c;");
+                    statusLabel.getStyleClass().setAll("status-error");
                 }
             })).exceptionally(ex -> {
                 Platform.runLater(() -> statusLabel.setText("Lỗi kết nối server!"));
@@ -292,61 +236,6 @@ public class SellerDashboardController {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
-    }
-
-    @FXML
-    public void handleCreateItem() {
-        String name = nameField.getText();
-        String priceStr = priceField.getText();
-        ItemType type = typeBox.getValue();
-        String desc = descField.getText();
-        String durationStr = durationField.getText();
-
-        if (name.isEmpty() || priceStr.isEmpty() || type == null || durationStr.isEmpty()) {
-            statusLabel.setText("Vui lòng điền Tên, Giá, Loại và Thời gian!");
-            statusLabel.setStyle("-fx-text-fill: #e74c3c;");
-            return;
-        }
-
-        try {
-            double price = Double.parseDouble(priceStr);
-            long duration = Long.parseLong(durationStr);
-            AuthUserData user = NetworkClient.getInstance().getCurrentUser();
-            if (user == null) {
-                statusLabel.setText("Vui lòng đăng nhập lại!");
-                return;
-            }
-
-            Map<String, String> attrs = new HashMap<>();
-            attrs.put("durationMinutes", String.valueOf(duration));
-
-            CreateItemRequest req = new CreateItemRequest(name, desc, price, user.getUserId(), type, attrs);
-            ClientRequest request = new ClientRequest(Action.CREATE_ITEM, req);
-
-            statusLabel.setText("Đang tạo...");
-            statusLabel.setStyle("-fx-text-fill: gray;");
-
-            NetworkClient.getInstance().sendRequestAsync(request).thenAccept(res -> Platform.runLater(() -> {
-                if (res.isSuccess()) {
-                    statusLabel.setText("Tạo thành công!");
-                    statusLabel.setStyle("-fx-text-fill: #2ecc71;");
-                    nameField.clear();
-                    priceField.clear();
-                    typeBox.setValue(null);
-                    descField.clear();
-                    loadItems();
-                } else {
-                    statusLabel.setText(res.getMessage());
-                    statusLabel.setStyle("-fx-text-fill: #e74c3c;");
-                }
-            })).exceptionally(ex -> {
-                Platform.runLater(() -> statusLabel.setText("Lỗi kết nối server!"));
-                return null;
-            });
-        } catch (NumberFormatException e) {
-            statusLabel.setText("Giá phải là số!");
-            statusLabel.setStyle("-fx-text-fill: #e74c3c;");
         }
     }
 
@@ -417,11 +306,11 @@ public class SellerDashboardController {
             NetworkClient.getInstance().sendRequestAsync(request).thenAccept(res -> Platform.runLater(() -> {
                 if (res.isSuccess()) {
                     statusLabel.setText("Hủy phiên thành công!");
-                    statusLabel.setStyle("-fx-text-fill: #2ecc71;");
+                    statusLabel.getStyleClass().setAll("status-success");
                     loadItems();
                 } else {
                     statusLabel.setText(res.getMessage());
-                    statusLabel.setStyle("-fx-text-fill: #e74c3c;");
+                    statusLabel.getStyleClass().setAll("status-error");
                 }
             })).exceptionally(ex -> {
                 Platform.runLater(() -> statusLabel.setText("Lỗi kết nối server!"));

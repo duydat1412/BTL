@@ -8,6 +8,10 @@ import com.auction.common.enums.AuctionStatus;
 import com.auction.common.message.*;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.animation.FadeTransition;
+import javafx.animation.TranslateTransition;
+import javafx.animation.ParallelTransition;
+import javafx.animation.Interpolator;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -15,14 +19,23 @@ import javafx.scene.*;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import com.auction.client.util.NotificationToast;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class AuctionDetailController {
+
+    @FXML private VBox notificationCard;
+    @FXML private Label notificationMessageLabel;
+    @FXML private Label notificationIconLabel;
+    @FXML private Label notificationTitleLabel;
+    @FXML private HBox timerBox;
 
     @FXML private Label nameLabel;
     @FXML private Label priceLabel;
@@ -79,8 +92,22 @@ public class AuctionDetailController {
 
         // Register push listener
         registerPushListener();
+
+        // Callback khi bị ban
+        NetworkClient.getInstance().setOnBannedCallback(reason -> {
+            com.auction.client.util.BanHandler.handleBan(nameLabel.getScene(), reason);
+        });
     }
 
+    private static final String[] STATUS_CLASSES = {
+            "status-success", "status-error", "status-warning", "status-info",
+            "text-up", "text-down", "text-warning"
+    };
+
+    private void setTimeLabelStyle(String... classes) {
+        timeLabel.getStyleClass().removeAll(STATUS_CLASSES);
+        timeLabel.getStyleClass().addAll(classes);
+    }
     private void initPriceChart() {
         if (priceChart == null) return;
 
@@ -110,18 +137,28 @@ public class AuctionDetailController {
                 priceLabel.setText(String.format("%,.0f VNĐ", fresh.getCurrentPrice()));
 
                 if (fresh.getStatus() == AuctionStatus.CANCELED) {
-                    timeLabel.setText("Phiên đã bị hủy");
-                    timeLabel.setStyle("-fx-text-fill: #ef4444; -fx-font-weight: bold;");
+                    if (timerBox != null) {
+                        timerBox.setVisible(false);
+                        timerBox.setManaged(false);
+                    }
                     disableAllControls();
+                    loadBidHistory();
                     return;
                 }
                 if (fresh.getStatus() == AuctionStatus.FINISHED) {
-                    timeLabel.setText("Phiên đã kết thúc");
-                    timeLabel.setStyle("-fx-text-fill: #ef4444; -fx-font-weight: bold;");
+                    if (timerBox != null) {
+                        timerBox.setVisible(false);
+                        timerBox.setManaged(false);
+                    }
                     disableAllControls();
+                    loadBidHistory();
                     return;
                 }
                 // Auction còn hoạt động — start countdown + load bid history
+                if (timerBox != null) {
+                    timerBox.setVisible(true);
+                    timerBox.setManaged(true);
+                }
                 startCountdown();
                 loadBidHistory();
             } else {
@@ -149,6 +186,11 @@ public class AuctionDetailController {
         if (currentAuction.getStatus() == AuctionStatus.CANCELED
                 || currentAuction.getStatus() == AuctionStatus.FINISHED) return;
 
+        if (timerBox != null) {
+            timerBox.setVisible(true);
+            timerBox.setManaged(true);
+        }
+
         if (countdownTimeline != null) countdownTimeline.stop();
 
         countdownTimeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> updateCountdown()));
@@ -165,7 +207,7 @@ public class AuctionDetailController {
         if (remaining.isNegative() || remaining.isZero()) {
             // Không tự disable — chờ server gửi AUCTION_ENDED (anti-sniping có thể gia hạn)
             timeLabel.setText("Đang chờ server xác nhận kết thúc...");
-            timeLabel.setStyle("-fx-text-fill: #eab308; -fx-font-weight: bold;");
+            setTimeLabelStyle("status-warning");
             return;
         }
 
@@ -176,11 +218,11 @@ public class AuctionDetailController {
 
         // Color: xanh (>1h), vàng (<1h), đỏ (<5 phút)
         if (remaining.toHours() >= 1) {
-            timeLabel.setStyle("-fx-text-fill: #22c55e; -fx-font-weight: bold;");
+            setTimeLabelStyle("text-up");
         } else if (remaining.toMinutes() >= 5) {
-            timeLabel.setStyle("-fx-text-fill: #eab308; -fx-font-weight: bold;");
+            setTimeLabelStyle("text-warning");
         } else {
-            timeLabel.setStyle("-fx-text-fill: #ef4444; -fx-font-weight: bold;");
+            setTimeLabelStyle("text-down");
         }
     }
 
@@ -272,13 +314,51 @@ public class AuctionDetailController {
                     setText(item);
                     // Check if this bid is by current user (by checking bidderId in text)
                     if (currentUserId != null && !currentUserId.isEmpty() && item.contains(currentUserId)) {
-                        setStyle("-fx-background-color: #fef3c7; -fx-text-fill: #0f172a;");
+                        if (!getStyleClass().contains("bid-highlight")) {
+                            getStyleClass().add("bid-highlight");
+                        }
                     } else {
-                        setStyle("");
+                        getStyleClass().remove("bid-highlight");
                     }
                 }
             }
         });
+
+        // Show detailed notification card if auction is completed or canceled
+        if (notificationCard != null && notificationMessageLabel != null && currentAuction != null) {
+            if (currentAuction.getStatus() == AuctionStatus.FINISHED) {
+                String winner = currentAuction.getHighestBidderId();
+                double finalPrice = currentAuction.getCurrentPrice();
+                
+                String icon = "🏆";
+                String title = "Kết quả đấu giá";
+                String borderStyle = "-accent-yellow";
+                String titleStyle = "-fx-text-fill: -accent-yellow;";
+                
+                String message;
+                if (winner != null && !winner.trim().isEmpty()) {
+                    message = String.format("Phiên đấu giá đã kết thúc thành công!\nNgười thắng cuộc là \"%s\" với mức giá %,.0f VNĐ.", 
+                            winner, finalPrice);
+                } else if (!bids.isEmpty()) {
+                    BidTransaction winnerBid = bids.get(bids.size() - 1);
+                    message = String.format("Phiên đấu giá đã kết thúc thành công!\nNgười thắng cuộc là \"%s\" với mức giá %,.0f VNĐ.", 
+                            winnerBid.getBidderId(), winnerBid.getBidAmount());
+                } else {
+                    message = "Phiên đấu giá đã kết thúc nhưng không có lượt đặt giá nào hợp lệ.";
+                    icon = "🏁";
+                    borderStyle = "-muted";
+                    titleStyle = "-fx-text-fill: -muted;";
+                }
+                showNotification(icon, title, message, borderStyle, titleStyle);
+            } else if (currentAuction.getStatus() == AuctionStatus.CANCELED) {
+                showNotification("🚫", "Thông báo hủy", "Phiên đấu giá này đã bị hủy bởi quản trị viên.", "-muted", "-fx-text-fill: -muted;");
+            } else {
+                String currentTitle = notificationTitleLabel != null ? notificationTitleLabel.getText() : "";
+                if (!currentTitle.startsWith("Đặt giá")) {
+                    closeNotification();
+                }
+            }
+        }
     }
 
     private void loadBalance() {
@@ -320,15 +400,16 @@ public class AuctionDetailController {
                         && endedAuction.getId().equals(currentAuction.getId())) {
                     Platform.runLater(() -> {
                         currentAuction.setStatus(endedAuction.getStatus());
-                        if (endedAuction.getStatus() == AuctionStatus.CANCELED) {
-                            timeLabel.setText("Phiên đã bị hủy");
-                        } else {
-                            timeLabel.setText(pushMsg.getMessage() != null ? pushMsg.getMessage() : "Đã kết thúc");
+                        if (timerBox != null) {
+                            timerBox.setVisible(false);
+                            timerBox.setManaged(false);
                         }
-                        timeLabel.setStyle("-fx-text-fill: #ef4444; -fx-font-weight: bold;");
                         disableAllControls();
                         loadBidHistory();
                         loadBalance();
+                        if (pushMsg.getMessage() != null) {
+                            NotificationToast.show(nameLabel.getScene().getWindow(), pushMsg.getMessage(), false);
+                        }
                     });
                 }
             }
@@ -439,7 +520,7 @@ public class AuctionDetailController {
                 if (res.isSuccess()) {
                     autoBidEnabled = true;
                     autoBidBtn.setText("Hủy auto-bid");
-                    autoBidBtn.setStyle("-fx-background-color: #ef4444; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20; -fx-background-radius: 6;");
+                    autoBidBtn.getStyleClass().setAll("auto-bid-on");
                     maxBidField.setDisable(true);
                     incrementField.setDisable(true);
                     showStatus("Auto-bid đã bật!", false);
@@ -468,7 +549,7 @@ public class AuctionDetailController {
             if (res.isSuccess()) {
                 autoBidEnabled = false;
                 autoBidBtn.setText("Bật auto-bid");
-                autoBidBtn.setStyle("");
+                autoBidBtn.getStyleClass().setAll("btn-primary");
                 maxBidField.setDisable(false);
                 incrementField.setDisable(false);
                 showStatus("Đã hủy auto-bid", false);
@@ -481,11 +562,73 @@ public class AuctionDetailController {
         });
     }
 
+    @FXML
+    public void closeNotification() {
+        if (notificationCard != null && notificationCard.isVisible()) {
+            FadeTransition fadeOut = new FadeTransition(Duration.millis(250), notificationCard);
+            fadeOut.setToValue(0.0);
+            
+            TranslateTransition slideOut = new TranslateTransition(Duration.millis(250), notificationCard);
+            slideOut.setToY(-15.0);
+            
+            ParallelTransition closeAnim = new ParallelTransition(fadeOut, slideOut);
+            closeAnim.setInterpolator(Interpolator.EASE_IN);
+            closeAnim.setOnFinished(e -> {
+                notificationCard.setVisible(false);
+                notificationCard.setManaged(false);
+                notificationCard.setTranslateY(0); // Reset translation
+            });
+            closeAnim.play();
+        }
+    }
+
+    private void showNotification(String icon, String title, String message, String borderStyle, String titleStyle) {
+        if (notificationCard == null || notificationMessageLabel == null) return;
+        
+        boolean wasVisible = notificationCard.isVisible();
+        
+        if (notificationIconLabel != null) notificationIconLabel.setText(icon);
+        if (notificationTitleLabel != null) {
+            notificationTitleLabel.setText(title);
+            notificationTitleLabel.setStyle(titleStyle);
+        }
+        notificationMessageLabel.setText(message);
+        notificationCard.setStyle("-fx-background-color: -surface-dark-el; -fx-border-color: " + borderStyle + "; -fx-border-width: 1px; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 15px;");
+        
+        if (!wasVisible) {
+            notificationCard.setVisible(true);
+            notificationCard.setManaged(true);
+            
+            // Trạng thái bắt đầu của animation
+            notificationCard.setOpacity(0.0);
+            notificationCard.setTranslateY(-15);
+            
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(300), notificationCard);
+            fadeIn.setToValue(1.0);
+            
+            TranslateTransition slideIn = new TranslateTransition(Duration.millis(300), notificationCard);
+            slideIn.setToY(0.0);
+            
+            ParallelTransition showAnim = new ParallelTransition(fadeIn, slideIn);
+            showAnim.setInterpolator(Interpolator.EASE_OUT);
+            showAnim.play();
+        } else {
+            // Pulse nháy nhẹ khi cập nhật thông tin mới trên thẻ đang mở
+            FadeTransition pulse = new FadeTransition(Duration.millis(150), notificationCard);
+            pulse.setFromValue(1.0);
+            pulse.setToValue(0.5);
+            pulse.setAutoReverse(true);
+            pulse.setCycleCount(2);
+            pulse.play();
+        }
+    }
+
     private void showStatus(String msg, boolean isError) {
-        timeLabel.setText(msg);
-        timeLabel.setStyle(isError
-                ? "-fx-text-fill: #ef4444; -fx-font-weight: bold;"
-                : "-fx-text-fill: #22c55e; -fx-font-weight: bold;");
+        if (isError) {
+            showNotification("❌", "Đặt giá thất bại", msg, "-semantic-down", "-fx-text-fill: -semantic-down;");
+        } else {
+            showNotification("✅", "Đặt giá thành công!", msg, "-semantic-up", "-fx-text-fill: -semantic-up;");
+        }
     }
 
     @FXML

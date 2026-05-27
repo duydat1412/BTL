@@ -11,6 +11,9 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.*;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 
 import java.util.List;
@@ -43,13 +46,62 @@ public class AuctionListController {
     @FXML
     public void initialize() {
         listView.setCellFactory(param -> new ListCell<>() {
+            private final HBox container = new HBox(15);
+            private final VBox textContainer = new VBox(5);
+            private final VBox priceContainer = new VBox(5);
+            private final Label titleLabel = new Label();
+            private final Label statusBadge = new Label();
+            private final Label priceLabel = new Label();
+            private final Label priceTitleLabel = new Label("Giá hiện tại");
+            private final Label arrowLabel = new Label("Tham gia đặt giá ➔");
+            private final Region spacer = new Region();
+
+            {
+                container.getStyleClass().add("custom-card-cell");
+                container.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                
+                titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;");
+                statusBadge.setStyle("-fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 3px 8px; -fx-background-radius: 10px;");
+                
+                priceLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: -accent-yellow;");
+                priceTitleLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: -body;");
+                
+                arrowLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 6px 14px; -fx-background-color: -primary; -fx-background-radius: 100px;");
+                
+                textContainer.getChildren().addAll(titleLabel, statusBadge);
+                priceContainer.getChildren().addAll(priceTitleLabel, priceLabel);
+                priceContainer.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+                
+                container.getChildren().addAll(textContainer, spacer, priceContainer, arrowLabel);
+                HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+            }
+
             @Override
             protected void updateItem(Auction item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
+                    setGraphic(null);
                     setText(null);
                 } else {
-                    setText(item.getTitle() + " - Giá: " + String.format("%,.0f", item.getCurrentPrice()) + " VNĐ");
+                    titleLabel.setText(item.getTitle());
+                    priceLabel.setText(String.format("%,.0f", item.getCurrentPrice()) + " VNĐ");
+                    
+                    if (item.getStatus() == AuctionStatus.RUNNING) {
+                        statusBadge.setText("⚡ Đang diễn ra");
+                        statusBadge.setStyle("-fx-background-color: -semantic-up; -fx-text-fill: white; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 3px 8px; -fx-background-radius: 10px;");
+                    } else if (item.getStatus() == AuctionStatus.OPEN) {
+                        statusBadge.setText("⏱ Sắp diễn ra");
+                        statusBadge.setStyle("-fx-background-color: -accent-yellow; -fx-text-fill: white; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 3px 8px; -fx-background-radius: 10px;");
+                    } else if (item.getStatus() == AuctionStatus.FINISHED) {
+                        statusBadge.setText("🏁 Đã kết thúc");
+                        statusBadge.setStyle("-fx-background-color: -muted; -fx-text-fill: white; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 3px 8px; -fx-background-radius: 10px;");
+                    } else {
+                        statusBadge.setText("🚫 Đã hủy");
+                        statusBadge.setStyle("-fx-background-color: -semantic-down; -fx-text-fill: white; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 3px 8px; -fx-background-radius: 10px;");
+                    }
+                    
+                    setGraphic(container);
+                    setText(null);
                 }
             }
         });
@@ -61,13 +113,47 @@ public class AuctionListController {
         });
 
         wonListView.setCellFactory(param -> new ListCell<>() {
+            private final HBox container = new HBox(15);
+            private final VBox textContainer = new VBox(5);
+            private final VBox priceContainer = new VBox(5);
+            private final Label titleLabel = new Label();
+            private final Label statusBadge = new Label("🏆 Bạn đã thắng");
+            private final Label priceLabel = new Label();
+            private final Label priceTitleLabel = new Label("Giá chung cuộc");
+            private final Label arrowLabel = new Label("Chi tiết ➔");
+            private final Region spacer = new Region();
+
+            {
+                container.getStyleClass().add("custom-card-cell");
+                container.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                
+                titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;");
+                statusBadge.setStyle("-fx-background-color: -semantic-up; -fx-text-fill: white; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 3px 8px; -fx-background-radius: 10px;");
+                
+                priceLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: -accent-yellow;");
+                priceTitleLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: -body;");
+                
+                arrowLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 6px 14px; -fx-background-color: -primary; -fx-background-radius: 100px;");
+                
+                textContainer.getChildren().addAll(titleLabel, statusBadge);
+                priceContainer.getChildren().addAll(priceTitleLabel, priceLabel);
+                priceContainer.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+                
+                container.getChildren().addAll(textContainer, spacer, priceContainer, arrowLabel);
+                HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+            }
+
             @Override
             protected void updateItem(Auction item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
+                    setGraphic(null);
                     setText(null);
                 } else {
-                    setText(item.getTitle() + " - Giá thắng: " + String.format("%,.0f", item.getCurrentPrice()) + " VNĐ");
+                    titleLabel.setText(item.getTitle());
+                    priceLabel.setText(String.format("%,.0f", item.getCurrentPrice()) + " VNĐ");
+                    setGraphic(container);
+                    setText(null);
                 }
             }
         });
@@ -87,6 +173,11 @@ public class AuctionListController {
         loadWonAuctions();
         loadBalance();
         registerPushListener();
+
+        // Callback khi bị ban
+        NetworkClient.getInstance().setOnBannedCallback(reason -> {
+            com.auction.client.util.BanHandler.handleBan(userInfoLabel.getScene(), reason);
+        });
     }
 
     private void loadAuctions() {
@@ -302,8 +393,8 @@ public class AuctionListController {
         } catch (Exception e) {
             System.err.println("Lỗi khi mở màn hình chi tiết: " + e.getMessage());
             e.printStackTrace();
+            statusLabel.getStyleClass().setAll("status-error");
             statusLabel.setText("Lỗi: " + e.getMessage());
-            statusLabel.setStyle("-fx-text-fill: #e74c3c;");
         }
     }
 }

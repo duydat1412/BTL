@@ -10,10 +10,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,8 +28,6 @@ public class CreateItemController {
     @FXML
     private TextField durationField;
     @FXML
-    private TextField imagePathField;
-    @FXML
     private Label statusLabel;
 
     @FXML
@@ -40,29 +36,16 @@ public class CreateItemController {
     }
 
     @FXML
-    public void handleChooseImage() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Chọn ảnh sản phẩm");
-        fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.gif"));
-        File selectedFile = fileChooser.showOpenDialog(nameField.getScene().getWindow());
-        if (selectedFile != null) {
-            imagePathField.setText(selectedFile.getAbsolutePath());
-        }
-    }
-
-    @FXML
     public void handleCreateItem() {
         String name = nameField.getText();
         String priceStr = priceField.getText();
         String desc = descArea.getText();
         String durationStr = durationField.getText();
-        String imagePath = imagePathField.getText();
         ItemType type = typeBox.getValue();
 
         if (name.isEmpty() || priceStr.isEmpty() || type == null || durationStr.isEmpty()) {
             statusLabel.setText("Vui lòng điền đầy đủ Tên, Giá, Loại và Thời gian!");
-            statusLabel.setStyle("-fx-text-fill: #e74c3c;");
+            statusLabel.getStyleClass().add("status-error");
             return;
         }
 
@@ -78,39 +61,36 @@ public class CreateItemController {
 
             Map<String, String> extraAttrs = new HashMap<>();
             extraAttrs.put("durationMinutes", String.valueOf(duration));
-            if (!imagePath.isEmpty()) {
-                extraAttrs.put("imagePath", imagePath);
-            }
 
             CreateItemRequest req = new CreateItemRequest(name, desc, price, user.getUserId(), type, extraAttrs);
             ClientRequest request = new ClientRequest(Action.CREATE_ITEM, req);
 
             statusLabel.setText("Đang tạo sản phẩm...");
-            statusLabel.setStyle("-fx-text-fill: gray;");
+            statusLabel.getStyleClass().add("status-info");
 
             NetworkClient.getInstance().sendRequestAsync(request).thenAccept(res -> Platform.runLater(() -> {
                 if (res.isSuccess()) {
                     statusLabel.setText("Tạo sản phẩm & lên lịch đấu giá thành công!");
-                    statusLabel.setStyle("-fx-text-fill: #2ecc71;");
+                    statusLabel.getStyleClass().add("status-success");
                     new Thread(() -> {
                         try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
                         Platform.runLater(this::goBack);
                     }).start();
                 } else {
                     statusLabel.setText(res.getMessage());
-                    statusLabel.setStyle("-fx-text-fill: #e74c3c;");
+                    statusLabel.getStyleClass().add("status-error");
                 }
             })).exceptionally(ex -> {
                 Platform.runLater(() -> {
                     statusLabel.setText("Lỗi kết nối server!");
-                    statusLabel.setStyle("-fx-text-fill: #e74c3c;");
+                    statusLabel.getStyleClass().add("status-error");
                 });
                 return null;
             });
 
         } catch (NumberFormatException e) {
             statusLabel.setText("Giá và Thời gian phải là số hợp lệ!");
-            statusLabel.setStyle("-fx-text-fill: #e74c3c;");
+            statusLabel.getStyleClass().add("status-error");
         }
     }
 
@@ -119,10 +99,7 @@ public class CreateItemController {
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/view/seller_dashboard.fxml"));
             Stage stage = (Stage) nameField.getScene().getWindow();
-            Scene scene = new Scene(root);
-            String css = getClass().getResource("/CSS/style.css").toExternalForm();
-            scene.getStylesheets().add(css);
-            stage.setScene(scene);
+            stage.getScene().setRoot(root);
         } catch (Exception e) {
             e.printStackTrace();
         }

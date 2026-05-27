@@ -2,41 +2,48 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
-<?import javafx.collections.FXCollections?>
-<?import java.lang.String?>
 
 <HBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.auction.client.controller.RegisterController"
-      prefHeight="600.0" prefWidth="900.0"
-      styleClass="main-bg">
+      prefHeight="768.0" prefWidth="1024.0"
+      styleClass="canvas"
+      alignment="CENTER">
 
-    <!-- Trái: Phần giới thiệu -->
-    <VBox HBox.hgrow="ALWAYS" style="-fx-background-color: #87ceeb;" alignment="CENTER">
-        <padding><Insets top="40" bottom="40" left="40" right="40"/></padding>
-        <Label text="DHDH" styleClass="text-white, text-lg, font-bold" maxWidth="Infinity" alignment="CENTER_LEFT"/>
+    <!-- Left: Dark premium hero banner -->
+    <VBox HBox.hgrow="ALWAYS" styleClass="surface-dark" alignment="CENTER" maxWidth="500">
+        <padding><Insets top="60" bottom="60" left="50" right="50"/></padding>
+        <Label text="🏛 DHDH AUCTION" styleClass="text-primary, text-lg, font-bold" maxWidth="Infinity" alignment="CENTER_LEFT"/>
         <Region VBox.vgrow="ALWAYS"/>
-        <Label text="Tạo tài khoản mới&#10;Tham gia ngay!" styleClass="text-white, text-3xl, font-bold" wrapText="true" textAlignment="CENTER"/>
+        
+        <VBox spacing="15" alignment="CENTER_LEFT">
+            <Label text="✨" style="-fx-font-size: 64px;"/>
+            <Label text="Tạo tài khoản mới&#10;Tham gia ngay!" styleClass="text-white, text-3xl, font-bold" wrapText="true"/>
+            <Label text="Đăng ký tài khoản để bắt đầu đấu giá mua sắm hoặc đăng bán sản phẩm của riêng bạn với quy trình chuyên nghiệp." styleClass="text-body, text-sm" wrapText="true"/>
+        </VBox>
+        
         <Region VBox.vgrow="ALWAYS"/>
-        <Label text="© DHDH 2025" styleClass="text-white, text-xs" maxWidth="Infinity" alignment="CENTER_LEFT"/>
+        <Label text="© DHDH 2026 • Bảo mật &amp; Minh bạch" styleClass="text-muted, text-xs" maxWidth="Infinity" alignment="CENTER_LEFT"/>
     </VBox>
 
-    <!-- Phải: Form đăng ký -->
-    <StackPane prefWidth="450" styleClass="bg-white">
-        <VBox alignment="CENTER_LEFT" spacing="15" maxWidth="350">
+    <!-- Right: Glassmorphic centered Register form -->
+    <StackPane HBox.hgrow="ALWAYS" style="-fx-background-color: -canvas;">
+        <padding><Insets top="20" bottom="20" left="40" right="40"/></padding>
+        <VBox alignment="CENTER" maxWidth="450" maxHeight="680" styleClass="card-elevated" spacing="15">
+            <padding><Insets top="30" bottom="30" left="40" right="40"/></padding>
 
-            <VBox spacing="2">
-                <Label text="Tạo tài khoản" styleClass="text-2xl, font-bold, text-foreground"/>
-                <Label text="Vui lòng điền thông tin để tiếp tục" styleClass="text-sm, text-muted"/>
+            <VBox spacing="4" alignment="CENTER_LEFT" maxWidth="Infinity">
+                <Label text="Đăng ký tài khoản" styleClass="text-2xl, font-bold, text-white"/>
+                <Label text="Vui lòng nhập đầy đủ thông tin bên dưới" styleClass="text-sm, text-body"/>
             </VBox>
 
-            <VBox spacing="5">
-                <Label text="Tên đăng nhập" styleClass="text-sm, font-bold, text-foreground"/>
+            <VBox spacing="4" maxWidth="Infinity">
+                <Label text="Tên đăng nhập" styleClass="text-sm, font-bold, text-body"/>
                 <TextField fx:id="usernameField" promptText="Nhập tên đăng nhập" styleClass="input-field"/>
             </VBox>
 
-            <VBox spacing="5">
-                <Label text="Mật khẩu" styleClass="text-sm, font-bold, text-foreground"/>
+            <VBox spacing="4" maxWidth="Infinity">
+                <Label text="Mật khẩu" styleClass="text-sm, font-bold, text-body"/>
                 <StackPane>
                     <PasswordField fx:id="passwordField" promptText="VD: Abc@1234" styleClass="input-field"/>
                     <TextField fx:id="visiblePasswordField" promptText="VD: Abc@1234" styleClass="input-field" visible="false" managed="false"/>
@@ -44,32 +51,31 @@
                 <Label fx:id="strengthLabel" styleClass="text-xs" managed="false" visible="false"/>
             </VBox>
 
-            <VBox spacing="5">
-                <Label text="Nhập lại mật khẩu" styleClass="text-sm, font-bold, text-foreground"/>
+            <VBox spacing="4" maxWidth="Infinity">
+                <Label text="Nhập lại mật khẩu" styleClass="text-sm, font-bold, text-body"/>
                 <StackPane>
                     <PasswordField fx:id="confirmPasswordField" promptText="••••••••" styleClass="input-field" onAction="#handleRegister"/>
                     <TextField fx:id="visibleConfirmPasswordField" promptText="••••••••" styleClass="input-field" visible="false" managed="false"/>
                 </StackPane>
-                <CheckBox fx:id="showPasswordCheckBox" text="Hiện mật khẩu" onAction="#togglePasswordVisibility" styleClass="text-sm, text-muted"/>
+                <CheckBox fx:id="showPasswordCheckBox" text="Hiện mật khẩu" onAction="#togglePasswordVisibility" styleClass="text-xs, text-body"/>
             </VBox>
 
-            <VBox spacing="5">
-                <Label text="Email" styleClass="text-sm, font-bold, text-foreground"/>
+            <VBox spacing="4" maxWidth="Infinity">
+                <Label text="Email" styleClass="text-sm, font-bold, text-body"/>
                 <TextField fx:id="emailField" promptText="you@example.com" styleClass="input-field"/>
             </VBox>
 
-            <VBox spacing="5">
-                <Label text="Vai trò" styleClass="text-sm, font-bold, text-foreground"/>
+            <VBox spacing="4" maxWidth="Infinity">
+                <Label text="Vai trò" styleClass="text-sm, font-bold, text-body"/>
                 <ComboBox fx:id="roleBox" promptText="Chọn vai trò" styleClass="combo-box" maxWidth="Infinity"/>
             </VBox>
 
-            <Button text="Đăng ký tài khoản" onAction="#handleRegister" styleClass="btn-gold" maxWidth="Infinity">
-                <VBox.margin><Insets top="5"/></VBox.margin>
-            </Button>
+            <VBox spacing="10" maxWidth="Infinity">
+                <Button text="Đăng ký tài khoản" onAction="#handleRegister" styleClass="btn-primary" maxWidth="Infinity"/>
+                <Button text="Quay lại Đăng nhập" onAction="#goBack" styleClass="btn-secondary" maxWidth="Infinity"/>
+            </VBox>
 
-            <Button text="Quay lại Đăng nhập" onAction="#goBack" styleClass="btn-outline" maxWidth="Infinity"/>
-
-            <Label fx:id="messageLabel" styleClass="text-danger, text-sm" wrapText="true" alignment="CENTER" maxWidth="Infinity"/>
+            <Label fx:id="messageLabel" styleClass="text-sm" wrapText="true" alignment="CENTER" maxWidth="Infinity"/>
         </VBox>
     </StackPane>
 

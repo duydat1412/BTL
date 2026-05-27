@@ -36,6 +36,7 @@ import java.util.List;
 public class ClientHandler implements Runnable {
 
     private final Socket clientSocket;
+    private String currentUserId; // userId sau khi login, null nếu chưa login
 
     // Khởi tạo các services và event manager dùng chung cho các handlers
     private static final ItemService itemService = new ItemService();
@@ -106,6 +107,11 @@ public class ClientHandler implements Runnable {
             return failure("Action is required");
         }
 
+        // Kiểm tra banned user cho mọi action trừ REGISTER và LOGIN
+        if (action != Action.REGISTER && action != Action.LOGIN && isCurrentUserBanned()) {
+            return failure("Tài khoản của bạn đã bị cấm. Vui lòng liên hệ admin.");
+        }
+
         Serializable payload = request.getPayload();
         return switch (action) {
             case REGISTER -> handleRegister(payload);
@@ -142,7 +148,12 @@ public class ClientHandler implements Runnable {
         if (!(payload instanceof BanUserRequest req)) {
             return failure("BAN_USER payload must be BanUserRequest");
         }
-        return executeAuthAction(() -> UserService.banUser(req));
+        ClientResponse res = executeAuthAction(() -> UserService.banUser(req));
+        if (res.isSuccess()) {
+            // Kick user bị ban ngay lập tức
+            ClientRegistry.getInstance().kickUser(req.getTargetUserId(), req.getReason());
+        }
+        return res;
     }
 
     private ClientResponse handleUnbanUser(Serializable payload) {
@@ -170,7 +181,14 @@ public class ClientHandler implements Runnable {
         if (!(payload instanceof LoginRequest req)) {
             return failure("LOGIN payload must be LoginRequest");
         }
-        return executeAuthAction(() -> UserService.login(req));
+        ClientResponse res = executeAuthAction(() -> UserService.login(req));
+        if (res.isSuccess() && res.getData() instanceof AuthUserData authData) {
+            currentUserId = authData.getUserId();
+            String clientId = clientSocket.getInetAddress() + ":" + clientSocket.getPort();
+            ClientRegistry.getInstance().registerUserSession(currentUserId, clientId);
+            System.out.println("[Login] User " + authData.getUsername() + " (" + currentUserId + ") logged in từ " + clientId);
+        }
+        return res;
     }
 
     private ClientResponse executeAuthAction(AuthAction action) {
@@ -310,6 +328,21 @@ public class ClientHandler implements Runnable {
 
     private ClientResponse failure(String message) {
         return new ClientResponse(false, message, null);
+    }
+
+    /**
+     * Kiểm tra user hiện tại đã bị ban chưa.
+     */
+    private boolean isCurrentUserBanned() {
+        if (currentUserId == null) return false;
+        try {
+            com.auction.server.repository.SerializableUserRepository userRepo =
+                    new com.auction.server.repository.SerializableUserRepository();
+            com.auction.common.entity.User user = userRepo.findById(currentUserId);
+            return user != null && user.isBanned();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @FunctionalInterface

@@ -693,3 +693,26 @@
 .table-view .column-resize-line {
     -fx-background-color: -primary;
 }
+
+/* Ban Alert Dialog Custom Dark Styling */
+.ban-alert-dialog {
+    -fx-background-color: -surface-dark;
+}
+.ban-alert-dialog .label {
+    -fx-text-fill: -body;
+}
+.ban-alert-dialog .header-panel {
+    -fx-background-color: -surface-dark-el;
+}
+.ban-alert-dialog .header-panel .label {
+    -fx-text-fill: -semantic-down;
+    -fx-font-weight: bold;
+}
+.ban-alert-dialog .button {
+    -fx-background-color: -surface-light;
+    -fx-text-fill: -body;
+    -fx-cursor: hand;
+}
+.ban-alert-dialog .button:hover {
+    -fx-background-color: -muted;
+}

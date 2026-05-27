@@ -51,6 +51,12 @@ public class NetworkClient {
      */
     private final ReentrantLock requestLock = new ReentrantLock();
 
+    /**
+     * Callback được gọi khi user bị ban từ server (USER_BANNED push).
+     * Nhận lý do ban làm tham số.
+     */
+    private Consumer<String> onBannedCallback;
+
     private static final ExecutorService IO_EXECUTOR = Executors.newCachedThreadPool(r -> {
         Thread t = new Thread(r, "IO-Worker");
         t.setDaemon(true);
@@ -104,12 +110,21 @@ public class NetworkClient {
                     responseQueue.put(response);
                 
                 } else if (obj instanceof ServerPushMessage pushMsg) {
-                    // Push notification từ server → dispatch tới UI
-                    for (PushListener listener : pushListeners) {
-                        try {
-                            listener.onPush(pushMsg);
-                        } catch (Exception e) {
-                            System.err.println("C: Lỗi trong PushListener: " + e.getMessage());
+                    if (pushMsg.getType() == ServerPushMessage.PushType.USER_BANNED) {
+                        final String reason = pushMsg.getMessage();
+                        System.out.println("C: Đã bị ban khỏi server: " + reason);
+                        currentUser = null;
+                        if (onBannedCallback != null) {
+                            onBannedCallback.accept(reason);
+                        }
+                    } else {
+                        // Push notification từ server → dispatch tới UI
+                        for (PushListener listener : pushListeners) {
+                            try {
+                                listener.onPush(pushMsg);
+                            } catch (Exception e) {
+                                System.err.println("C: Lỗi trong PushListener: " + e.getMessage());
+                            }
                         }
                     }
                 }
@@ -199,6 +214,31 @@ public class NetworkClient {
      */
     public void removePushListener(PushListener listener) {
         pushListeners.remove(listener);
+    }
+
+    /**
+     * Đăng ký callback được gọi khi user bị ban từ server.
+     */
+    public void setOnBannedCallback(Consumer<String> callback) {
+        this.onBannedCallback = callback;
+    }
+
+    /**
+     * Ngắt kết nối khỏi server.
+     */
+    public void disconnect() {
+        try {
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
+        } catch (IOException e) {
+            System.err.println("C: Lỗi khi đóng socket: " + e.getMessage());
+        }
+        currentUser = null;
+        responseQueue.clear();
+        pushListeners.clear();
+        onBannedCallback = null;
+        instance = null;
     }
 
     // ==================== Session ====================
