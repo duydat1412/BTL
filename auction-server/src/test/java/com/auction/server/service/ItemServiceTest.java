@@ -137,6 +137,27 @@ class ItemServiceTest {
         }
 
         @Test
+        @DisplayName("Create with null item type fails")
+        void create_nullType_fails() {
+            Map<String, String> attrs = new HashMap<>();
+            attrs.put("durationMinutes", "60");
+            CreateItemRequest req = new CreateItemRequest("Item", "desc", 1000, "seller-1", null, attrs);
+            ClientResponse res = ItemService.C(req);
+            assertFalse(res.isSuccess());
+        }
+
+        @Test
+        @DisplayName("Create with invalid duration falls back safely")
+        void create_invalidDuration_stillSucceeds() {
+            Map<String, String> attrs = new HashMap<>();
+            attrs.put("durationMinutes", "not-a-number");
+            CreateItemRequest req = new CreateItemRequest("AuctionItem", "desc", 2000, "seller-1", ItemType.ELECTRONICS, attrs);
+            ClientResponse res = ItemService.C(req);
+            assertTrue(res.isSuccess());
+            assertEquals(1, DataStore.getInstance().getAuctions().size());
+        }
+
+        @Test
         @DisplayName("Create also creates auction")
         void create_createsAuction() {
             Map<String, String> attrs = new HashMap<>();
@@ -257,6 +278,23 @@ class ItemServiceTest {
             ClientResponse res = itemService.U(req);
             assertFalse(res.isSuccess());
         }
+
+        @Test
+        @DisplayName("Update vehicle attributes success")
+        void update_vehicleAttrs_success() {
+            String vehicleItemId = createTestItem("Car", 3000, "seller-1", ItemType.VEHICLE);
+            Map<String, String> attrs = new HashMap<>();
+            attrs.put("manufacturer", "Honda");
+            attrs.put("yearOfManufacture", "2024");
+            attrs.put("mileage", "200");
+            UpdateItemRequest req = new UpdateItemRequest(vehicleItemId, null, null, null, null, attrs);
+            ClientResponse res = itemService.U(req);
+            assertTrue(res.isSuccess());
+            Vehicle updated = (Vehicle) itemRepo.findById(vehicleItemId);
+            assertEquals("Honda", updated.getManufacturer());
+            assertEquals(2024, updated.getYearOfManufacture());
+            assertEquals(200, updated.getMileage());
+        }
     }
 
     @Nested
@@ -287,6 +325,21 @@ class ItemServiceTest {
             DeleteItemRequest req = new DeleteItemRequest(itemId, "seller-1");
             ClientResponse res = itemService.D(req, "other-user");
             assertFalse(res.isSuccess());
+        }
+
+        @Test
+        @DisplayName("Delete finished auction item fails")
+        void delete_finishedAuctionItem_fails() {
+            Auction auction = DataStore.getInstance().getAuctions().stream()
+                    .filter(a -> itemId.equals(a.getItemId()))
+                    .findFirst()
+                    .orElseThrow();
+            auction.setStatus(com.auction.common.enums.AuctionStatus.FINISHED);
+
+            DeleteItemRequest req = new DeleteItemRequest(itemId, "seller-1");
+            ClientResponse res = itemService.D(req, "seller-1");
+            assertFalse(res.isSuccess());
+            assertNotNull(itemRepo.findById(itemId));
         }
     }
 }
