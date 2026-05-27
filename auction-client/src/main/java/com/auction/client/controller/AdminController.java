@@ -13,6 +13,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
 import java.time.format.DateTimeFormatter;
@@ -37,6 +38,7 @@ public class AdminController {
     @FXML private TableColumn<User, String> emailCol;
     @FXML private TableColumn<User, String> roleCol;
     @FXML private TableColumn<User, String> statusCol;
+    @FXML private TableColumn<User, String> balanceCol;
     @FXML private TableColumn<User, Void> actionCol;
     @FXML private Label userStatus;
 
@@ -72,13 +74,21 @@ public class AdminController {
             User u = cellData.getValue();
             return new javafx.beans.property.SimpleStringProperty(u.isBanned() ? "Banned" : "Hoạt động");
         });
+        balanceCol.setCellValueFactory(cellData -> {
+            User u = cellData.getValue();
+            return new javafx.beans.property.SimpleStringProperty(
+                    String.format("%,.0f VNĐ", u.getBalance()));
+        });
 
         actionCol.setCellFactory(param -> new TableCell<>() {
             private final Button banBtn = new Button("Ban");
             private final Button unbanBtn = new Button("Unban");
+            private final Button topUpBtn = new Button("Nạp tiền");
+            private final HBox actionBox = new HBox(5, banBtn, unbanBtn, topUpBtn);
             {
                 banBtn.setStyle("-fx-background-color: #ef4444; -fx-text-fill: white; -fx-font-size: 12; -fx-padding: 4 10; -fx-background-radius: 4;");
                 unbanBtn.setStyle("-fx-background-color: #22c55e; -fx-text-fill: white; -fx-font-size: 12; -fx-padding: 4 10; -fx-background-radius: 4;");
+                topUpBtn.setStyle("-fx-background-color: #f97316; -fx-text-fill: white; -fx-font-size: 12; -fx-padding: 4 10; -fx-background-radius: 4;");
             }
 
             @Override
@@ -91,12 +101,15 @@ public class AdminController {
                     AuthUserData currentUser = NetworkClient.getInstance().getCurrentUser();
                     if (u.getId().equals(currentUser.getUserId())) {
                         setGraphic(new Label("--"));
-                    } else if (u.isBanned()) {
-                        unbanBtn.setOnAction(e -> handleUnban(u));
-                        setGraphic(unbanBtn);
                     } else {
-                        banBtn.setOnAction(e -> handleBan(u));
-                        setGraphic(banBtn);
+                        Button banUnbanBtn = u.isBanned() ? unbanBtn : banBtn;
+                        banUnbanBtn.setOnAction(e -> {
+                            if (u.isBanned()) handleUnban(u);
+                            else handleBan(u);
+                        });
+                        topUpBtn.setOnAction(e -> handleAdminTopUp(u));
+                        actionBox.getChildren().setAll(banUnbanBtn, topUpBtn);
+                        setGraphic(actionBox);
                     }
                 }
             }
@@ -335,6 +348,33 @@ public class AdminController {
     @FXML
     public void handleRefreshUsers() {
         loadUsers();
+    }
+
+    private void handleAdminTopUp(User targetUser) {
+        TextInputDialog dialog = new TextInputDialog("100000");
+        dialog.setTitle("Nạp tiền cho " + targetUser.getUsername());
+        dialog.setHeaderText("Nhập số tiền muốn nạp cho " + targetUser.getUsername() + ":");
+        dialog.setContentText("Số tiền (VNĐ):");
+
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(amountStr -> {
+            try {
+                double amount = Double.parseDouble(amountStr);
+                if (amount <= 0) return;
+                TopUpRequest req = new TopUpRequest(targetUser.getId(), amount);
+                NetworkClient.getInstance().sendRequestAsync(new ClientRequest(Action.TOP_UP, req))
+                    .thenAccept(res -> Platform.runLater(() -> {
+                        if (res.isSuccess()) {
+                            userStatus.setText("Đã nạp " + String.format("%,.0f", amount) + " VNĐ cho " + targetUser.getUsername());
+                            loadUsers();
+                        } else {
+                            userStatus.setText("Lỗi: " + res.getMessage());
+                        }
+                    }));
+            } catch (NumberFormatException e) {
+                // ignore
+            }
+        });
     }
 
     @FXML
