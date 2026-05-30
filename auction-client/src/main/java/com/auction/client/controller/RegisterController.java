@@ -52,13 +52,13 @@ public class RegisterController {
 
         if (pass.length() >= 8 && hasUpper && hasDigit && hasSpecial) {
             strengthLabel.setText("Mạnh");
-            strengthLabel.setStyle("-fx-text-fill: #22c55e; -fx-font-weight: bold;");
+            strengthLabel.getStyleClass().setAll("status-success");
         } else if (pass.length() >= 6 && (hasUpper || hasDigit)) {
             strengthLabel.setText("Trung bình");
-            strengthLabel.setStyle("-fx-text-fill: #eab308; -fx-font-weight: bold;");
+            strengthLabel.getStyleClass().setAll("status-warning");
         } else {
             strengthLabel.setText("Yếu");
-            strengthLabel.setStyle("-fx-text-fill: #ef4444; -fx-font-weight: bold;");
+            strengthLabel.getStyleClass().setAll("status-error");
         }
     }
 
@@ -90,7 +90,7 @@ public class RegisterController {
         String confirm = confirmPasswordField.getText();
         if (!pass.equals(confirm)) {
             messageLabel.setText("Mật khẩu không khớp!");
-            messageLabel.setStyle("-fx-text-fill: #ef4444;");
+            messageLabel.getStyleClass().setAll("status-error");
             return;
         }
 
@@ -98,13 +98,13 @@ public class RegisterController {
         client.connect();
 
         messageLabel.setText("Đang đăng ký...");
-        messageLabel.setStyle("-fx-text-fill: gray;");
+        messageLabel.getStyleClass().setAll("status-info");
 
         RegisterRequest req = new RegisterRequest(user, pass, email, role);
         ClientRequest request = new ClientRequest(Action.REGISTER, req);
 
         client.sendRequestAsync(request).thenAccept(res -> Platform.runLater(() -> {
-            messageLabel.setStyle(res.isSuccess() ? "-fx-text-fill: green;" : "-fx-text-fill: #ef4444;");
+            messageLabel.getStyleClass().setAll(res.isSuccess() ? "status-success" : "status-error");
             messageLabel.setText(res.getMessage());
         })).exceptionally(ex -> {
             Platform.runLater(() -> messageLabel.setText("Lỗi kết nối!"));

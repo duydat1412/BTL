@@ -64,6 +64,11 @@ public class AdminController {
         setupAuctionTable();
         loadAllData();
         registerPushListener();
+
+        // Callback khi bị ban
+        NetworkClient.getInstance().setOnBannedCallback(reason -> {
+            com.auction.client.util.BanHandler.handleBan(userInfoLabel.getScene(), reason);
+        });
     }
 
     private void setupUserTable() {
@@ -86,9 +91,9 @@ public class AdminController {
             private final Button topUpBtn = new Button("Nạp tiền");
             private final HBox actionBox = new HBox(5, banBtn, unbanBtn, topUpBtn);
             {
-                banBtn.setStyle("-fx-background-color: #ef4444; -fx-text-fill: white; -fx-font-size: 12; -fx-padding: 4 10; -fx-background-radius: 4;");
-                unbanBtn.setStyle("-fx-background-color: #22c55e; -fx-text-fill: white; -fx-font-size: 12; -fx-padding: 4 10; -fx-background-radius: 4;");
-                topUpBtn.setStyle("-fx-background-color: #f97316; -fx-text-fill: white; -fx-font-size: 12; -fx-padding: 4 10; -fx-background-radius: 4;");
+                banBtn.getStyleClass().addAll("btn-sm", "btn-sm-red");
+                unbanBtn.getStyleClass().addAll("btn-sm", "btn-sm-green");
+                topUpBtn.getStyleClass().addAll("btn-sm", "btn-sm-orange");
             }
 
             @Override
@@ -134,7 +139,7 @@ public class AdminController {
         auctionActionCol.setCellFactory(param -> new TableCell<>() {
             private final Button cancelBtn = new Button("Hủy phiên");
             {
-                cancelBtn.setStyle("-fx-background-color: #ef4444; -fx-text-fill: white; -fx-font-size: 12; -fx-padding: 4 10; -fx-background-radius: 4;");
+                cancelBtn.getStyleClass().addAll("btn-sm", "btn-sm-red");
             }
 
             @Override
@@ -263,14 +268,21 @@ public class AdminController {
         AuthUserData admin = NetworkClient.getInstance().getCurrentUser();
         if (admin == null) return;
 
+        TextInputDialog reasonDialog = new TextInputDialog("Vi phạm điều khoản");
+        reasonDialog.setTitle("Ban User");
+        reasonDialog.setHeaderText("Nhập lý do ban cho \"" + targetUser.getUsername() + "\":");
+        reasonDialog.setContentText("Lý do:");
+        Optional<String> reasonResult = reasonDialog.showAndWait();
+        if (reasonResult.isEmpty() || reasonResult.get().isBlank()) return;
+
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Ban User");
-        confirm.setHeaderText("Xác nhận ban");
-        confirm.setContentText("Bạn có chắc muốn ban user \"" + targetUser.getUsername() + "\"?");
+        confirm.setTitle("Xác nhận ban");
+        confirm.setHeaderText("Xác nhận ban user \"" + targetUser.getUsername() + "\"");
+        confirm.setContentText("Lý do: " + reasonResult.get());
         Optional<ButtonType> result = confirm.showAndWait();
 
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            BanUserRequest req = new BanUserRequest(admin.getUserId(), targetUser.getId(), "Vi phạm điều khoản");
+            BanUserRequest req = new BanUserRequest(admin.getUserId(), targetUser.getId(), reasonResult.get());
             NetworkClient.getInstance().sendRequestAsync(new ClientRequest(Action.BAN_USER, req))
                     .thenAccept(res -> Platform.runLater(() -> {
                         if (res.isSuccess()) {

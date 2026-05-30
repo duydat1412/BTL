@@ -1,28 +1,18 @@
 package com.auction.client.util;
 
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
+import javafx.animation.FadeTransition;
+import javafx.animation.Interpolator;
+import javafx.animation.ParallelTransition;
+import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
-import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.stage.Popup;
 import javafx.stage.Window;
 import javafx.util.Duration;
 
-/**
- * Utility class to show toast notifications in the top-right corner.
- */
 public class NotificationToast {
 
-    /**
-     * Show a toast notification for 3 seconds.
-     *
-     * @param window  the parent window to anchor the toast
-     * @param message the message to display
-     * @param isError true for error styling, false for info
-     */
     public static void show(Window window, String message, boolean isError) {
         Platform.runLater(() -> {
             Popup popup = new Popup();
@@ -30,27 +20,62 @@ public class NotificationToast {
 
             Label msgLabel = new Label(message);
             msgLabel.setWrapText(true);
-            msgLabel.setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;");
+            msgLabel.setMaxWidth(350);
+            
+            // Apply custom styles directly to match the premium dark theme
+            if (isError) {
+                msgLabel.setStyle("-fx-background-color: #ff4d4f; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 12px 24px; -fx-background-radius: 20px; -fx-effect: dropshadow(gaussian, rgba(255, 77, 79, 0.3), 10, 0, 0, 4);");
+            } else {
+                msgLabel.setStyle("-fx-background-color: #52c41a; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 12px 24px; -fx-background-radius: 20px; -fx-effect: dropshadow(gaussian, rgba(82, 196, 26, 0.3), 10, 0, 0, 4);");
+            }
 
-            StackPane content = new StackPane(msgLabel);
-            content.setStyle(isError
-                    ? "-fx-background-color: #ef4444; -fx-padding: 15 25; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 4);"
-                    : "-fx-background-color: #22c55e; -fx-padding: 15 25; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 4);");
+            StackPane root = new StackPane(msgLabel);
+            root.setStyle("-fx-background-color: transparent;");
+            popup.getContent().add(root);
 
-            popup.getContent().add(content);
-
-            // Position at top-right of window
             popup.setOnShown(e -> {
-                popup.setX(window.getX() + window.getWidth() - content.getWidth() - 20);
-                popup.setY(window.getY() + 20);
+                double targetX = window.getX() + window.getWidth() - msgLabel.getWidth() - 30;
+                double targetY = window.getY() + 75; // Position below the navigation bar
+                popup.setX(targetX);
+                popup.setY(targetY);
+
+                // Entry animation: Slide in from the right, fade in
+                root.setTranslateX(150);
+                root.setOpacity(0.0);
+
+                TranslateTransition slideIn = new TranslateTransition(Duration.millis(350), root);
+                slideIn.setToX(0);
+                slideIn.setInterpolator(Interpolator.EASE_OUT);
+
+                FadeTransition fadeIn = new FadeTransition(Duration.millis(350), root);
+                fadeIn.setToValue(1.0);
+
+                ParallelTransition showAnim = new ParallelTransition(slideIn, fadeIn);
+                showAnim.play();
+
+                // Exit animation: Trigger after delay
+                showAnim.setOnFinished(ev -> {
+                    new Thread(() -> {
+                        try {
+                            Thread.sleep(2500);
+                        } catch (InterruptedException ignored) {}
+                        Platform.runLater(() -> {
+                            TranslateTransition slideOut = new TranslateTransition(Duration.millis(300), root);
+                            slideOut.setToX(150);
+                            slideOut.setInterpolator(Interpolator.EASE_IN);
+
+                            FadeTransition fadeOut = new FadeTransition(Duration.millis(300), root);
+                            fadeOut.setToValue(0.0);
+
+                            ParallelTransition hideAnim = new ParallelTransition(slideOut, fadeOut);
+                            hideAnim.setOnFinished(evt -> popup.hide());
+                            hideAnim.play();
+                        });
+                    }).start();
+                });
             });
 
             popup.show(window);
-
-            // Auto-hide after 3 seconds
-            Timeline hideTimeline = new Timeline(new KeyFrame(Duration.seconds(3), e -> popup.hide()));
-            hideTimeline.setCycleCount(1);
-            hideTimeline.play();
         });
     }
 }
