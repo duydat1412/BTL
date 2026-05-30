@@ -125,3 +125,39 @@
 .combo-box-popup .list-view .list-cell:hover {
     -fx-background-color: #f1f5f9;
 }
+
+/* Chart */
+.chart-card {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 8;
+    -fx-padding: 5;
+}
+.chart-card .chart-content {
+    -fx-padding: 5;
+}
+.chart-card .chart-plot-background {
+    -fx-background-color: white;
+}
+.chart-card .chart-vertical-grid-lines {
+    -fx-stroke: #f1f5f9;
+}
+.chart-card .chart-horizontal-grid-lines {
+    -fx-stroke: #f1f5f9;
+}
+.chart-card .chart-series-line {
+    -fx-stroke-width: 2px;
+}
+.chart-card .chart-line-symbol {
+    -fx-background-radius: 3px;
+    -fx-padding: 4px;
+}
+.chart-card .axis-label {
+    -fx-text-fill: #64748b;
+    -fx-font-size: 11px;
+}
+.chart-card .axis {
+    -fx-tick-label-fill: #64748b;
+    -fx-tick-label-font-size: 10px;
+}

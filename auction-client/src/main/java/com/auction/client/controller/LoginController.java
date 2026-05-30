@@ -13,7 +13,31 @@ public class LoginController {
 
     @FXML private TextField usernameField;
     @FXML private PasswordField passwordField;
+    @FXML private TextField visiblePasswordField;
+    @FXML private CheckBox showPasswordCheckBox;
     @FXML private Label errorLabel;
+
+    @FXML
+    public void initialize() {
+        // Enter key trên usernameField chuyển focus xuống password
+        usernameField.setOnAction(e -> passwordField.requestFocus());
+        // visiblePasswordField đồng bộ với passwordField
+        visiblePasswordField.textProperty().bindBidirectional(passwordField.textProperty());
+    }
+
+    @FXML
+    public void togglePasswordVisibility() {
+        boolean selected = showPasswordCheckBox.isSelected();
+        passwordField.setVisible(!selected);
+        passwordField.setManaged(!selected);
+        visiblePasswordField.setVisible(selected);
+        visiblePasswordField.setManaged(selected);
+        if (selected) {
+            visiblePasswordField.requestFocus();
+        } else {
+            passwordField.requestFocus();
+        }
+    }
 
     @FXML
     public void handleLogin() {

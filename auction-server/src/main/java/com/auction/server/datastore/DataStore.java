@@ -13,8 +13,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import org.mindrot.jbcrypt.BCrypt;
 
 /**
@@ -30,10 +30,10 @@ public class DataStore implements Serializable {
 
     private static volatile DataStore instance;
 
-    private List<User> users = new ArrayList<>();
-    private List<Item> items = new ArrayList<>();
-    private List<Auction> auctions = new ArrayList<>();
-    private List<BidTransaction> bidTransactions = new ArrayList<>();
+    private List<User> users = new CopyOnWriteArrayList<>();
+    private List<Item> items = new CopyOnWriteArrayList<>();
+    private List<Auction> auctions = new CopyOnWriteArrayList<>();
+    private List<BidTransaction> bidTransactions = new CopyOnWriteArrayList<>();
 
     private DataStore() {
     }
@@ -79,10 +79,10 @@ public class DataStore implements Serializable {
 
         try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(file))) {
             DataStore loadedData = (DataStore) in.readObject();
-            this.users = loadedData.users;
-            this.items = loadedData.items;
-            this.auctions = loadedData.auctions;
-            this.bidTransactions = loadedData.bidTransactions;
+            this.users = new CopyOnWriteArrayList<>(loadedData.users);
+            this.items = new CopyOnWriteArrayList<>(loadedData.items);
+            this.auctions = new CopyOnWriteArrayList<>(loadedData.auctions);
+            this.bidTransactions = new CopyOnWriteArrayList<>(loadedData.bidTransactions);
             ensureDefaultAdminAccount();
             System.out.println("Loaded data from " + FILE_PATH);
         } catch (Exception e) {

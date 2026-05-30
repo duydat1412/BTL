@@ -14,6 +14,8 @@
         <Label text="DHDH - Kênh Người Bán" styleClass="text-2xl, font-bold, text-foreground"/>
         <Region HBox.hgrow="ALWAYS"/>
         <Label fx:id="userInfoLabel" styleClass="text-sm, text-muted, font-bold"/>
+        <Label fx:id="balanceLabel" styleClass="text-sm, text-gold, font-bold"/>
+        <Button text="Nạp tiền" onAction="#handleTopUp" styleClass="btn-outline"/>
         <Button text="Đăng xuất" onAction="#handleLogout" styleClass="btn-outline"/>
     </HBox>
 
@@ -44,6 +46,11 @@
                     <VBox spacing="5">
                         <Label text="Mô tả" styleClass="text-sm, font-bold, text-foreground"/>
                         <TextField fx:id="descField" promptText="Mô tả chi tiết sản phẩm..." styleClass="input-field"/>
+                    </VBox>
+
+                    <VBox spacing="5">
+                        <Label text="Thời gian đấu giá (phút)" styleClass="text-sm, font-bold, text-foreground"/>
+                        <TextField fx:id="durationField" promptText="VD: 60" styleClass="input-field"/>
                     </VBox>
 
                     <Button text="Tạo sản phẩm" onAction="#handleCreateItem" styleClass="btn-gold" maxWidth="Infinity">

@@ -9,11 +9,17 @@ import com.auction.server.handler.ClientHandler;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class E2ETestHelper {
+    public static final int SOCKET_TIMEOUT_MILLIS = 5_000;
 
     private E2ETestHelper() {}
 
@@ -22,7 +28,9 @@ public class E2ETestHelper {
     }
 
     public static Socket connectToServer(int port) throws IOException {
-        return new Socket("localhost", port);
+        Socket socket = new Socket("localhost", port);
+        socket.setSoTimeout(SOCKET_TIMEOUT_MILLIS);
+        return socket;
     }
 
     public static ClientResponse sendReceive(ObjectOutputStream out, ObjectInputStream in, ClientRequest request)
@@ -52,6 +60,29 @@ public class E2ETestHelper {
                 return (ServerPushMessage) obj;
             }
         }
+    }
+
+    public static ServerPushMessage waitForPush(ObjectInputStream in,
+                                                ServerPushMessage.PushType expectedType,
+                                                long timeoutMillis) throws Exception {
+        Instant deadline = Instant.now().plusMillis(timeoutMillis);
+        List<ServerPushMessage.PushType> observedTypes = new ArrayList<>();
+
+        while (Instant.now().isBefore(deadline)) {
+            try {
+                ServerPushMessage push = readPush(in);
+                observedTypes.add(push.getType());
+                if (push.getType() == expectedType) {
+                    return push;
+                }
+            } catch (SocketTimeoutException ex) {
+                break;
+            }
+        }
+
+        throw new AssertionError("Timed out waiting for push " + expectedType
+                + " within " + Duration.ofMillis(timeoutMillis)
+                + ". Observed pushes: " + observedTypes);
     }
 
     public static ClientResponse sendRequest(Socket socket, ClientRequest request) throws Exception {

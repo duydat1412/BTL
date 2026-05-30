@@ -2,20 +2,26 @@ package com.auction.client.controller;
 
 import com.auction.client.network.NetworkClient;
 import com.auction.common.entity.Auction;
+import com.auction.common.entity.BidTransaction;
 import com.auction.common.entity.Item;
+import com.auction.common.enums.AuctionStatus;
 import com.auction.common.message.*;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.*;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.XYChart;
+import javafx.scene.control.*;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
-/**
- * Controller chi tiết phiên đấu giá.
- * Hỗ trợ Server Push: khi có người khác bid, giá tự động cập nhật realtime.
- */
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
 public class AuctionDetailController {
 
     @FXML private Label nameLabel;
@@ -23,12 +29,24 @@ public class AuctionDetailController {
     @FXML private Label timeLabel;
     @FXML private TextField bidAmountField;
     @FXML private Label descLabel;
+    @FXML private Button placeBidBtn;
 
+    @FXML private ListView<String> bidHistoryView;
+    @FXML private Label bidHistoryStatus;
+
+    @FXML private TextField maxBidField;
+    @FXML private TextField incrementField;
+    @FXML private Button autoBidBtn;
+    @FXML private Label balanceLabel;
+    @FXML private LineChart<Number, Number> priceChart;
+
+    private XYChart.Series<Number, Number> allBidsSeries;
+    private XYChart.Series<Number, Number> myBidsSeries;
     private Auction currentAuction;
     private Item currentItem;
-
-    /** Listener cho push notification — lưu lại để unregister khi rời trang. */
     private NetworkClient.PushListener pushListener;
+    private Timeline countdownTimeline;
+    private boolean autoBidEnabled = false;
 
     public void setData(Auction auction, Item item) {
         this.currentAuction = auction;
@@ -50,31 +68,250 @@ public class AuctionDetailController {
             descLabel.setText(desc);
         }
 
-        timeLabel.setText(auction != null && auction.getEndTime() != null
-                ? "Kết thúc lúc: " + auction.getEndTime().toString()
-                : "Đang chờ dữ liệu thời gian...");
+        // Init price chart
+        initPriceChart();
 
-        // Đăng ký nhận push notification realtime
+        // Load balance
+        loadBalance();
+
+        // Fetch fresh auction data từ server để check status mới nhất
+        loadFreshAuctionData();
+
+        // Register push listener
         registerPushListener();
     }
 
-    /**
-     * Đăng ký lắng nghe push từ server.
-     * Khi có bid mới trên cùng phiên đấu giá → cập nhật giá lên UI ngay lập tức.
-     */
+    private void initPriceChart() {
+        if (priceChart == null) return;
+
+        allBidsSeries = new XYChart.Series<>();
+        allBidsSeries.setName("Tất cả lượt đặt");
+        myBidsSeries = new XYChart.Series<>();
+        myBidsSeries.setName("Lượt đặt của tôi");
+
+        priceChart.getData().clear();
+        priceChart.getData().add(allBidsSeries);
+        priceChart.getData().add(myBidsSeries);
+
+        // Style series via lookup after render
+        priceChart.setAnimated(false);
+    }
+
+    private void loadFreshAuctionData() {
+        if (currentAuction == null) return;
+        String auctionId = currentAuction.getId();
+        NetworkClient.getInstance().sendRequestAsync(
+                new ClientRequest(Action.GET_AUCTION, auctionId)
+        ).thenAccept(res -> Platform.runLater(() -> {
+            if (res.isSuccess() && res.getData() instanceof Auction fresh) {
+                currentAuction = fresh;
+                currentAuction.setCurrentPrice(fresh.getCurrentPrice());
+                if (fresh.getEndTime() != null) currentAuction.setEndTime(fresh.getEndTime());
+                priceLabel.setText(String.format("%,.0f VNĐ", fresh.getCurrentPrice()));
+
+                if (fresh.getStatus() == AuctionStatus.CANCELED) {
+                    timeLabel.setText("Phiên đã bị hủy");
+                    timeLabel.setStyle("-fx-text-fill: #ef4444; -fx-font-weight: bold;");
+                    disableAllControls();
+                    return;
+                }
+                if (fresh.getStatus() == AuctionStatus.FINISHED) {
+                    timeLabel.setText("Phiên đã kết thúc");
+                    timeLabel.setStyle("-fx-text-fill: #ef4444; -fx-font-weight: bold;");
+                    disableAllControls();
+                    return;
+                }
+                // Auction còn hoạt động — start countdown + load bid history
+                startCountdown();
+                loadBidHistory();
+            } else {
+                // Không fetch được — start với dữ liệu hiện tại
+                startCountdown();
+                loadBidHistory();
+            }
+        }));
+    }
+
+    private void disableAllControls() {
+        placeBidBtn.setDisable(true);
+        bidAmountField.setDisable(true);
+        maxBidField.setDisable(true);
+        incrementField.setDisable(true);
+        autoBidBtn.setDisable(true);
+        if (countdownTimeline != null) {
+            countdownTimeline.stop();
+            countdownTimeline = null;
+        }
+    }
+
+    private void startCountdown() {
+        if (currentAuction == null || currentAuction.getEndTime() == null) return;
+        if (currentAuction.getStatus() == AuctionStatus.CANCELED
+                || currentAuction.getStatus() == AuctionStatus.FINISHED) return;
+
+        if (countdownTimeline != null) countdownTimeline.stop();
+
+        countdownTimeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> updateCountdown()));
+        countdownTimeline.setCycleCount(Timeline.INDEFINITE);
+        countdownTimeline.play();
+    }
+
+    private void updateCountdown() {
+        if (currentAuction == null || currentAuction.getEndTime() == null) return;
+
+        LocalDateTime end = currentAuction.getEndTime();
+        java.time.Duration remaining = java.time.Duration.between(LocalDateTime.now(), end);
+
+        if (remaining.isNegative() || remaining.isZero()) {
+            // Không tự disable — chờ server gửi AUCTION_ENDED (anti-sniping có thể gia hạn)
+            timeLabel.setText("Đang chờ server xác nhận kết thúc...");
+            timeLabel.setStyle("-fx-text-fill: #eab308; -fx-font-weight: bold;");
+            return;
+        }
+
+        long h = remaining.toHours();
+        long m = remaining.toMinutes() % 60;
+        long s = remaining.getSeconds() % 60;
+        timeLabel.setText(String.format("Còn lại: %02d:%02d:%02d", h, m, s));
+
+        // Color: xanh (>1h), vàng (<1h), đỏ (<5 phút)
+        if (remaining.toHours() >= 1) {
+            timeLabel.setStyle("-fx-text-fill: #22c55e; -fx-font-weight: bold;");
+        } else if (remaining.toMinutes() >= 5) {
+            timeLabel.setStyle("-fx-text-fill: #eab308; -fx-font-weight: bold;");
+        } else {
+            timeLabel.setStyle("-fx-text-fill: #ef4444; -fx-font-weight: bold;");
+        }
+    }
+
+    private void loadBidHistory() {
+        if (currentAuction == null) return;
+        bidHistoryStatus.setText("Đang tải...");
+        ClientRequest req = new ClientRequest(Action.GET_BID_HISTORY, new GetBidHistoryRequest(currentAuction.getId()));
+        NetworkClient.getInstance().sendRequestAsync(req).thenAccept(res -> Platform.runLater(() -> {
+            if (res.isSuccess() && res.getData() != null) {
+                List<?> rawList = (List<?>) res.getData();
+                List<BidTransaction> bids = rawList.stream()
+                        .filter(BidTransaction.class::isInstance)
+                        .map(BidTransaction.class::cast)
+                        .toList();
+                updateBidHistoryView(bids);
+                bidHistoryStatus.setText(bids.size() + " lượt đặt giá");
+            } else {
+                bidHistoryStatus.setText("Không có dữ liệu");
+            }
+        })).exceptionally(ex -> {
+            Platform.runLater(() -> bidHistoryStatus.setText("Lỗi tải!"));
+            return null;
+        });
+    }
+
+    /** Load bid history không block — dùng cho push listener để tránh requestLock contention */
+    private void loadBidHistoryAsync() {
+        if (currentAuction == null) return;
+        ClientRequest req = new ClientRequest(Action.GET_BID_HISTORY, new GetBidHistoryRequest(currentAuction.getId()));
+        NetworkClient.getInstance().sendRequestAsync(req).thenAccept(res -> {
+            if (res.isSuccess() && res.getData() != null) {
+                List<?> rawList = (List<?>) res.getData();
+                List<BidTransaction> bids = rawList.stream()
+                        .filter(BidTransaction.class::isInstance)
+                        .map(BidTransaction.class::cast)
+                        .toList();
+                Platform.runLater(() -> {
+                    updateBidHistoryView(bids);
+                    bidHistoryStatus.setText(bids.size() + " lượt đặt giá");
+                });
+            }
+        });
+    }
+
+    private void updateBidHistoryView(List<BidTransaction> bids) {
+        AuthUserData user = NetworkClient.getInstance().getCurrentUser();
+        String currentUserId = user != null ? user.getUserId() : "";
+
+        bidHistoryView.getItems().clear();
+
+        // Update price chart
+        if (priceChart != null) {
+            allBidsSeries.getData().clear();
+            myBidsSeries.getData().clear();
+            // chronological order (oldest first)
+            for (int i = 0; i < bids.size(); i++) {
+                BidTransaction bid = bids.get(i);
+                double y = bid.getBidAmount();
+                allBidsSeries.getData().add(new XYChart.Data<>(i + 1, y));
+            }
+            // my bids — same X indices
+            for (int i = 0; i < bids.size(); i++) {
+                BidTransaction bid = bids.get(i);
+                if (bid.getBidderId().equals(currentUserId)) {
+                    myBidsSeries.getData().add(new XYChart.Data<>(i + 1, bid.getBidAmount()));
+                }
+            }
+        }
+        int seq = bids.size();
+        for (int i = bids.size() - 1; i >= 0; i--) {
+            BidTransaction bid = bids.get(i);
+            String formatted = String.format("%d. %s: %,.0f VNĐ - %s",
+                    seq--,
+                    bid.getBidderId(),
+                    bid.getBidAmount(),
+                    bid.getBidTime() != null ? bid.getBidTime().format(DateTimeFormatter.ofPattern("dd/MM HH:mm:ss")) : "");
+            bidHistoryView.getItems().add(formatted);
+        }
+
+        // Highlight current user's bids using cell factory
+        bidHistoryView.setCellFactory(param -> new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(item);
+                    // Check if this bid is by current user (by checking bidderId in text)
+                    if (currentUserId != null && !currentUserId.isEmpty() && item.contains(currentUserId)) {
+                        setStyle("-fx-background-color: #fef3c7; -fx-text-fill: #0f172a;");
+                    } else {
+                        setStyle("");
+                    }
+                }
+            }
+        });
+    }
+
+    private void loadBalance() {
+        AuthUserData user = NetworkClient.getInstance().getCurrentUser();
+        if (user == null || balanceLabel == null) return;
+        ClientRequest req = new ClientRequest(Action.GET_BALANCE, user.getUserId());
+        NetworkClient.getInstance().sendRequestAsync(req).thenAccept(res -> Platform.runLater(() -> {
+            if (res.isSuccess() && res.getData() != null) {
+                double balance = (double) res.getData();
+                balanceLabel.setText("Số dư: " + String.format("%,.0f", balance) + " VNĐ");
+                // Cập nhật balance trong AuthUserData để dùng cho client-side check
+                user.setBalance(balance);
+            }
+        }));
+    }
+
     private void registerPushListener() {
         pushListener = pushMsg -> {
-            if (pushMsg.getType() == ServerPushMessage.PushType.NEW_BID
+            // Cập nhật endTime + giá từ push (quan trọng cho anti-sniping và auto-bid)
+            if ((pushMsg.getType() == ServerPushMessage.PushType.NEW_BID
+                    || pushMsg.getType() == ServerPushMessage.PushType.PRICE_UPDATE)
                     && pushMsg.getData() instanceof Auction updatedAuction) {
 
-                // Chỉ cập nhật nếu đúng phiên đấu giá đang xem
                 if (currentAuction != null
                         && updatedAuction.getId().equals(currentAuction.getId())) {
                     Platform.runLater(() -> {
                         currentAuction.setCurrentPrice(updatedAuction.getCurrentPrice());
+                        if (updatedAuction.getEndTime() != null) {
+                            currentAuction.setEndTime(updatedAuction.getEndTime());
+                        }
                         priceLabel.setText(String.format("%,.0f VNĐ", updatedAuction.getCurrentPrice()));
-                        timeLabel.setText("💡 Giá vừa được cập nhật bởi người khác!");
-                        timeLabel.setStyle("-fx-text-fill: #f39c12;");
+                        // Load bid history bất đồng bộ — không block UI
+                        loadBidHistoryAsync();
                     });
                 }
             } else if (pushMsg.getType() == ServerPushMessage.PushType.AUCTION_ENDED) {
@@ -82,9 +319,16 @@ public class AuctionDetailController {
                         && currentAuction != null
                         && endedAuction.getId().equals(currentAuction.getId())) {
                     Platform.runLater(() -> {
-                        timeLabel.setText("⏰ Phiên đấu giá đã kết thúc!");
-                        timeLabel.setStyle("-fx-text-fill: #e74c3c;");
-                        bidAmountField.setDisable(true);
+                        currentAuction.setStatus(endedAuction.getStatus());
+                        if (endedAuction.getStatus() == AuctionStatus.CANCELED) {
+                            timeLabel.setText("Phiên đã bị hủy");
+                        } else {
+                            timeLabel.setText(pushMsg.getMessage() != null ? pushMsg.getMessage() : "Đã kết thúc");
+                        }
+                        timeLabel.setStyle("-fx-text-fill: #ef4444; -fx-font-weight: bold;");
+                        disableAllControls();
+                        loadBidHistory();
+                        loadBalance();
                     });
                 }
             }
@@ -97,8 +341,7 @@ public class AuctionDetailController {
         String amountStr = bidAmountField.getText();
 
         if (amountStr.isEmpty()) {
-            timeLabel.setText("Chưa nhập giá!");
-            timeLabel.setStyle("-fx-text-fill: #e74c3c;");
+            showStatus("Chưa nhập giá!", true);
             return;
         }
 
@@ -108,44 +351,146 @@ public class AuctionDetailController {
 
             AuthUserData user = NetworkClient.getInstance().getCurrentUser();
             if (user == null) {
-                timeLabel.setText("Vui lòng đăng nhập lại!");
+                showStatus("Vui lòng đăng nhập lại!", true);
+                return;
+            }
+
+            // Client-side balance check
+            double balance = user.getBalance();
+            if (balance < amount) {
+                showStatus("Số dư không đủ! Số dư: " + String.format("%,.0f", balance) + " VNĐ", true);
                 return;
             }
 
             PlaceBidRequest req = new PlaceBidRequest(auctionId, user.getUserId(), amount, false);
             ClientRequest request = new ClientRequest(Action.PLACE_BID, req);
 
-            timeLabel.setText("Đang xử lý...");
-            timeLabel.setStyle("-fx-text-fill: gray;");
-
+            showStatus("Đang xử lý...", false);
             NetworkClient.getInstance().sendRequestAsync(request).thenAccept(res -> Platform.runLater(() -> {
                 if (res.isSuccess()) {
-                    timeLabel.setText("Đặt giá thành công: " + String.format("%,.0f", amount) + " VNĐ");
-                    timeLabel.setStyle("-fx-text-fill: #2ecc71;");
-                    priceLabel.setText(String.format("%,.0f VNĐ", amount));
-                    if (currentAuction != null) currentAuction.setCurrentPrice(amount);
+                    showStatus("Đặt giá thành công: " + String.format("%,.0f", amount) + " VNĐ", false);
                     bidAmountField.clear();
+                    loadBidHistory();
                 } else {
-                    timeLabel.setText("Lỗi: " + res.getMessage());
-                    timeLabel.setStyle("-fx-text-fill: #e74c3c;");
+                    showStatus("Lỗi: " + res.getMessage(), true);
                 }
             })).exceptionally(ex -> {
-                Platform.runLater(() -> {
-                    timeLabel.setText("Lỗi kết nối server!");
-                    timeLabel.setStyle("-fx-text-fill: #e74c3c;");
-                });
+                Platform.runLater(() -> showStatus("Lỗi kết nối server!", true));
                 return null;
             });
 
         } catch (NumberFormatException ex) {
-            timeLabel.setText("Giá trị không hợp lệ!");
-            timeLabel.setStyle("-fx-text-fill: #e74c3c;");
+            showStatus("Giá trị không hợp lệ!", true);
         }
     }
 
     @FXML
+    public void handleAutoBid() {
+        if (autoBidEnabled) {
+            // Disable auto-bid
+            removeAutoBid();
+        } else {
+            // Enable auto-bid
+            enableAutoBid();
+        }
+    }
+
+    private void enableAutoBid() {
+        String maxBidStr = maxBidField.getText();
+        if (maxBidStr.isEmpty()) {
+            showStatus("Nhập giá tối đa cho auto-bid!", true);
+            return;
+        }
+
+        String incStr = incrementField.getText();
+        if (incStr.isEmpty()) {
+            showStatus("Nhập bước tăng giá cho auto-bid!", true);
+            return;
+        }
+
+        try {
+            double maxBid = Double.parseDouble(maxBidStr);
+            double increment = Double.parseDouble(incStr);
+
+            if (increment <= 0) {
+                showStatus("Bước tăng phải lớn hơn 0!", true);
+                return;
+            }
+
+            AuthUserData user = NetworkClient.getInstance().getCurrentUser();
+            if (user == null) {
+                showStatus("Vui lòng đăng nhập lại!", true);
+                return;
+            }
+
+            // Client-side balance check
+            double balance = user.getBalance();
+            if (balance < maxBid) {
+                showStatus("Số dư không đủ cho auto-bid! Số dư: " + String.format("%,.0f", balance) + " VNĐ", true);
+                return;
+            }
+
+            String auctionId = currentAuction != null ? currentAuction.getId() : "";
+            RegisterAutoBidRequest req = new RegisterAutoBidRequest(auctionId, user.getUserId(), maxBid, increment);
+            ClientRequest request = new ClientRequest(Action.REGISTER_AUTO_BID, req);
+
+            showStatus("Đang đăng ký auto-bid...", false);
+            NetworkClient.getInstance().sendRequestAsync(request).thenAccept(res -> Platform.runLater(() -> {
+                if (res.isSuccess()) {
+                    autoBidEnabled = true;
+                    autoBidBtn.setText("Hủy auto-bid");
+                    autoBidBtn.setStyle("-fx-background-color: #ef4444; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20; -fx-background-radius: 6;");
+                    maxBidField.setDisable(true);
+                    incrementField.setDisable(true);
+                    showStatus("Auto-bid đã bật!", false);
+                } else {
+                    showStatus("Lỗi: " + res.getMessage(), true);
+                }
+            })).exceptionally(ex -> {
+                Platform.runLater(() -> showStatus("Lỗi kết nối server!", true));
+                return null;
+            });
+
+        } catch (NumberFormatException ex) {
+            showStatus("Giá tối đa không hợp lệ!", true);
+        }
+    }
+
+    private void removeAutoBid() {
+        AuthUserData user = NetworkClient.getInstance().getCurrentUser();
+        if (user == null) return;
+
+        String auctionId = currentAuction != null ? currentAuction.getId() : "";
+        RemoveAutoBidRequest req = new RemoveAutoBidRequest(auctionId, user.getUserId());
+        ClientRequest request = new ClientRequest(Action.REMOVE_AUTO_BID, req);
+
+        NetworkClient.getInstance().sendRequestAsync(request).thenAccept(res -> Platform.runLater(() -> {
+            if (res.isSuccess()) {
+                autoBidEnabled = false;
+                autoBidBtn.setText("Bật auto-bid");
+                autoBidBtn.setStyle("");
+                maxBidField.setDisable(false);
+                incrementField.setDisable(false);
+                showStatus("Đã hủy auto-bid", false);
+            } else {
+                showStatus("Lỗi: " + res.getMessage(), true);
+            }
+        })).exceptionally(ex -> {
+            Platform.runLater(() -> showStatus("Lỗi kết nối server!", true));
+            return null;
+        });
+    }
+
+    private void showStatus(String msg, boolean isError) {
+        timeLabel.setText(msg);
+        timeLabel.setStyle(isError
+                ? "-fx-text-fill: #ef4444; -fx-font-weight: bold;"
+                : "-fx-text-fill: #22c55e; -fx-font-weight: bold;");
+    }
+
+    @FXML
     public void goBack() {
-        // Hủy đăng ký push listener khi rời trang
+        if (countdownTimeline != null) countdownTimeline.stop();
         if (pushListener != null) {
             NetworkClient.getInstance().removePushListener(pushListener);
         }

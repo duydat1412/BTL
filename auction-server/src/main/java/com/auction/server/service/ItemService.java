@@ -4,6 +4,7 @@ import com.auction.common.entity.Art;
 import com.auction.common.entity.Electronics;
 import com.auction.common.entity.Item;
 import com.auction.common.entity.Vehicle;
+import com.auction.common.enums.AuctionStatus;
 import com.auction.common.factory.ItemFactory;
 import com.auction.common.message.*;
 import com.auction.server.repository.SerializableItemRepository;
@@ -90,10 +91,23 @@ public class ItemService {
             
             com.auction.server.repository.SerializableAuctionRepository auctionRepo = new com.auction.server.repository.SerializableAuctionRepository();
             auctionRepo.save(auction);
+            System.out.println("[DEBUG] ItemService: created auction " + auction.getId() + " for item " + item.getId());
             
             // Lên lịch tự động kết thúc
             AuctionScheduler.scheduleAuctionStart(auction.getId(), auction.getStartTime());
             AuctionScheduler.scheduleAuctionEndAt(auction.getId(), auction.getEndTime());
+
+            // Broadcast thông báo auction mới cho tất cả client
+            try {
+                com.auction.common.message.ServerPushMessage pushMsg = new com.auction.common.message.ServerPushMessage(
+                        com.auction.common.message.ServerPushMessage.PushType.AUCTION_CREATED,
+                        "Phiên đấu giá mới: " + auction.getTitle(),
+                        auction
+                );
+                com.auction.server.handler.ClientRegistry.getInstance().broadcast(pushMsg);
+            } catch (Exception pushEx) {
+                System.err.println("[WARN] Failed to broadcast AUCTION_CREATED: " + pushEx.getMessage());
+            }
 
             return new ClientResponse(true, "Tạo sản phẩm và phiên đấu giá thành công", item);
 
@@ -200,12 +214,48 @@ public class ItemService {
     // ==================== DELETE (Người D sẽ implement) ====================
 
     public ClientResponse D(DeleteItemRequest deleteItemRequest, String senderId) {
-        if (deleteItemRequest.getSellerId()!=senderId){
+        if (deleteItemRequest.getSellerId() == null || !deleteItemRequest.getSellerId().equals(senderId)){
             return new ClientResponse(false, "No Permission", null);
         }
         try{
+            // Không cho xóa nếu item đã có phiên FINISHED (có người thắng)
+            com.auction.server.repository.SerializableAuctionRepository auctionRepo =
+                    new com.auction.server.repository.SerializableAuctionRepository();
+            boolean hasFinished = auctionRepo.findAll().stream()
+                    .anyMatch(a -> deleteItemRequest.getItemId().equals(a.getItemId())
+                            && a.getStatus() == AuctionStatus.FINISHED);
+            if (hasFinished) {
+                return new ClientResponse(false, "Sản phẩm đã có phiên đấu giá kết thúc, không thể xóa", null);
+            }
+
+            // Xóa item
             sir.delete(deleteItemRequest.getItemId());
-            return new ClientResponse(true, "Thanh cong", null);
+
+            // Xóa các auction liên kết với item này (chỉ xóa nếu chưa FINISHED)
+            java.util.List<com.auction.common.entity.Auction> toRemove = auctionRepo.findAll().stream()
+                    .filter(a -> deleteItemRequest.getItemId().equals(a.getItemId()))
+                    .filter(a -> a.getStatus() != AuctionStatus.FINISHED)
+                    .toList();
+            // Xóa trước — tránh race: nếu broadcast rồi mới xóa, client loadAuctions()
+            // có thể GET_AUCTIONS trước khi xóa kịp hoàn tất, nhận về auction cũ
+            for (com.auction.common.entity.Auction a : toRemove) {
+                auctionRepo.delete(a.getId());
+            }
+            // Broadcast sau khi xóa — client load lại list sẽ không thấy auction
+            for (com.auction.common.entity.Auction a : toRemove) {
+                try {
+                    com.auction.common.message.ServerPushMessage pushMsg = new com.auction.common.message.ServerPushMessage(
+                            com.auction.common.message.ServerPushMessage.PushType.AUCTION_ENDED,
+                            "Phiên \"" + a.getTitle() + "\" đã bị xóa",
+                            a
+                    );
+                    com.auction.server.handler.ClientRegistry.getInstance().broadcast(pushMsg);
+                } catch (Exception pushEx) {
+                    System.err.println("[WARN] Failed to broadcast auction delete: " + pushEx.getMessage());
+                }
+            }
+
+            return new ClientResponse(true, "Xóa thành công", null);
         } catch (Exception e){
             return new ClientResponse(false, e.getMessage(), null);
         }

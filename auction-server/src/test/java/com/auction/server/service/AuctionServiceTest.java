@@ -165,6 +165,34 @@ class AuctionServiceTest {
             List<?> auctions = (List<?>) res.getData();
             assertTrue(auctions.isEmpty());
         }
+
+        @Test
+        @DisplayName("Get auctions filters out orphan non-finished auctions")
+        void getAuctions_filtersOrphanNonFinished() {
+            Auction orphan = new Auction("missing-item", sellerId, "Orphan", 1000,
+                    java.time.LocalDateTime.now(), java.time.LocalDateTime.now().plusHours(1));
+            orphan.setStatus(AuctionStatus.OPEN);
+            DataStore.getInstance().getAuctions().add(orphan);
+
+            ClientResponse res = AuctionService.getAuctions(null);
+            List<?> auctions = (List<?>) res.getData();
+            assertEquals(1, auctions.size());
+            assertEquals(auctionId, ((Auction) auctions.get(0)).getId());
+        }
+
+        @Test
+        @DisplayName("Get auctions keeps orphan finished auctions")
+        void getAuctions_keepsOrphanFinished() {
+            Auction orphan = new Auction("missing-item", sellerId, "Finished orphan", 1000,
+                    java.time.LocalDateTime.now(), java.time.LocalDateTime.now().plusHours(1));
+            orphan.setStatus(AuctionStatus.FINISHED);
+            DataStore.getInstance().getAuctions().add(orphan);
+
+            ClientResponse res = AuctionService.getAuctions(new GetAuctionsRequest(null, AuctionStatus.FINISHED.name()));
+            List<?> auctions = (List<?>) res.getData();
+            assertEquals(1, auctions.size());
+            assertEquals(orphan.getId(), ((Auction) auctions.get(0)).getId());
+        }
     }
 
     @Nested
@@ -243,6 +271,67 @@ class AuctionServiceTest {
             auction.setStatus(AuctionStatus.FINISHED);
             CancelAuctionRequest req = new CancelAuctionRequest(adminId, auctionId, "Late");
             ClientResponse res = AuctionService.cancelAuction(req);
+            assertFalse(res.isSuccess());
+        }
+
+        @Test
+        @DisplayName("Unknown admin cannot cancel auction")
+        void cancelAuction_unknownAdmin_fails() {
+            CancelAuctionRequest req = new CancelAuctionRequest("missing-admin", auctionId, "No admin");
+            ClientResponse res = AuctionService.cancelAuction(req);
+            assertFalse(res.isSuccess());
+            assertEquals("ADMIN PERMISSION REQUIRED", res.getMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("sellerCancelAuction tests")
+    class SellerCancelAuctionTests {
+
+        private String auctionId;
+
+        @BeforeEach
+        void createAuction() {
+            java.time.LocalDateTime startTime = java.time.LocalDateTime.now().plusHours(1);
+            CreateAuctionRequest req = new CreateAuctionRequest(itemId, startTime, null);
+            auctionId = ((Auction) AuctionService.createAuction(req).getData()).getId();
+        }
+
+        @Test
+        @DisplayName("Seller can cancel own auction")
+        void sellerCancelAuction_success() {
+            SellerCancelAuctionRequest req = new SellerCancelAuctionRequest(sellerId, auctionId, "Seller decision");
+            ClientResponse res = AuctionService.sellerCancelAuction(req);
+            assertTrue(res.isSuccess());
+            assertEquals(AuctionStatus.CANCELED, ((Auction) res.getData()).getStatus());
+        }
+
+        @Test
+        @DisplayName("Non-seller cannot cancel seller auction")
+        void sellerCancelAuction_nonSeller_fails() {
+            SellerCancelAuctionRequest req = new SellerCancelAuctionRequest(adminId, auctionId, "No permission");
+            ClientResponse res = AuctionService.sellerCancelAuction(req);
+            assertFalse(res.isSuccess());
+            assertEquals("SELLER PERMISSION REQUIRED", res.getMessage());
+        }
+
+        @Test
+        @DisplayName("Seller cannot cancel another seller auction")
+        void sellerCancelAuction_otherSeller_fails() {
+            Seller otherSeller = new Seller("other", "hash", "other@test.com");
+            otherSeller.setId("seller-2");
+            DataStore.getInstance().getUsers().add(otherSeller);
+
+            SellerCancelAuctionRequest req = new SellerCancelAuctionRequest(otherSeller.getId(), auctionId, "Not mine");
+            ClientResponse res = AuctionService.sellerCancelAuction(req);
+            assertFalse(res.isSuccess());
+        }
+
+        @Test
+        @DisplayName("Seller cancel missing auction fails")
+        void sellerCancelAuction_missingAuction_fails() {
+            SellerCancelAuctionRequest req = new SellerCancelAuctionRequest(sellerId, "missing-auction", "No auction");
+            ClientResponse res = AuctionService.sellerCancelAuction(req);
             assertFalse(res.isSuccess());
         }
     }

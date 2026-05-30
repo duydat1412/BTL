@@ -14,6 +14,8 @@
         <Label text="DHDH - Danh sách đấu giá" styleClass="text-2xl, font-bold, text-foreground"/>
         <Region HBox.hgrow="ALWAYS"/>
         <Label fx:id="userInfoLabel" styleClass="text-sm, text-muted, font-bold"/>
+        <Label fx:id="balanceLabel" styleClass="text-sm, text-gold, font-bold"/>
+        <Button text="Nạp tiền" onAction="#handleTopUp" styleClass="btn-outline"/>
         <Button text="Đăng xuất" onAction="#handleLogout" styleClass="btn-outline"/>
     </HBox>
 
@@ -31,13 +33,30 @@
 
             <!-- Main Content -->
             <VBox spacing="15" styleClass="card" VBox.vgrow="ALWAYS" maxWidth="800">
-                <HBox alignment="CENTER_LEFT" spacing="10">
-                    <Label text="Phiên nổi bật" styleClass="text-xl, font-bold, text-foreground"/>
-                    <Region HBox.hgrow="ALWAYS"/>
-                    <Label fx:id="statusLabel" styleClass="text-sm, text-danger"/>
-                </HBox>
-
-                <ListView fx:id="listView" styleClass="list-view" VBox.vgrow="ALWAYS" prefHeight="400"/>
+                <TabPane VBox.vgrow="ALWAYS">
+                    <Tab text="Đang diễn ra" closable="false">
+                        <VBox spacing="10">
+                            <padding><Insets top="10"/></padding>
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Label text="Phiên nổi bật" styleClass="text-xl, font-bold, text-foreground"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label fx:id="statusLabel" styleClass="text-sm, text-danger"/>
+                            </HBox>
+                            <ListView fx:id="listView" styleClass="list-view" VBox.vgrow="ALWAYS" prefHeight="400"/>
+                        </VBox>
+                    </Tab>
+                    <Tab text="Đã thắng" closable="false">
+                        <VBox spacing="10">
+                            <padding><Insets top="10"/></padding>
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Label text="Phiên đã thắng" styleClass="text-xl, font-bold, text-foreground"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label fx:id="wonStatusLabel" styleClass="text-sm, text-muted"/>
+                            </HBox>
+                            <ListView fx:id="wonListView" styleClass="list-view" VBox.vgrow="ALWAYS" prefHeight="400"/>
+                        </VBox>
+                    </Tab>
+                </TabPane>
             </VBox>
 
         </VBox>

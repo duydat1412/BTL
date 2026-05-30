@@ -6,43 +6,99 @@
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.auction.client.controller.AdminController"
-      prefHeight="700.0" prefWidth="900.0"
+      prefHeight="750.0" prefWidth="1000.0"
       styleClass="main-bg">
 
     <!-- Navbar -->
     <HBox alignment="CENTER_LEFT" spacing="20" styleClass="bg-white" style="-fx-padding: 15 30; -fx-border-color: #e2e8f0; -fx-border-width: 0 0 1 0;">
         <Label text="DHDH - Quản Trị Hệ Thống" styleClass="text-2xl, font-bold, text-foreground"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <Button text="Đăng xuất" styleClass="btn-outline"/>
+        <Label fx:id="userInfoLabel" styleClass="text-sm, text-muted, font-bold"/>
+        <Button text="Đăng xuất" onAction="#handleLogout" styleClass="btn-outline"/>
     </HBox>
 
-    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
-        <VBox spacing="25" alignment="TOP_CENTER" style="-fx-padding: 30;">
+    <TabPane VBox.vgrow="ALWAYS" style="-fx-padding: 20;">
+        <!-- Tab 1: Dashboard -->
+        <Tab text="Dashboard" closable="false">
+            <VBox spacing="25" alignment="TOP_CENTER" style="-fx-padding: 20;">
+                <Label text="Thống kê tổng quan" styleClass="text-2xl, font-bold, text-foreground"/>
 
-            <VBox spacing="20" styleClass="card" maxWidth="800">
-                <Label text="Thống kê tổng quan" styleClass="text-xl, font-bold, text-foreground"/>
-
-                <HBox spacing="20">
+                <HBox spacing="20" maxWidth="900">
                     <VBox spacing="5" style="-fx-background-color: #f1f5f9; -fx-padding: 20; -fx-background-radius: 8;" HBox.hgrow="ALWAYS">
-                        <Label text="Người dùng" styleClass="text-sm, text-muted"/>
-                        <Label text="0" styleClass="text-3xl, font-bold, text-foreground"/>
+                        <Label text="Tổng người dùng" styleClass="text-sm, text-muted"/>
+                        <Label fx:id="totalUsersLabel" text="0" styleClass="text-3xl, font-bold, text-foreground"/>
                     </VBox>
                     <VBox spacing="5" style="-fx-background-color: #fef3c7; -fx-padding: 20; -fx-background-radius: 8;" HBox.hgrow="ALWAYS">
-                        <Label text="Phiên đang chạy" styleClass="text-sm, text-muted"/>
-                        <Label text="0" styleClass="text-3xl, font-bold, text-gold"/>
+                        <Label text="Số Seller" styleClass="text-sm, text-muted"/>
+                        <Label fx:id="totalSellersLabel" text="0" styleClass="text-3xl, font-bold, text-gold"/>
                     </VBox>
-                    <VBox spacing="5" style="-fx-background-color: #f1f5f9; -fx-padding: 20; -fx-background-radius: 8;" HBox.hgrow="ALWAYS">
-                        <Label text="Cảnh báo" styleClass="text-sm, text-muted"/>
-                        <Label text="0" styleClass="text-3xl, font-bold, text-danger"/>
+                    <VBox spacing="5" style="-fx-background-color: #e0f2fe; -fx-padding: 20; -fx-background-radius: 8;" HBox.hgrow="ALWAYS">
+                        <Label text="Số Bidder" styleClass="text-sm, text-muted"/>
+                        <Label fx:id="totalBiddersLabel" text="0" styleClass="text-3xl, font-bold, text-foreground"/>
                     </VBox>
                 </HBox>
 
-                <Separator/>
+                <HBox spacing="20" maxWidth="900">
+                    <VBox spacing="5" style="-fx-background-color: #f1f5f9; -fx-padding: 20; -fx-background-radius: 8;" HBox.hgrow="ALWAYS">
+                        <Label text="Tổng số Item" styleClass="text-sm, text-muted"/>
+                        <Label fx:id="totalItemsLabel" text="0" styleClass="text-3xl, font-bold, text-foreground"/>
+                    </VBox>
+                    <VBox spacing="5" style="-fx-background-color: #fef3c7; -fx-padding: 20; -fx-background-radius: 8;" HBox.hgrow="ALWAYS">
+                        <Label text="Auction đang chạy" styleClass="text-sm, text-muted"/>
+                        <Label fx:id="activeAuctionsLabel" text="0" styleClass="text-3xl, font-bold, text-gold"/>
+                    </VBox>
+                    <VBox spacing="5" style="-fx-background-color: #fce7f3; -fx-padding: 20; -fx-background-radius: 8;" HBox.hgrow="ALWAYS">
+                        <Label text="Auction kết thúc" styleClass="text-sm, text-muted"/>
+                        <Label fx:id="finishedAuctionsLabel" text="0" styleClass="text-3xl, font-bold, text-danger"/>
+                    </VBox>
+                </HBox>
 
-                <Label text="Tính năng đang phát triển..." styleClass="text-muted"/>
+                <Label fx:id="dashboardStatus" styleClass="text-sm, text-muted"/>
             </VBox>
+        </Tab>
 
-        </VBox>
-    </ScrollPane>
+        <!-- Tab 2: User Management -->
+        <Tab text="Quản lý User" closable="false">
+            <VBox spacing="15" style="-fx-padding: 20;">
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Danh sách người dùng" styleClass="text-xl, font-bold, text-foreground"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Tải lại" onAction="#handleRefreshUsers" styleClass="btn-outline"/>
+                </HBox>
+                <TableView fx:id="userTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                    <columns>
+                        <TableColumn fx:id="usernameCol" text="Username" prefWidth="140"/>
+                        <TableColumn fx:id="emailCol" text="Email" prefWidth="180"/>
+                        <TableColumn fx:id="roleCol" text="Vai trò" prefWidth="80"/>
+                        <TableColumn fx:id="statusCol" text="Trạng thái" prefWidth="80"/>
+                        <TableColumn fx:id="balanceCol" text="Số dư" prefWidth="130"/>
+                        <TableColumn fx:id="actionCol" text="Hành động" prefWidth="180"/>
+                    </columns>
+                </TableView>
+                <Label fx:id="userStatus" styleClass="text-sm, text-muted"/>
+            </VBox>
+        </Tab>
+
+        <!-- Tab 3: Auction Management -->
+        <Tab text="Quản lý Auction" closable="false">
+            <VBox spacing="15" style="-fx-padding: 20;">
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Danh sách phiên đấu giá" styleClass="text-xl, font-bold, text-foreground"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Tải lại" onAction="#handleRefreshAuctions" styleClass="btn-outline"/>
+                </HBox>
+                <TableView fx:id="auctionTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                    <columns>
+                        <TableColumn fx:id="auctionTitleCol" text="Tiêu đề" prefWidth="200"/>
+                        <TableColumn fx:id="auctionStatusCol" text="Trạng thái" prefWidth="120"/>
+                        <TableColumn fx:id="auctionPriceCol" text="Giá hiện tại" prefWidth="150"/>
+                        <TableColumn fx:id="auctionEndCol" text="Kết thúc" prefWidth="150"/>
+                        <TableColumn fx:id="auctionActionCol" text="Hành động" prefWidth="150"/>
+                    </columns>
+                </TableView>
+                <Label fx:id="auctionStatus" styleClass="text-sm, text-muted"/>
+            </VBox>
+        </Tab>
+    </TabPane>
 
 </VBox>
