@@ -646,3 +646,4 @@ public class AuctionDetailController {
         }
     }
 }
+//1
