@@ -1,21 +1,21 @@
 # Auction System
 
-## 1. Mo ta bai toan va pham vi he thong
+## 1. Mô tả bài toán và phạm vi hệ thống
 
-Day la he thong dau gia truc tuyen xay dung theo mo hinh client-server bang Java. He thong cho phep nhieu nguoi dung ket noi dong thoi, dang nhap theo vai tro, tao san pham, tao phien dau gia, tham gia tra gia va theo doi cap nhat theo thoi gian thuc.
+Đây là hệ thống đấu giá trực tuyến xây dựng theo mô hình client-server bằng Java. Hệ thống cho phép nhiều người dùng kết nối đồng thời, đăng nhập theo vai trò, tạo phiên đấu giá, tham gia trả giá, theo dõi cập nhật real-time và quản trị dữ liệu người dùng/phiên đấu giá.
 
-Pham vi hien tai cua he thong:
+Phạm vi hiện tại của hệ thống:
 
-- Server socket xu ly request/response giua client va server
-- Client JavaFX cho nguoi dung cuoi
-- Quan ly nguoi dung theo vai tro `ADMIN`, `SELLER`, `BIDDER`
-- Quan ly item va phien dau gia
-- Tra gia thu cong, auto-bid va cap nhat real-time
-- Chuc nang quan tri nhu ban/unban user, huy phien, nap tien
+- Server socket xử lý request/response giữa client và server
+- Client JavaFX cho người dùng cuối
+- Quản lý người dùng theo vai trò `ADMIN`, `SELLER`, `BIDDER`
+- Quản lý item và phiên đấu giá
+- Trả giá thủ công, tự động và cập nhật real-time
+- Một số chức năng quản trị như ban/unban user, hủy phiên, nạp tiền
 
-## 2. Cong nghe su dung, moi truong chay va yeu cau cai dat
+## 2. Công nghệ sử dụng, môi trường chạy và yêu cầu cài đặt
 
-### Cong nghe su dung
+### Công nghệ sử dụng
 
 - Java 17
 - Maven Wrapper
@@ -24,39 +24,37 @@ Pham vi hien tai cua he thong:
 - Gson
 - JUnit 5
 
-### Moi truong chay
+### Môi trường chạy
 
 - Windows
 - Linux
 - macOS
 
-### Yeu cau cai dat
+### Yêu cầu cài đặt
 
-- Cai JDK 17 va cau hinh `JAVA_HOME`
-- Khong bat buoc cai Maven rieng vi project da co `mvnw` va `mvnw.cmd`
+- Cài JDK 17 và cấu hình `JAVA_HOME`
+- Không bắt buộc cài Maven riêng vì project đã có `mvnw` và `mvnw.cmd`
+- Máy cần cho phép mở nhiều terminal để chạy Server và Client riêng
 
-## 3. Cau truc thu muc / module chinh
+## 3. Cấu trúc thư mục / module chính
 
 ```text
 BTL/
-├── auction-common/   # Class dung chung: entity, enum, message, request/response
+├── auction-common/   # Class dùng chung: entity, enum, message, request/response
 ├── auction-server/   # Server socket, handler, service, repository, scheduler
 ├── auction-client/   # JavaFX UI, controller, network client
+├── data/             # Dữ liệu runtime được server sử dụng/lưu trữ
+├── docs/             # Tài liệu dự án
 ├── pom.xml           # Parent POM cho multi-module Maven project
 ├── mvnw              # Maven wrapper cho Linux/macOS
 └── mvnw.cmd          # Maven wrapper cho Windows
 ```
 
-Luu y:
+## 4. Câu lệnh dòng lệnh để chạy chương trình
 
-- Thu muc `data/` se duoc tao tu dong khi server chay lan dau
-- File du lieu `auction_data.dat` cung duoc tao tu dong trong qua trinh chay
+Các lệnh dưới đây phải chạy tại thư mục gốc của project, nơi chứa file `pom.xml`.
 
-## 4. Cau lenh dong lenh de chay chuong trinh
-
-Tat ca cac lenh duoi day phai chay tai thu muc goc cua project, noi chua file `pom.xml`.
-
-### Build toan bo project
+### Build toàn bộ project
 
 Windows:
 
@@ -70,7 +68,7 @@ Linux / macOS:
 ./mvnw clean install
 ```
 
-### Chay Server
+### Chạy Server
 
 Windows:
 
@@ -84,7 +82,7 @@ Linux / macOS:
 ./mvnw -pl auction-server exec:java -Dexec.mainClass=com.auction.server.AuctionServerApp
 ```
 
-### Chay Client
+### Chạy Client
 
 Windows:
 
@@ -98,38 +96,42 @@ Linux / macOS:
 ./mvnw -pl auction-client javafx:run
 ```
 
-## 5. Huong dan chay Server/Client theo thu tu
+## 5. Hướng dẫn chạy Server/Client theo thứ tự
 
-1. Mo terminal tai thu muc goc project.
-2. Build toan bo project bang `clean install`.
-3. Mo terminal thu nhat va chay Server.
-4. Cho Server khoi dong xong tren cong mac dinh `8080`.
-5. Mo terminal thu hai va chay Client.
-6. Neu muon mo phong nhieu nguoi dung, mo them terminal va chay them Client.
+1. Mở terminal tại thư mục gốc project.
+2. Build toàn bộ project bằng `clean install`.
+3. Mở terminal thứ nhất và chạy Server.
+4. Chờ Server khởi động xong trên cổng mặc định.
+5. Mở terminal thứ hai và chạy Client.
+6. Nếu muốn mô phỏng nhiều người dùng, mở thêm terminal và chạy thêm Client.
 
-Tai khoan admin mac dinh:
+Khuyến nghị:
 
-- Username: `admin`
-- Password: `Admin@123`
+- Luôn chạy Server trước, rồi mới chạy Client
+- Nếu clone mới project, nên build lại từ đầu trước khi chạy
 
-## 6. Danh sach chuc nang da hoan thanh
+## 6. Danh sách chức năng đã hoàn thành
 
-- Dang ky tai khoan
-- Dang nhap he thong
-- Phan quyen theo vai tro nguoi dung
-- Tao item
-- Tao phien dau gia
-- Xem danh sach phien dau gia
-- Xem chi tiet phien dau gia
-- Dat gia thu cong
-- Dang ky auto-bid
-- Go auto-bid
-- Cap nhat gia va trang thai phien theo thoi gian thuc
+- Đăng ký tài khoản
+- Đăng nhập hệ thống
+- Phân quyền theo vai trò người dùng
+- Tạo item
+- Tạo phiên đấu giá
+- Xem danh sách phiên đấu giá
+- Xem chi tiết phiên đấu giá
+- Đặt giá thủ công
+- Đặt giá tự động
+- Cập nhật giá và trạng thái phiên theo thời gian thực
 - Dashboard cho seller
 - Dashboard cho admin
 - Ban user
 - Unban user
-- Huy phien dau gia
-- Nap tien cho nguoi dung
-- Theo doi so du
-- Luu tru va doc du lieu he thong
+- Hủy phiên đấu giá
+- Nạp tiền cho người dùng
+- Theo dõi số dư
+- Lưu trữ và đọc dữ liệu hệ thống
+
+## 7. Link báo cáo PDF và video demo
+
+- Báo cáo PDF: 
+- Video demo: 
