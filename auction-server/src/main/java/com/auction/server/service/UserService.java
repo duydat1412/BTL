@@ -111,7 +111,6 @@ public class UserService{
             return new ClientResponse(false, e.getMessage(), null);
         }
     }
-
     public static ClientResponse unbanUser(UnbanUserRequest ubur) throws AuthenticationException{
         if (sur.findById(ubur.getAdminId()).getRole()!=UserRole.ADMIN){
             throw new AuthenticationException("ADMIN PERM REQUIRED");
