@@ -24,30 +24,30 @@
                 <Label text="Số Liệu Thống Kê Hệ Thống" styleClass="text-2xl, font-bold, text-white"/>
 
                 <HBox spacing="20" maxWidth="960" HBox.hgrow="ALWAYS">
-                    <VBox spacing="8" styleClass="stat-card" HBox.hgrow="ALWAYS">
+                    <VBox spacing="8" styleClass="stat-card" HBox.hgrow="ALWAYS" prefWidth="300" maxWidth="Infinity">
                         <Label text="👤 TỔNG NGƯỜI DÙNG" styleClass="text-xs, text-body" style="-fx-font-weight: bold;"/>
                         <Label fx:id="totalUsersLabel" text="0" styleClass="text-3xl, font-bold, text-white"/>
                     </VBox>
-                    <VBox spacing="8" styleClass="stat-card, stat-card-primary" HBox.hgrow="ALWAYS">
+                    <VBox spacing="8" styleClass="stat-card, stat-card-primary" HBox.hgrow="ALWAYS" prefWidth="300" maxWidth="Infinity">
                         <Label text="💼 SỐ LƯỢNG SELLER" styleClass="text-xs, text-primary" style="-fx-font-weight: bold;"/>
                         <Label fx:id="totalSellersLabel" text="0" styleClass="text-3xl, font-bold, text-primary"/>
                     </VBox>
-                    <VBox spacing="8" styleClass="stat-card" HBox.hgrow="ALWAYS">
+                    <VBox spacing="8" styleClass="stat-card" HBox.hgrow="ALWAYS" prefWidth="300" maxWidth="Infinity">
                         <Label text="🔨 SỐ LƯỢNG BIDDER" styleClass="text-xs, text-body" style="-fx-font-weight: bold;"/>
                         <Label fx:id="totalBiddersLabel" text="0" styleClass="text-3xl, font-bold, text-white"/>
                     </VBox>
                 </HBox>
 
                 <HBox spacing="20" maxWidth="960" HBox.hgrow="ALWAYS">
-                    <VBox spacing="8" styleClass="stat-card" HBox.hgrow="ALWAYS">
+                    <VBox spacing="8" styleClass="stat-card" HBox.hgrow="ALWAYS" prefWidth="300" maxWidth="Infinity">
                         <Label text="📦 TỔNG SỐ ITEM" styleClass="text-xs, text-body" style="-fx-font-weight: bold;"/>
                         <Label fx:id="totalItemsLabel" text="0" styleClass="text-3xl, font-bold, text-white"/>
                     </VBox>
-                    <VBox spacing="8" styleClass="stat-card, stat-card-primary" HBox.hgrow="ALWAYS">
+                    <VBox spacing="8" styleClass="stat-card, stat-card-primary" HBox.hgrow="ALWAYS" prefWidth="300" maxWidth="Infinity">
                         <Label text="⚡ ĐẤU GIÁ ĐANG CHẠY" styleClass="text-xs, text-primary" style="-fx-font-weight: bold;"/>
                         <Label fx:id="activeAuctionsLabel" text="0" styleClass="text-3xl, font-bold, text-primary"/>
                     </VBox>
-                    <VBox spacing="8" styleClass="stat-card" HBox.hgrow="ALWAYS">
+                    <VBox spacing="8" styleClass="stat-card" HBox.hgrow="ALWAYS" prefWidth="300" maxWidth="Infinity">
                         <Label text="🏁 ĐẤU GIÁ KẾT THÚC" styleClass="text-xs, text-body" style="-fx-font-weight: bold;"/>
                         <Label fx:id="finishedAuctionsLabel" text="0" styleClass="text-3xl, font-bold, text-warning" style="-fx-text-fill: -accent-yellow;"/>
                     </VBox>
