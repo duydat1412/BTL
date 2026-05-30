@@ -1,18 +1,47 @@
 package com.auction.server.datastore;
 
+import com.auction.common.entity.Admin;
+import com.auction.common.entity.Bidder;
 import com.auction.common.entity.User;
 import org.junit.jupiter.api.*;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class DataStoreTest {
+    private static final Path DATA_FILE = Path.of("data", "auction_data.dat");
+
+    private byte[] originalDataFile;
+    private boolean dataFileExisted;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws IOException {
+        dataFileExisted = Files.exists(DATA_FILE);
+        if (dataFileExisted) {
+            originalDataFile = Files.readAllBytes(DATA_FILE);
+        }
         DataStore.getInstance().getUsers().clear();
         DataStore.getInstance().getItems().clear();
         DataStore.getInstance().getAuctions().clear();
         DataStore.getInstance().getBidTransactions().clear();
+    }
+
+    @AfterEach
+    void tearDown() throws IOException, InterruptedException {
+        DataStore.getInstance().getUsers().clear();
+        DataStore.getInstance().getItems().clear();
+        DataStore.getInstance().getAuctions().clear();
+        DataStore.getInstance().getBidTransactions().clear();
+
+        if (dataFileExisted) {
+            Files.createDirectories(DATA_FILE.getParent());
+            Files.write(DATA_FILE, originalDataFile);
+        } else {
+            deleteWithRetries(DATA_FILE);
+        }
     }
 
     @Test
@@ -78,12 +107,68 @@ class DataStoreTest {
     @DisplayName("DataStore does not create default admin when admin exists")
     void dataStore_skipDefaultAdminIfExists() {
         DataStore ds = DataStore.getInstance();
-        com.auction.common.entity.Admin existingAdmin = new com.auction.common.entity.Admin(
-                "existing", "hash", "exist@test.com", "IT");
+        Admin existingAdmin = new Admin("existing", "hash", "exist@test.com", "IT");
         ds.getUsers().add(existingAdmin);
 
         int beforeCount = ds.getUsers().size();
-        DataStore.getInstance().loadData();
+        ds.saveData();
+        ds.loadData();
         assertEquals(beforeCount, ds.getUsers().size());
+    }
+
+    @Test
+    @DisplayName("loadData creates default admin when file is missing")
+    void loadData_missingFile_createsDefaultAdmin() throws IOException {
+        Files.deleteIfExists(DATA_FILE);
+
+        DataStore ds = DataStore.getInstance();
+        ds.loadData();
+
+        assertEquals(1, ds.getUsers().size());
+        User admin = ds.getUsers().get(0);
+        assertEquals("admin", admin.getUsername());
+    }
+
+    @Test
+    @DisplayName("saveData and loadData restore persisted state")
+    void saveAndLoad_roundTrip_success() {
+        DataStore ds = DataStore.getInstance();
+        ds.getUsers().add(new Bidder("persisted", "hash", "persisted@test.com"));
+        ds.saveData();
+
+        ds.getUsers().clear();
+        assertTrue(ds.getUsers().isEmpty());
+
+        ds.loadData();
+        assertTrue(ds.getUsers().stream().anyMatch(user -> "persisted".equals(user.getUsername())));
+    }
+
+    @Test
+    @DisplayName("loadData handles corrupt file without throwing")
+    void loadData_corruptFile_doesNotThrow() throws IOException {
+        Files.createDirectories(DATA_FILE.getParent());
+        Files.writeString(DATA_FILE, "not-a-serialized-datastore");
+
+        DataStore ds = DataStore.getInstance();
+        ds.getUsers().add(new Bidder("existing", "hash", "existing@test.com"));
+
+        assertDoesNotThrow(ds::loadData);
+        assertTrue(ds.getUsers().stream().anyMatch(user -> "existing".equals(user.getUsername())));
+    }
+
+    private void deleteWithRetries(Path path) throws IOException, InterruptedException {
+        IOException lastError = null;
+        for (int attempt = 0; attempt < 5; attempt++) {
+            try {
+                Files.deleteIfExists(path);
+                return;
+            } catch (IOException ex) {
+                lastError = ex;
+                Thread.sleep(100);
+            }
+        }
+        if (lastError != null) {
+            throw lastError;
+        }
     }
 }

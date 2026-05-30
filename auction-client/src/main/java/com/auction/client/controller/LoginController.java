@@ -13,7 +13,38 @@ public class LoginController {
 
     @FXML private TextField usernameField;
     @FXML private PasswordField passwordField;
+    @FXML private TextField visiblePasswordField;
+    @FXML private CheckBox showPasswordCheckBox;
     @FXML private Label errorLabel;
+
+    @FXML
+    public void initialize() {
+        // Enter key trên usernameField chuyển focus xuống password
+        usernameField.setOnAction(e -> passwordField.requestFocus());
+        // visiblePasswordField đồng bộ với passwordField
+        visiblePasswordField.textProperty().bindBidirectional(passwordField.textProperty());
+    }
+
+    public void setBanReason(String reason) {
+        if (errorLabel != null) {
+            errorLabel.getStyleClass().setAll("status-error");
+            errorLabel.setText("Tài khoản của bạn đã bị cấm!\nLý do: " + (reason != null && !reason.trim().isEmpty() ? reason : "Không có lý do cụ thể."));
+        }
+    }
+
+    @FXML
+    public void togglePasswordVisibility() {
+        boolean selected = showPasswordCheckBox.isSelected();
+        passwordField.setVisible(!selected);
+        passwordField.setManaged(!selected);
+        visiblePasswordField.setVisible(selected);
+        visiblePasswordField.setManaged(selected);
+        if (selected) {
+            visiblePasswordField.requestFocus();
+        } else {
+            passwordField.requestFocus();
+        }
+    }
 
     @FXML
     public void handleLogin() {
@@ -30,11 +61,11 @@ public class LoginController {
         client.connect();
 
         errorLabel.setText("Đang đăng nhập...");
-        errorLabel.setStyle("-fx-text-fill: gray;");
+        errorLabel.getStyleClass().setAll("status-info");
 
         client.loginAsync(user, pass).thenAccept(res -> Platform.runLater(() -> {
             if (res.isSuccess()) {
-                errorLabel.setStyle("-fx-text-fill: green;");
+                errorLabel.getStyleClass().setAll("status-success");
                 errorLabel.setText(res.getMessage());
 
                 AuthUserData authData = (AuthUserData) res.getData();
@@ -61,7 +92,7 @@ public class LoginController {
                     }
                 }
             } else {
-                errorLabel.setStyle("-fx-text-fill: #ef4444;");
+                errorLabel.getStyleClass().setAll("status-error");
                 errorLabel.setText(res.getMessage());
             }
         })).exceptionally(ex -> {

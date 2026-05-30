@@ -4,6 +4,7 @@ import com.auction.common.entity.Auction;
 import com.auction.common.entity.Item;
 import com.auction.common.enums.AuctionStatus;
 import com.auction.common.message.CancelAuctionRequest;
+import com.auction.common.message.SellerCancelAuctionRequest;
 import com.auction.common.message.ClientResponse;
 import com.auction.common.message.CreateAuctionRequest;
 import com.auction.common.message.GetAuctionsRequest;
@@ -85,6 +86,13 @@ public final class AuctionService {
     public static ClientResponse getAuctions(GetAuctionsRequest request) {
         try {
             List<Auction> auctions = AUCTION_REPOSITORY.findAll();
+            // Filter out orphan auctions whose items no longer exist (giữ lại FINISHED để bidder xem lịch sử)
+            auctions = auctions.stream()
+                    .filter(auction -> auction.getStatus() == AuctionStatus.FINISHED
+                            || ITEM_REPOSITORY.findById(auction.getItemId()) != null)
+                    .collect(Collectors.toList());
+            System.out.println("[DEBUG] getAuctions: total in repo = " + auctions.size());
+            auctions.forEach(a -> System.out.println("[DEBUG]  - auction: " + a.getId() + " | " + a.getTitle() + " | " + a.getStatus()));
             if (request != null) {
                 auctions = auctions.stream()
                         .filter(auction -> {
@@ -152,6 +160,48 @@ public final class AuctionService {
                     + ". Reason: " + request.getReason());
 
             return new ClientResponse(true, "Auction cancelled successfully", auction);
+        } catch (Exception e) {
+            return new ClientResponse(false, "Failed to cancel auction: " + e.getMessage(), null);
+        }
+    }
+
+    public static ClientResponse sellerCancelAuction(SellerCancelAuctionRequest request) {
+        try {
+            String sellerId = request.getSellerId();
+            User seller = USER_REPOSITORY.findById(sellerId);
+            if (seller == null || seller.getRole() != UserRole.SELLER) {
+                return new ClientResponse(false, "SELLER PERMISSION REQUIRED", null);
+            }
+
+            Auction auction = AUCTION_REPOSITORY.findById(request.getAuctionId());
+            if (auction == null) {
+                return new ClientResponse(false, "Auction not found: " + request.getAuctionId(), null);
+            }
+
+            if (!sellerId.equals(auction.getSellerId())) {
+                return new ClientResponse(false, "Day khong phai auction cua ban", null);
+            }
+
+            if (auction.getStatus() == AuctionStatus.FINISHED || auction.getStatus() == AuctionStatus.CANCELED) {
+                return new ClientResponse(false, "Auction already " + auction.getStatus().getDisplayName(), null);
+            }
+
+            AuctionStatus oldStatus = auction.getStatus();
+            auction.setStatus(AuctionStatus.CANCELED);
+            AUCTION_REPOSITORY.update(auction);
+
+            com.auction.server.observer.AuctionEventManager eventManager =
+                    com.auction.server.handler.ClientHandler.getEventManager();
+            if (eventManager != null) {
+                eventManager.notifyStatusChanged(auction, oldStatus, AuctionStatus.CANCELED);
+                eventManager.notifyAuctionEnded(auction);
+            }
+
+            System.out.println("[Cancel] Auction " + request.getAuctionId()
+                    + " cancelled by seller " + sellerId
+                    + ". Reason: " + request.getReason());
+
+            return new ClientResponse(true, "Huy phien dau gia thanh cong", auction);
         } catch (Exception e) {
             return new ClientResponse(false, "Failed to cancel auction: " + e.getMessage(), null);
         }

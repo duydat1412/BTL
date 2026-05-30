@@ -111,7 +111,6 @@ public class UserService{
             return new ClientResponse(false, e.getMessage(), null);
         }
     }
-
     public static ClientResponse unbanUser(UnbanUserRequest ubur) throws AuthenticationException{
         if (sur.findById(ubur.getAdminId()).getRole()!=UserRole.ADMIN){
             throw new AuthenticationException("ADMIN PERM REQUIRED");
@@ -134,7 +133,31 @@ public class UserService{
 
     }
 
+    public static ClientResponse getBalance(String userId) {
+        User user = sur.findById(userId);
+        if (user == null) {
+            return new ClientResponse(false, "User not found", null);
+        }
+        return new ClientResponse(true, "OK", user.getBalance());
+    }
+
+    public static ClientResponse topUp(TopUpRequest req) {
+        try {
+            User user = sur.findById(req.getUserId());
+            if (user == null) {
+                return new ClientResponse(false, "User not found", null);
+            }
+            user.setBalance(user.getBalance() + req.getAmount());
+            sur.update(user);
+            return new ClientResponse(true,
+                    "Nap thanh cong. So du: " + String.format("%,.0f", user.getBalance()) + " VND",
+                    user.getBalance());
+        } catch (Exception e) {
+            return new ClientResponse(false, "Failed to top up: " + e.getMessage(), null);
+        }
+    }
+
     private static AuthUserData toAuthUserData(User user) {
-        return new AuthUserData(user.getId(), user.getUsername(), user.getRole());
+        return new AuthUserData(user.getId(), user.getUsername(), user.getRole(), user.getBalance());
     }
 }

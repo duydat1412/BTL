@@ -2,61 +2,132 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
 
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.auction.client.controller.AuctionDetailController"
-      prefHeight="600.0" prefWidth="800.0"
-      styleClass="main-bg">
+      prefHeight="768.0" prefWidth="1024.0"
+      styleClass="canvas">
 
     <!-- Navbar -->
-    <HBox alignment="CENTER_LEFT" spacing="20" styleClass="bg-white" style="-fx-padding: 15 30; -fx-border-color: #e2e8f0; -fx-border-width: 0 0 1 0;">
-        <Button text="← Quay lại" onAction="#goBack" styleClass="btn-outline"/>
-        <Label text="Chi tiết phiên đấu" styleClass="text-lg, font-bold, text-foreground"/>
+    <HBox alignment="CENTER_LEFT" spacing="20" styleClass="nav-bar">
+        <Button text="← Quay lại" onAction="#goBack" styleClass="btn-secondary" style="-fx-min-height: 36px; -fx-padding: 6px 16px;"/>
+        <Label text="Chi tiết phiên đấu giá" styleClass="text-lg, font-bold, text-white"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="balanceLabel" styleClass="text-sm, font-mono, text-white" style="-fx-font-weight: bold;"/>
     </HBox>
 
-    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
-        <HBox alignment="TOP_CENTER" style="-fx-padding: 30;">
-
-            <VBox spacing="20" styleClass="card" maxWidth="600" HBox.hgrow="ALWAYS">
-                <HBox spacing="20">
-                    <!-- Fake Image Area -->
-                    <StackPane style="-fx-background-color: #e2e8f0; -fx-background-radius: 8;" prefWidth="250" prefHeight="250">
-                        <Label text="Ảnh sản phẩm" styleClass="text-muted"/>
-                    </StackPane>
-
-                    <!-- Detail Info -->
-                    <VBox spacing="15" HBox.hgrow="ALWAYS">
-                        <Label fx:id="nameLabel" text="Tên sản phẩm" styleClass="text-2xl, font-bold, text-foreground" wrapText="true"/>
-
-                        <VBox spacing="5">
-                            <Label text="Giá hiện tại" styleClass="text-sm, text-muted"/>
-                            <Label fx:id="priceLabel" text="$0" styleClass="text-3xl, font-bold, text-gold"/>
-                        </VBox>
-
-                        <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-background-color: #fef3c7; -fx-padding: 10; -fx-background-radius: 6;">
-                            <Label text="⏱" styleClass="text-lg"/>
-                            <Label fx:id="timeLabel" text="Thời gian còn lại: 00:00" styleClass="text-sm, font-bold, text-foreground"/>
-                        </HBox>
-
-                        <Separator/>
-
-                        <VBox spacing="5">
-                            <Label text="Mô tả" styleClass="text-sm, font-bold, text-foreground"/>
-                            <Label fx:id="descLabel" text="Không có mô tả" wrapText="true" styleClass="text-sm, text-muted"/>
-                        </VBox>
-
-                        <Separator/>
-
-                        <VBox spacing="10">
-                            <Label text="Đặt giá mới" styleClass="text-sm, font-bold, text-foreground"/>
-                            <HBox spacing="10">
-                                <TextField fx:id="bidAmountField" promptText="Nhập mức giá..." styleClass="input-field" HBox.hgrow="ALWAYS"/>
-                                <Button text="Đặt giá" onAction="#handlePlaceBid" styleClass="btn-gold"/>
-                            </HBox>
-                        </VBox>
+    <ScrollPane fitToWidth="true" fitToHeight="true" styleClass="scroll-pane" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent;">
+        <HBox alignment="TOP_CENTER" spacing="25" style="-fx-padding: 25;">
+            
+            <!-- Column 1 (Left): Info & Bidding Forms -->
+            <VBox spacing="20" HBox.hgrow="ALWAYS" maxWidth="480">
+                
+                <!-- Product Details Card -->
+                <VBox spacing="15" styleClass="card">
+                    <padding><Insets top="20" bottom="20" left="20" right="20"/></padding>
+                    <Label fx:id="nameLabel" text="Tên sản phẩm" styleClass="text-2xl, font-bold, text-white" wrapText="true"/>
+                    
+                    <VBox spacing="5">
+                        <Label text="Giá hiện tại" styleClass="text-xs, text-body" style="-fx-font-weight: bold;"/>
+                        <Label fx:id="priceLabel" text="0 VNĐ" styleClass="text-3xl, font-bold, text-warning" style="-fx-text-fill: -accent-yellow;"/>
                     </VBox>
-                </HBox>
+
+                    <HBox fx:id="timerBox" alignment="CENTER_LEFT" spacing="10" styleClass="timer-box">
+                        <Label text="⏳" styleClass="text-lg"/>
+                        <Label fx:id="timeLabel" text="Đang tải thời gian..." styleClass="text-sm, font-bold, text-white"/>
+                    </HBox>
+
+                    <Separator styleClass="separator" style="-fx-background-color: -hairline;"/>
+
+                    <VBox spacing="5">
+                        <Label text="Mô tả sản phẩm" styleClass="text-xs, text-body" style="-fx-font-weight: bold;"/>
+                        <Label fx:id="descLabel" text="Không có mô tả chi tiết." wrapText="true" styleClass="text-sm, text-body"/>
+                    </VBox>
+                </VBox>
+
+                <!-- Notification Card (for auction ended/cancelled message) -->
+                <VBox fx:id="notificationCard" spacing="10" styleClass="card" style="-fx-background-color: -surface-dark-el; -fx-border-color: -accent-yellow; -fx-border-width: 1px; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 15px;" visible="false" managed="false">
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label fx:id="notificationIconLabel" text="📢" styleClass="text-lg"/>
+                        <Label fx:id="notificationTitleLabel" text="Thông báo kết quả" styleClass="text-sm, font-bold, text-warning" style="-fx-text-fill: -accent-yellow;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="✕" onAction="#closeNotification" styleClass="btn-secondary" style="-fx-min-height: 24px; -fx-padding: 2px 8px; -fx-font-size: 10px; -fx-background-radius: 100px; -fx-cursor: hand;"/>
+                    </HBox>
+                    <Label fx:id="notificationMessageLabel" styleClass="text-sm, text-white" wrapText="true"/>
+                </VBox>
+
+                <!-- Bidding Card -->
+                <VBox spacing="15" styleClass="card">
+                    <padding><Insets top="20" bottom="20" left="20" right="20"/></padding>
+                    <Label text="Đặt giá thủ công 💸" styleClass="text-lg, font-bold, text-white"/>
+                    
+                    <VBox spacing="8">
+                        <Label text="Mức giá muốn đặt (VNĐ)" styleClass="text-xs, text-body"/>
+                        <HBox spacing="10">
+                            <TextField fx:id="bidAmountField" promptText="Nhập mức giá muốn đặt..." styleClass="input-field" HBox.hgrow="ALWAYS"/>
+                            <Button fx:id="placeBidBtn" text="Đặt giá" onAction="#handlePlaceBid" styleClass="btn-primary" style="-fx-min-height: 48px;"/>
+                        </HBox>
+                    </VBox>
+                </VBox>
+
+                <!-- Auto-bid Card -->
+                <VBox spacing="15" styleClass="card">
+                    <padding><Insets top="20" bottom="20" left="20" right="20"/></padding>
+                    <Label text="Tự động đặt giá (Auto-bid) 🤖" styleClass="text-lg, font-bold, text-white"/>
+                    
+                    <VBox spacing="12">
+                        <HBox spacing="10">
+                            <VBox spacing="5" HBox.hgrow="ALWAYS">
+                                <Label text="Giá tối đa muốn trả (VNĐ)" styleClass="text-xs, text-body"/>
+                                <TextField fx:id="maxBidField" promptText="VD: 5,000,000" styleClass="input-field" maxWidth="Infinity"/>
+                            </VBox>
+                            <VBox spacing="5" prefWidth="140">
+                                <Label text="Bước tăng (VNĐ)" styleClass="text-xs, text-body"/>
+                                <TextField fx:id="incrementField" text="10000" promptText="VD: 50,000" styleClass="input-field" maxWidth="Infinity"/>
+                            </VBox>
+                        </HBox>
+                        
+                        <Button fx:id="autoBidBtn" text="Kích hoạt Auto-bid" onAction="#handleAutoBid" styleClass="btn-primary" maxWidth="Infinity" style="-fx-min-height: 44px;"/>
+                    </VBox>
+                </VBox>
+
+            </VBox>
+
+            <!-- Column 2 (Right): Price Trend Chart & Bid History List -->
+            <VBox spacing="20" HBox.hgrow="ALWAYS" maxWidth="450" VBox.vgrow="ALWAYS">
+                
+                <!-- Price Chart Card -->
+                <VBox spacing="10" styleClass="card">
+                    <padding><Insets top="15" bottom="15" left="15" right="15"/></padding>
+                    <Label text="Xu hướng giá đấu 📈" styleClass="text-sm, font-bold, text-white"/>
+                    <LineChart fx:id="priceChart" prefHeight="230" minHeight="200"
+                               styleClass="chart-card"
+                               createSymbols="true" legendVisible="false"
+                               alternativeRowFillVisible="false" alternativeColumnFillVisible="false"
+                               animated="false">
+                        <xAxis>
+                            <NumberAxis side="BOTTOM" label="Lần" autoRanging="true" minorTickVisible="false"/>
+                        </xAxis>
+                        <yAxis>
+                            <NumberAxis side="LEFT" label="Giá (VNĐ)" autoRanging="true" minorTickVisible="false"/>
+                        </yAxis>
+                    </LineChart>
+                </VBox>
+
+                <!-- Bid History List Card -->
+                <VBox spacing="10" styleClass="card" VBox.vgrow="ALWAYS" minHeight="250">
+                    <padding><Insets top="20" bottom="20" left="20" right="20"/></padding>
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Lịch sử đặt giá" styleClass="text-lg, font-bold, text-white"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="bidHistoryStatus" styleClass="status-info, text-sm"/>
+                    </HBox>
+                    <ListView fx:id="bidHistoryView" styleClass="list-view" VBox.vgrow="ALWAYS"/>
+                </VBox>
+
             </VBox>
 
         </HBox>

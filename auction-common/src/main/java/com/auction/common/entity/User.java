@@ -24,6 +24,9 @@ public abstract class User extends Entity {
     /** Vai tro: BIDDER, SELLER, hoac ADMIN. */
     private UserRole role;
 
+    /** So du tai khoan (cho Bidder va Seller). */
+    protected double balance = 0;
+
     /** Ban status set by admin. */
     private boolean banned;
 
@@ -87,6 +90,14 @@ public abstract class User extends Entity {
 
     public void setRole(UserRole role) {
         this.role = role;
+    }
+
+    public double getBalance() {
+        return balance;
+    }
+
+    public void setBalance(double balance) {
+        this.balance = balance;
     }
 
     public boolean isBanned() {

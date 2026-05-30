@@ -23,6 +23,7 @@ class AuctionSchedulerTest {
 
     @BeforeEach
     void setUp() {
+        AuctionScheduler.resetForTests();
         DataStore.getInstance().getAuctions().clear();
         DataStore.getInstance().getItems().clear();
 
@@ -44,6 +45,7 @@ class AuctionSchedulerTest {
 
     @AfterEach
     void tearDown() {
+        AuctionScheduler.resetForTests();
         DataStore.getInstance().getAuctions().clear();
         DataStore.getInstance().getItems().clear();
     }

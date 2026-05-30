@@ -20,6 +20,9 @@ public enum Action {
     UPDATE_ITEM,
     DELETE_ITEM,
     REGISTER_AUTO_BID,
-    REMOVE_AUTO_BID
+    REMOVE_AUTO_BID,
+    GET_BALANCE,
+    TOP_UP,
+    SELLER_CANCEL_AUCTION
 }
 

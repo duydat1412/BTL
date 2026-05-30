@@ -6,67 +6,59 @@
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.auction.client.controller.SellerDashboardController"
-      prefHeight="750.0" prefWidth="1000.0"
-      styleClass="main-bg">
+      prefHeight="768.0" prefWidth="1024.0"
+      styleClass="canvas">
 
     <!-- Navbar -->
-    <HBox alignment="CENTER_LEFT" spacing="20" styleClass="bg-white" style="-fx-padding: 15 30; -fx-border-color: #e2e8f0; -fx-border-width: 0 0 1 0;">
-        <Label text="DHDH - Kênh Người Bán" styleClass="text-2xl, font-bold, text-foreground"/>
+    <HBox alignment="CENTER_LEFT" spacing="20" styleClass="nav-bar">
+        <Label text="🏛 DHDH SELLER HUB" styleClass="text-lg, font-bold, text-primary"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <Label fx:id="userInfoLabel" styleClass="text-sm, text-muted, font-bold"/>
-        <Button text="Đăng xuất" onAction="#handleLogout" styleClass="btn-outline"/>
+        <Label fx:id="userInfoLabel" styleClass="text-sm, text-body"/>
+        <Label fx:id="balanceLabel" styleClass="text-sm, font-mono, text-white" style="-fx-font-weight: bold;"/>
+        <Button text="Nạp tiền 💰" onAction="#handleTopUp" styleClass="btn-secondary" style="-fx-min-height: 36px; -fx-padding: 6px 16px;"/>
+        <Button text="Đăng xuất 🚪" onAction="#handleLogout" styleClass="btn-secondary" style="-fx-min-height: 36px; -fx-padding: 6px 16px;"/>
     </HBox>
 
-    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
-        <VBox spacing="25" alignment="TOP_CENTER" style="-fx-padding: 30;">
+    <VBox spacing="20" alignment="TOP_CENTER" VBox.vgrow="ALWAYS" styleClass="section">
+        <padding><Insets top="20" bottom="20" left="30" right="30"/></padding>
 
-            <HBox spacing="25" maxWidth="900" alignment="TOP_CENTER">
+        <!-- Metric Analytics Cards -->
+        <HBox spacing="20" maxWidth="960" HBox.hgrow="ALWAYS">
+            <VBox fx:id="cardTotal" spacing="8" styleClass="stat-card" HBox.hgrow="ALWAYS">
+                <Label text="📦 TỔNG SẢN PHẨM" styleClass="text-xs, text-body" style="-fx-font-weight: bold;"/>
+                <Label fx:id="totalItemsLabel" text="0" styleClass="text-2xl, font-bold, text-white"/>
+            </VBox>
+            <VBox fx:id="cardActive" spacing="8" styleClass="stat-card, stat-card-primary" HBox.hgrow="ALWAYS">
+                <Label text="⚡ ĐANG ĐẤU GIÁ" styleClass="text-xs, text-primary" style="-fx-font-weight: bold;"/>
+                <Label fx:id="activeAuctionsLabel" text="0" styleClass="text-2xl, font-bold, text-primary"/>
+            </VBox>
+            <VBox fx:id="cardFinished" spacing="8" styleClass="stat-card" HBox.hgrow="ALWAYS">
+                <Label text="🏁 PHIÊN KẾT THÚC" styleClass="text-xs, text-body" style="-fx-font-weight: bold;"/>
+                <Label fx:id="finishedAuctionsLabel" text="0" styleClass="text-2xl, font-bold, text-white"/>
+            </VBox>
+        </HBox>
 
-                <!-- Left: Form tạo sản phẩm -->
-                <VBox spacing="20" styleClass="card" HBox.hgrow="ALWAYS" maxWidth="400">
-                    <Label text="Thêm sản phẩm mới" styleClass="text-xl, font-bold, text-foreground"/>
-
-                    <VBox spacing="5">
-                        <Label text="Tên sản phẩm" styleClass="text-sm, font-bold, text-foreground"/>
-                        <TextField fx:id="nameField" promptText="VD: Rolex Submariner" styleClass="input-field"/>
-                    </VBox>
-
-                    <VBox spacing="5">
-                        <Label text="Giá khởi điểm ($)" styleClass="text-sm, font-bold, text-foreground"/>
-                        <TextField fx:id="priceField" promptText="VD: 5000" styleClass="input-field"/>
-                    </VBox>
-
-                    <VBox spacing="5">
-                        <Label text="Danh mục" styleClass="text-sm, font-bold, text-foreground"/>
-                        <ComboBox fx:id="typeBox" promptText="Chọn loại" styleClass="combo-box" maxWidth="Infinity"/>
-                    </VBox>
-
-                    <VBox spacing="5">
-                        <Label text="Mô tả" styleClass="text-sm, font-bold, text-foreground"/>
-                        <TextField fx:id="descField" promptText="Mô tả chi tiết sản phẩm..." styleClass="input-field"/>
-                    </VBox>
-
-                    <Button text="Tạo sản phẩm" onAction="#handleCreateItem" styleClass="btn-gold" maxWidth="Infinity">
-                        <VBox.margin><Insets top="10"/></VBox.margin>
-                    </Button>
-
-                    <Label fx:id="statusLabel" styleClass="text-sm, text-danger" wrapText="true"/>
+        <!-- Main Product List Area -->
+        <VBox spacing="15" styleClass="card" VBox.vgrow="ALWAYS" maxWidth="960">
+            <padding><Insets top="20" bottom="20" left="20" right="20"/></padding>
+            
+            <HBox alignment="CENTER_LEFT" spacing="15">
+                <VBox spacing="2">
+                    <Label text="Danh mục sản phẩm đăng bán" styleClass="text-lg, font-bold, text-white"/>
+                    <Label text="Quản lý sản phẩm, xóa hoặc hủy phiên đấu giá" styleClass="text-xs, text-body"/>
                 </VBox>
-
-                <!-- Right: Danh sách sản phẩm -->
-                <VBox spacing="15" styleClass="card" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
-                    <HBox alignment="CENTER_LEFT" spacing="10">
-                        <Label text="Sản phẩm của tôi" styleClass="text-xl, font-bold, text-foreground"/>
-                        <Region HBox.hgrow="ALWAYS"/>
-                        <Button text="Tải lại" onAction="#handleRefresh" styleClass="btn-outline"/>
-                    </HBox>
-
-                    <ListView fx:id="itemListView" styleClass="list-view" VBox.vgrow="ALWAYS" prefHeight="400"/>
-                </VBox>
-
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Đăng bán sản phẩm mới ➕" onAction="#goToAddItem" styleClass="btn-primary" style="-fx-min-height: 38px; -fx-padding: 8px 16px;"/>
+                <Button text="Làm mới 🔄" onAction="#handleRefresh" styleClass="btn-secondary" style="-fx-min-height: 38px; -fx-padding: 8px 16px;"/>
             </HBox>
 
+            <ListView fx:id="itemListView" styleClass="list-view" VBox.vgrow="ALWAYS"/>
+            
+            <HBox alignment="CENTER_RIGHT">
+                <Label fx:id="statusLabel" styleClass="status-info, text-sm"/>
+            </HBox>
         </VBox>
-    </ScrollPane>
+
+    </VBox>
 
 </VBox>

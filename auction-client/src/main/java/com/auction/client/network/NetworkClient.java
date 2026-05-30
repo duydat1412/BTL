@@ -5,6 +5,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 /**
@@ -43,6 +44,18 @@ public class NetworkClient {
      * Danh sách các callback nhận push notification.
      */
     private final List<PushListener> pushListeners = new CopyOnWriteArrayList<>();
+
+    /**
+     * Lock đảm bảo chỉ một request-response cycle chạy tại một thời điểm.
+     * Tránh lỗi response bị lẫn khi push trigger request mới trong lúc request cũ đang chờ.
+     */
+    private final ReentrantLock requestLock = new ReentrantLock();
+
+    /**
+     * Callback được gọi khi user bị ban từ server (USER_BANNED push).
+     * Nhận lý do ban làm tham số.
+     */
+    private Consumer<String> onBannedCallback;
 
     private static final ExecutorService IO_EXECUTOR = Executors.newCachedThreadPool(r -> {
         Thread t = new Thread(r, "IO-Worker");
@@ -87,20 +100,31 @@ public class NetworkClient {
      */
     private void listenForServerMessages() {
         try {
+            System.out.println("[DEBUG] Listener thread started");
             while (socket != null && !socket.isClosed()) {
                 Object obj = in.readObject();
+                System.out.println("[DEBUG] Listener received: " + obj.getClass().getSimpleName());
 
                 if (obj instanceof ClientResponse response) {
-                    // Response cho request đang chờ
+                    System.out.println("[DEBUG] Listener queueing response, success=" + response.isSuccess());
                     responseQueue.put(response);
-
+                
                 } else if (obj instanceof ServerPushMessage pushMsg) {
-                    // Push notification từ server → dispatch tới UI
-                    for (PushListener listener : pushListeners) {
-                        try {
-                            listener.onPush(pushMsg);
-                        } catch (Exception e) {
-                            System.err.println("C: Lỗi trong PushListener: " + e.getMessage());
+                    if (pushMsg.getType() == ServerPushMessage.PushType.USER_BANNED) {
+                        final String reason = pushMsg.getMessage();
+                        System.out.println("C: Đã bị ban khỏi server: " + reason);
+                        currentUser = null;
+                        if (onBannedCallback != null) {
+                            onBannedCallback.accept(reason);
+                        }
+                    } else {
+                        // Push notification từ server → dispatch tới UI
+                        for (PushListener listener : pushListeners) {
+                            try {
+                                listener.onPush(pushMsg);
+                            } catch (Exception e) {
+                                System.err.println("C: Lỗi trong PushListener: " + e.getMessage());
+                            }
                         }
                     }
                 }
@@ -116,19 +140,29 @@ public class NetworkClient {
      */
     public ClientResponse sendRequest(ClientRequest request) {
         if (socket == null || socket.isClosed()) {
+            System.out.println("[DEBUG] sendRequest: socket not connected");
             return new ClientResponse(false, "Chưa kết nối server", null);
         }
 
+        // Lock để serialize request-response: tránh 2 thread cùng chờ responseQueue
+        // gây lẫn response (VD: push trigger loadAuctions trong lúc CREATE_ITEM đang chờ)
+        requestLock.lock();
         try {
+            System.out.println("[DEBUG] sendRequest: writing " + request.getAction());
             synchronized (out) {
+                out.reset();
                 out.writeObject(request);
                 out.flush();
             }
-            // Chờ listener thread đặt response vào queue (blocking)
-            return responseQueue.take();
+            System.out.println("[DEBUG] sendRequest: waiting for response...");
+            ClientResponse res = responseQueue.take();
+            System.out.println("[DEBUG] sendRequest: got response, success=" + res.isSuccess());
+            return res;
 
         } catch (Exception e) {
             return new ClientResponse(false, "Lỗi giao tiếp: " + e.getMessage(), null);
+        } finally {
+            requestLock.unlock();
         }
     }
 
@@ -180,6 +214,31 @@ public class NetworkClient {
      */
     public void removePushListener(PushListener listener) {
         pushListeners.remove(listener);
+    }
+
+    /**
+     * Đăng ký callback được gọi khi user bị ban từ server.
+     */
+    public void setOnBannedCallback(Consumer<String> callback) {
+        this.onBannedCallback = callback;
+    }
+
+    /**
+     * Ngắt kết nối khỏi server.
+     */
+    public void disconnect() {
+        try {
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
+        } catch (IOException e) {
+            System.err.println("C: Lỗi khi đóng socket: " + e.getMessage());
+        }
+        currentUser = null;
+        responseQueue.clear();
+        pushListeners.clear();
+        onBannedCallback = null;
+        instance = null;
     }
 
     // ==================== Session ====================

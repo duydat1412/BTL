@@ -44,6 +44,8 @@ public class ServerPushMessage implements Serializable {
         NEW_BID,
         PRICE_UPDATE,
         AUCTION_ENDED,
-        AUCTION_STARTED
+        AUCTION_STARTED,
+        AUCTION_CREATED,
+        USER_BANNED
     }
 }

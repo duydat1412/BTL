@@ -12,11 +12,20 @@ public class AuthUserData implements Serializable {
     private final String userId;
     private final String username;
     private final UserRole role;
+    private double balance;
 
     public AuthUserData(String userId, String username, UserRole role) {
         this.userId = userId;
         this.username = username;
         this.role = role;
+        this.balance = 0;
+    }
+
+    public AuthUserData(String userId, String username, UserRole role, double balance) {
+        this.userId = userId;
+        this.username = username;
+        this.role = role;
+        this.balance = balance;
     }
 
     public String getUserId() {
@@ -29,6 +38,14 @@ public class AuthUserData implements Serializable {
 
     public UserRole getRole() {
         return role;
+    }
+
+    public double getBalance() {
+        return balance;
+    }
+
+    public void setBalance(double balance) {
+        this.balance = balance;
     }
 }
 

@@ -11,7 +11,14 @@ import java.util.Map;
 import java.util.concurrent.*;
 
 public final class AuctionScheduler {
-    private static final ScheduledExecutorService SCHEDULER = Executors.newScheduledThreadPool(4);
+    private static final ThreadFactory SCHEDULER_THREAD_FACTORY = runnable -> {
+        Thread thread = new Thread(runnable);
+        thread.setName("auction-scheduler");
+        thread.setDaemon(true);
+        return thread;
+    };
+    private static volatile ScheduledExecutorService scheduler =
+            Executors.newScheduledThreadPool(4, SCHEDULER_THREAD_FACTORY);
     private static final SerializableAuctionRepository AUCTION_REPOSITORY =
             new SerializableAuctionRepository();
     private static final Map<String, ScheduledFuture<?>> scheduledEndTasks = new ConcurrentHashMap<>();
@@ -28,18 +35,19 @@ public final class AuctionScheduler {
     }
 
     public static void scheduleAuctionStart(String auctionId, LocalDateTime startTime) {
+        ScheduledExecutorService scheduler = getScheduler();
         long delayMillis = Duration.between(LocalDateTime.now(), startTime).toMillis();
         if (delayMillis <= 0) {
             startAuctionNow(auctionId);
             return;
         }
 
-        SCHEDULER.schedule(() -> startAuctionNow(auctionId), delayMillis, TimeUnit.MILLISECONDS);
+        scheduler.schedule(() -> startAuctionNow(auctionId), delayMillis, TimeUnit.MILLISECONDS);
         System.out.println("[Scheduler] Scheduled auction start for " + auctionId);
     }
 
     public static void scheduleAuctionEnd(String auctionId, long durationMinutes) {
-        ScheduledFuture<?> future = SCHEDULER.schedule(() -> {
+        ScheduledFuture<?> future = getScheduler().schedule(() -> {
             finishAuctionNow(auctionId);
         }, durationMinutes, TimeUnit.MINUTES);
 
@@ -49,13 +57,14 @@ public final class AuctionScheduler {
     }
 
     public static void scheduleAuctionEndAt(String auctionId, LocalDateTime endTime) {
+        ScheduledExecutorService scheduler = getScheduler();
         long delayMillis = Duration.between(LocalDateTime.now(), endTime).toMillis();
         if (delayMillis <= 0) {
             finishAuctionNow(auctionId);
             return;
         }
 
-        ScheduledFuture<?> future = SCHEDULER.schedule(() -> finishAuctionNow(auctionId),
+        ScheduledFuture<?> future = scheduler.schedule(() -> finishAuctionNow(auctionId),
                 delayMillis, TimeUnit.MILLISECONDS);
         scheduledEndTasks.put(auctionId, future);
         System.out.println("[Scheduler] Scheduled auction end for " + auctionId + " at absolute time.");
@@ -78,6 +87,25 @@ public final class AuctionScheduler {
         System.out.println("[Scheduler] Extended auction " + auctionId
                 + " by " + extraSeconds + "s, new end: " + newEnd);
         return true;
+    }
+
+    public static synchronized void resetForTests() {
+        for (ScheduledFuture<?> future : scheduledEndTasks.values()) {
+            if (future != null && !future.isDone()) {
+                future.cancel(false);
+            }
+        }
+        scheduledEndTasks.clear();
+        scheduler.shutdownNow();
+        scheduler = Executors.newScheduledThreadPool(4, SCHEDULER_THREAD_FACTORY);
+        eventManager = null;
+    }
+
+    private static synchronized ScheduledExecutorService getScheduler() {
+        if (scheduler.isShutdown() || scheduler.isTerminated()) {
+            scheduler = Executors.newScheduledThreadPool(4, SCHEDULER_THREAD_FACTORY);
+        }
+        return scheduler;
     }
 
     private static void startAuctionNow(String auctionId) {

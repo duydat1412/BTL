@@ -16,6 +16,7 @@ import com.auction.server.exception.InvalidBidException;
 import com.auction.server.repository.SerializableAuctionRepository;
 import com.auction.server.repository.SerializableBidRepository;
 import com.auction.server.observer.AuctionEventManager;
+import com.auction.server.observer.BalanceObserver;
 import com.auction.server.observer.BroadcastObserver;
 import com.auction.server.service.*;
 
@@ -35,6 +36,7 @@ import java.util.List;
 public class ClientHandler implements Runnable {
 
     private final Socket clientSocket;
+    private String currentUserId; // userId sau khi login, null nếu chưa login
 
     // Khởi tạo các services và event manager dùng chung cho các handlers
     private static final ItemService itemService = new ItemService();
@@ -46,6 +48,7 @@ public class ClientHandler implements Runnable {
     static {
         eventManager.subscribe(new BroadcastObserver());
         eventManager.subscribe(autoBidService);
+        eventManager.subscribe(new BalanceObserver());
         AuctionScheduler.setEventManager(eventManager);
     }
 
@@ -73,6 +76,7 @@ public class ClientHandler implements Runnable {
                 ClientResponse response = handleIncomingRequest(requestObj);
                 // synchronized vì broadcast() cũng có thể ghi vào out cùng lúc
                 synchronized (out) {
+                    out.reset();
                     out.writeObject(response);
                     out.flush();
                 }
@@ -103,6 +107,11 @@ public class ClientHandler implements Runnable {
             return failure("Action is required");
         }
 
+        // Kiểm tra banned user cho mọi action trừ REGISTER và LOGIN
+        if (action != Action.REGISTER && action != Action.LOGIN && isCurrentUserBanned()) {
+            return failure("Tài khoản của bạn đã bị cấm. Vui lòng liên hệ admin.");
+        }
+
         Serializable payload = request.getPayload();
         return switch (action) {
             case REGISTER -> handleRegister(payload);
@@ -122,6 +131,9 @@ public class ClientHandler implements Runnable {
             case DELETE_ITEM -> handleDeleteItem(payload);
             case REGISTER_AUTO_BID -> handleRegisterAutoBid(payload);
             case REMOVE_AUTO_BID -> handleRemoveAutoBid(payload);
+            case GET_BALANCE -> handleGetBalance(payload);
+            case TOP_UP -> handleTopUp(payload);
+            case SELLER_CANCEL_AUCTION -> handleSellerCancelAuction(payload);
         };
     }
 
@@ -136,7 +148,12 @@ public class ClientHandler implements Runnable {
         if (!(payload instanceof BanUserRequest req)) {
             return failure("BAN_USER payload must be BanUserRequest");
         }
-        return executeAuthAction(() -> UserService.banUser(req));
+        ClientResponse res = executeAuthAction(() -> UserService.banUser(req));
+        if (res.isSuccess()) {
+            // Kick user bị ban ngay lập tức
+            ClientRegistry.getInstance().kickUser(req.getTargetUserId(), req.getReason());
+        }
+        return res;
     }
 
     private ClientResponse handleUnbanUser(Serializable payload) {
@@ -164,7 +181,14 @@ public class ClientHandler implements Runnable {
         if (!(payload instanceof LoginRequest req)) {
             return failure("LOGIN payload must be LoginRequest");
         }
-        return executeAuthAction(() -> UserService.login(req));
+        ClientResponse res = executeAuthAction(() -> UserService.login(req));
+        if (res.isSuccess() && res.getData() instanceof AuthUserData authData) {
+            currentUserId = authData.getUserId();
+            String clientId = clientSocket.getInetAddress() + ":" + clientSocket.getPort();
+            ClientRegistry.getInstance().registerUserSession(currentUserId, clientId);
+            System.out.println("[Login] User " + authData.getUsername() + " (" + currentUserId + ") logged in từ " + clientId);
+        }
+        return res;
     }
 
     private ClientResponse executeAuthAction(AuthAction action) {
@@ -213,10 +237,29 @@ public class ClientHandler implements Runnable {
             if (autoBidService.hasAutoBid(req.getAuctionId(), req.getBidderId())) {
                 return failure("Bạn đã đăng ký auto-bid cho phiên này rồi.");
             }
+            // Kiem tra so du >= maxBid (req.getAmount() la maxBid trong PlaceBidRequest)
+            com.auction.server.repository.SerializableUserRepository userRepo =
+                    new com.auction.server.repository.SerializableUserRepository();
+            com.auction.common.entity.User bidder = userRepo.findById(req.getBidderId());
+            if (bidder != null && bidder.getBalance() < req.getAmount()) {
+                return failure("So du khong du cho auto-bid. So du: "
+                        + String.format("%,.0f", bidder.getBalance())
+                        + " VND, can: " + String.format("%,.0f", req.getAmount()) + " VND");
+            }
             AutoBid config = new AutoBid(req.getAuctionId(), req.getBidderId(), req.getAmount(), 500);
             autoBidService.registerAutoBid(config);
             return new ClientResponse(true, "Đăng ký auto-bid thành công (max: " + String.format("%,.0f", req.getAmount()) + " VNĐ)", null);
         }
+
+        // Kiem tra so du cho manual bid
+        com.auction.server.repository.SerializableUserRepository userRepo =
+                new com.auction.server.repository.SerializableUserRepository();
+        com.auction.common.entity.User bidder = userRepo.findById(req.getBidderId());
+        if (bidder != null && bidder.getBalance() < req.getAmount()) {
+            return failure("So du khong du. So du: " + String.format("%,.0f", bidder.getBalance())
+                    + " VND, can: " + String.format("%,.0f", req.getAmount()) + " VND");
+        }
+
         BidStrategy strategy = new ManualBidStrategy();
         try {
             BidTransaction result = bidService.placeBid(req.getAuctionId(), req.getBidderId(), req.getAmount(),
@@ -259,6 +302,17 @@ public class ClientHandler implements Runnable {
         if (!(payload instanceof RegisterAutoBidRequest req)) {
             return failure("REGISTER_AUTO_BID payload must be RegisterAutoBidRequest");
         }
+
+        // Kiem tra so du >= maxBid
+        com.auction.server.repository.SerializableUserRepository userRepo =
+                new com.auction.server.repository.SerializableUserRepository();
+        com.auction.common.entity.User bidder = userRepo.findById(req.getBidderId());
+        if (bidder != null && bidder.getBalance() < req.getMaxBid()) {
+            return failure("So du khong du cho auto-bid. So du: "
+                    + String.format("%,.0f", bidder.getBalance())
+                    + " VND, can: " + String.format("%,.0f", req.getMaxBid()) + " VND");
+        }
+
         AutoBid config = new AutoBid(req.getAuctionId(), req.getBidderId(), req.getMaxBid(), req.getIncrement());
         autoBidService.registerAutoBid(config);
         return new ClientResponse(true, "Đăng ký auto-bid thành công", null);
@@ -276,9 +330,44 @@ public class ClientHandler implements Runnable {
         return new ClientResponse(false, message, null);
     }
 
+    /**
+     * Kiểm tra user hiện tại đã bị ban chưa.
+     */
+    private boolean isCurrentUserBanned() {
+        if (currentUserId == null) return false;
+        try {
+            com.auction.server.repository.SerializableUserRepository userRepo =
+                    new com.auction.server.repository.SerializableUserRepository();
+            com.auction.common.entity.User user = userRepo.findById(currentUserId);
+            return user != null && user.isBanned();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     @FunctionalInterface
     private interface AuthAction {
         ClientResponse run() throws AuthenticationException;
     }
 
+    private ClientResponse handleGetBalance(Serializable payload) {
+        if (!(payload instanceof String userId)) {
+            return failure("GET_BALANCE payload must be userId (String)");
+        }
+        return UserService.getBalance(userId);
+    }
+
+    private ClientResponse handleTopUp(Serializable payload) {
+        if (!(payload instanceof TopUpRequest req)) {
+            return failure("TOP_UP payload must be TopUpRequest");
+        }
+        return UserService.topUp(req);
+    }
+
+    private ClientResponse handleSellerCancelAuction(Serializable payload) {
+        if (!(payload instanceof SellerCancelAuctionRequest req)) {
+            return failure("SELLER_CANCEL_AUCTION payload must be SellerCancelAuctionRequest");
+        }
+        return AuctionService.sellerCancelAuction(req);
+    }
 }

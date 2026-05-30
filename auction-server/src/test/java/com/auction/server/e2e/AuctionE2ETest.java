@@ -4,6 +4,7 @@ import com.auction.common.entity.*;
 import com.auction.common.enums.*;
 import com.auction.common.message.*;
 import com.auction.server.datastore.DataStore;
+import com.auction.server.service.AuctionScheduler;
 import org.junit.jupiter.api.*;
 
 import java.io.*;
@@ -21,6 +22,7 @@ class AuctionE2ETest {
 
     @BeforeEach
     void setUp() throws IOException {
+        AuctionScheduler.resetForTests();
         E2ETestHelper.resetDataStore();
         server = E2ETestHelper.startServer();
         port = server.getPort();
@@ -29,6 +31,7 @@ class AuctionE2ETest {
     @AfterEach
     void tearDown() {
         server.close();
+        AuctionScheduler.resetForTests();
         E2ETestHelper.resetDataStore();
     }
 
@@ -73,6 +76,11 @@ class AuctionE2ETest {
         ClientResponse res = login(client, user, pass);
         assertTrue(res.isSuccess(), "Login after register should succeed");
         return ((AuthUserData) res.getData()).getUserId();
+    }
+
+    private void topUp(ClientStreams client, String userId, double amount) throws Exception {
+        ClientResponse res = client.sendReceive(new ClientRequest(Action.TOP_UP, new TopUpRequest(userId, amount)));
+        assertTrue(res.isSuccess(), "Top-up should succeed for " + userId + ": " + res.getMessage());
     }
 
     private Map<String, String> makeAttrs(String... kv) {
@@ -152,6 +160,7 @@ class AuctionE2ETest {
         try (var seller = connect(); var bidder = connect()) {
             String sellerId = registerAndLogin(seller, "seller3", "Pass@123", "s3@test.com", UserRole.SELLER);
             String bidderId = registerAndLogin(bidder, "bidder3", "Pass@123", "b3@test.com", UserRole.BIDDER);
+            topUp(bidder, bidderId, 50_000);
 
             Map<String, String> attrs = makeAttrs("manufacturer", "Toyota", "yearOfManufacture", "2022", "mileage", "5000", "durationMinutes", "60");
             seller.sendReceive(new ClientRequest(Action.CREATE_ITEM,
@@ -189,6 +198,8 @@ class AuctionE2ETest {
         try (var clientA = connect(); var clientB = connect()) {
             String sellerId = registerAndLogin(clientA, "seller", "Pass@123", "s@t.com", UserRole.SELLER);
             String bidderId = registerAndLogin(clientB, "bidder", "Pass@123", "b@t.com", UserRole.BIDDER);
+            topUp(clientA, sellerId, 20_000);
+            topUp(clientB, bidderId, 20_000);
 
             Map<String, String> attrs = makeAttrs("brand", "Test", "model", "X", "warrantyMonths", "12", "durationMinutes", "60");
             clientA.sendReceive(new ClientRequest(Action.CREATE_ITEM,
@@ -202,10 +213,8 @@ class AuctionE2ETest {
             clientA.sendReceive(new ClientRequest(Action.PLACE_BID,
                     new PlaceBidRequest(auctionId, sellerId, 6000, false)));
 
-            ServerPushMessage push;
-            do {
-                push = E2ETestHelper.readPush(clientB.in());
-            } while (push.getType() != ServerPushMessage.PushType.NEW_BID);
+            ServerPushMessage push = E2ETestHelper.waitForPush(
+                    clientB.in(), ServerPushMessage.PushType.NEW_BID, 5_000);
             assertEquals(ServerPushMessage.PushType.NEW_BID, push.getType());
         }
     }
@@ -218,6 +227,8 @@ class AuctionE2ETest {
             String sellerId = registerAndLogin(seller, "sellerAB", "Pass@123", "sab@t.com", UserRole.SELLER);
             String autoId = registerAndLogin(autoBidder, "autoBidder", "Pass@123", "auto@t.com", UserRole.BIDDER);
             String otherId = registerAndLogin(otherBidder, "otherBidder", "Pass@123", "other@t.com", UserRole.BIDDER);
+            topUp(autoBidder, autoId, 100_000);
+            topUp(otherBidder, otherId, 100_000);
 
             Map<String, String> attrs = makeAttrs("brand", "Sony", "model", "PS5", "warrantyMonths", "24", "durationMinutes", "60");
             seller.sendReceive(new ClientRequest(Action.CREATE_ITEM,
@@ -253,6 +264,7 @@ class AuctionE2ETest {
         try (var client = connect()) {
             String sellerId = registerAndLogin(client, "sellerAS", "Pass@123", "sas@t.com", UserRole.SELLER);
             String bidderId = registerAndLogin(client, "bidderAS", "Pass@123", "bas@t.com", UserRole.BIDDER);
+            topUp(client, bidderId, 10_000);
 
             Map<String, String> attrs = makeAttrs("brand", "Nokia", "model", "3310", "warrantyMonths", "0", "durationMinutes", "60");
             client.sendReceive(new ClientRequest(Action.CREATE_ITEM,
@@ -349,6 +361,7 @@ class AuctionE2ETest {
         try (var client = connect()) {
             String sellerId = registerAndLogin(client, "sellerH", "Pass@123", "sh@t.com", UserRole.SELLER);
             String bidderId = registerAndLogin(client, "bidderH", "Pass@123", "bh@t.com", UserRole.BIDDER);
+            topUp(client, bidderId, 10_000);
 
             Map<String, String> attrs = makeAttrs("brand", "X", "model", "Y", "warrantyMonths", "12", "durationMinutes", "60");
             client.sendReceive(new ClientRequest(Action.CREATE_ITEM,
