@@ -210,7 +210,6 @@
     -fx-background-color: -surface-soft;
     -fx-text-fill: -muted-soft;
 }
-
 /* ── TextArea ── */
 .text-area {
     -fx-background-color: -canvas;
