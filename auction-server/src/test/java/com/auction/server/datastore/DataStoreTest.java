@@ -12,17 +12,11 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.*;
 
 class DataStoreTest {
-    private static final Path DATA_FILE = Path.of("data", "auction_data.dat");
-
-    private byte[] originalDataFile;
-    private boolean dataFileExisted;
+    private static final Path DATA_FILE = DataStore.getDataFilePath();
 
     @BeforeEach
-    void setUp() throws IOException {
-        dataFileExisted = Files.exists(DATA_FILE);
-        if (dataFileExisted) {
-            originalDataFile = Files.readAllBytes(DATA_FILE);
-        }
+    void setUp() throws IOException, InterruptedException {
+        deleteWithRetries(DATA_FILE);
         DataStore.getInstance().getUsers().clear();
         DataStore.getInstance().getItems().clear();
         DataStore.getInstance().getAuctions().clear();
@@ -30,18 +24,11 @@ class DataStoreTest {
     }
 
     @AfterEach
-    void tearDown() throws IOException, InterruptedException {
+    void tearDown() {
         DataStore.getInstance().getUsers().clear();
         DataStore.getInstance().getItems().clear();
         DataStore.getInstance().getAuctions().clear();
         DataStore.getInstance().getBidTransactions().clear();
-
-        if (dataFileExisted) {
-            Files.createDirectories(DATA_FILE.getParent());
-            Files.write(DATA_FILE, originalDataFile);
-        } else {
-            deleteWithRetries(DATA_FILE);
-        }
     }
 
     @Test

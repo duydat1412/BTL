@@ -13,6 +13,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import org.mindrot.jbcrypt.BCrypt;
@@ -23,7 +26,8 @@ import org.mindrot.jbcrypt.BCrypt;
 public class DataStore implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private static final String FILE_PATH = "data/auction_data.dat";
+    static final String DATA_FILE_PROPERTY = "auction.data.file";
+    private static final String DEFAULT_FILE_PATH = "data/auction_data.dat";
     private static final String DEFAULT_ADMIN_USERNAME = "admin";
     private static final String DEFAULT_ADMIN_PASSWORD = "Admin@123";
     private static final String DEFAULT_ADMIN_EMAIL = "admin@auction.local";
@@ -66,7 +70,7 @@ public class DataStore implements Serializable {
     }
 
     public synchronized void loadData() {
-        File file = new File(FILE_PATH);
+        File file = getDataFilePath().toFile();
         if (!file.exists()) {
             System.out.println("Data file does not exist. Starting with empty store.");
             File parent = file.getParentFile();
@@ -84,19 +88,34 @@ public class DataStore implements Serializable {
             this.auctions = new CopyOnWriteArrayList<>(loadedData.auctions);
             this.bidTransactions = new CopyOnWriteArrayList<>(loadedData.bidTransactions);
             ensureDefaultAdminAccount();
-            System.out.println("Loaded data from " + FILE_PATH);
+            System.out.println("Loaded data from " + file.getPath());
         } catch (Exception e) {
             System.err.println("Failed to load data file: " + e.getMessage());
         }
     }
 
     public synchronized void saveData() {
-        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(FILE_PATH))) {
+        Path dataFilePath = getDataFilePath();
+        try {
+            Path parent = dataFilePath.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+        } catch (IOException e) {
+            System.err.println("Failed to prepare data directory: " + e.getMessage());
+            return;
+        }
+
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(dataFilePath.toFile()))) {
             out.writeObject(this);
-            System.out.println("Saved data to " + FILE_PATH);
+            System.out.println("Saved data to " + dataFilePath);
         } catch (IOException e) {
             System.err.println("Failed to write data file: " + e.getMessage());
         }
+    }
+
+    static Path getDataFilePath() {
+        return Paths.get(System.getProperty(DATA_FILE_PROPERTY, DEFAULT_FILE_PATH));
     }
 
     private void ensureDefaultAdminAccount() {
