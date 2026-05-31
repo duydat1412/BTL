@@ -182,4 +182,4 @@ Khuyến nghị:
 | Tài liệu | Liên kết |
 | --- | --- |
 | Báo cáo dự án PDF | [![Báo cáo PDF](https://img.shields.io/badge/Báo%20cáo-PDF-EA4335?style=flat-square&logo=adobeacrobatreader&logoColor=white)](https://drive.google.com/file/d/1uo_7SLGj3uPYg_11qBq5_CuldmiOvQQ0/view?usp=sharing) |
-| Video demo | Sẽ cập nhật sau |
+| Video demo | [![Video demo](https://img.shields.io/badge/Video-Demo-0A66C2?style=flat-square&logo=google-drive&logoColor=white)](https://drive.google.com/file/d/1aKKtGr_c4Kh59t5ACaMh__7brs000O0U/view) |
